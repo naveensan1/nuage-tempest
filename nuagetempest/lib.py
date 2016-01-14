@@ -3,6 +3,8 @@ import re
 
 def setup_tempest_public_network(osc):
 
+    out = osc.cmd("source ~/admin_rc;neutron net-list", timeout=30, strict=False)
+
     cmds = [
         'source ~/admin_rc',
         'neutron net-create tempestPublicNw --router:external',

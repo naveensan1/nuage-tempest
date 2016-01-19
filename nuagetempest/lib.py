@@ -51,6 +51,9 @@ def setup_cmsid(osc):
 
 def setup_tempestcfg(**kwargs):
 
+    api_extensions = "security-group, provider, binding, quotas, external-net, router, extraroute, ext-gw-mode, allowed-address-pairs, extra_dhcp_opt, net-partition, nuage-router, nuage-subnet, nuage-floatingip, nuage-gateway, vsd-resource, nuage-redirect-target, nuage-external-security-group, appdesigner"
+    nuage_plugin_file = "/etc/neutron/plugin.ini"
+
     file = open(kwargs['tempest_cfg_file'], "w")
     file.write("[DEFAULT]\n")
     file.write("debug = True\n")
@@ -76,6 +79,9 @@ def setup_tempestcfg(**kwargs):
     file.write("admin_domain_name = Default\n")
     file.write("[network]\n")
     file.write("public_network_id = %s\n" % kwargs['net_id'])
+    file.write("[network-feature-enabled]\n")
+    file.write("ipv6 = false\n")
+    file.write("api_extensions = %s\n" % api_extensions)
     file.write("[nuage]\n")
     file.write("nuage_vsd_server = vsd-1:8443\n")
     file.write("nuage_default_netpartition = %s\n" % kwargs['def_netpartition'])
@@ -84,12 +90,22 @@ def setup_tempestcfg(**kwargs):
     file.write("nuage_vsd_user = csproot\n")
     file.write("nuage_vsd_password = csproot\n")
     file.write("nuage_vsd_org = csp\n")
-    file.write("cms_id = %s\n" % kwargs['cms_id'])
+    file.write("nuage_cms_id = %s\n" % kwargs['cms_id'])
     file.write("[oslo_concurrency]\n")
     file.write("lock_path = %s\n" % kwargs['tempest_log_path'])
     file.write("[service_available]\n")
+    file.write("heat = True\n")
     file.write("neutron = True\n")
     file.write("swift = False\n")
+    file.write("[validation]\n")
+    file.write("run_validation = true\n")
+    file.write("[cli]\n")
+    file.write("enabled = true\n")
+    file.write("[nuage_sut]\n")
+    file.write("nuage_plugin_configuration = %s\n" % nuage_plugin_file)
+    file.write("controller_service_management_mode = ubuntu\n")
+    file.write("controller_password = tigris\n")
+    file.write("controller_user = root\n")
 
     file.close()
 

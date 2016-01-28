@@ -8,7 +8,7 @@ def setup_tempest_public_network(osc):
     cmds = [
         'source ~/admin_rc',
         'neutron net-create tempestPublicNw --router:external',
-        'neutron subnet-create tempestPublicNw 10.10.100.0/24 --name tempestPublicSubnet',
+        'neutron subnet-create tempestPublicNw 172.20.0.0/24 --name tempestPublicSubnet',
         'neutron net-list',
         'neutron subnet-list'
     ]

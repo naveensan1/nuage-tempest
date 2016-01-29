@@ -49,11 +49,28 @@ def setup_cmsid(osc):
 
     return cms_id
 
+def setup_accountsyaml():
+
+    accounts_file = '/etc/accounts.yaml'
+    file = open(accounts_file, "w")
+    file.write("- username: 'admin'\n")
+    file.write("  tenant_name: 'admin'\n")
+    file.write("  password: 'tigris'\n")
+    file.write("  roles:\n")
+    file.write("    - 'admin'\n\n")
+    file.write("- username: 'demo'\n")
+    file.write("  tenant_name: 'demo'\n")
+    file.write("  password: 'tigris'\n")
+    file.write("  roles:\n")
+    file.write("    - '_member_'\n")
+    file.close()
+
+
 def setup_tempestcfg(**kwargs):
 
     api_extensions = "security-group, provider, binding, quotas, external-net, router, extraroute, ext-gw-mode, allowed-address-pairs, extra_dhcp_opt, net-partition, nuage-router, nuage-subnet, nuage-floatingip, nuage-gateway, vsd-resource, nuage-redirect-target, nuage-external-security-group, appdesigner"
     nuage_plugin_file = "/etc/neutron/plugins/nuage/plugin.ini" 
-    accounts_file = "tempest/etc/accounts.yaml"
+    accounts_file = "/etc/accounts.yaml"
 
     file = open(kwargs['tempest_cfg_file'], "w")
     file.write("[DEFAULT]\n")

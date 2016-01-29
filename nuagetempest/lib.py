@@ -53,6 +53,7 @@ def setup_tempestcfg(**kwargs):
 
     api_extensions = "security-group, provider, binding, quotas, external-net, router, extraroute, ext-gw-mode, allowed-address-pairs, extra_dhcp_opt, net-partition, nuage-router, nuage-subnet, nuage-floatingip, nuage-gateway, vsd-resource, nuage-redirect-target, nuage-external-security-group, appdesigner"
     nuage_plugin_file = "/etc/neutron/plugins/nuage/plugin.ini" 
+    accounts_file = "tempest/etc/accounts.yaml"
 
     file = open(kwargs['tempest_cfg_file'], "w")
     file.write("[DEFAULT]\n")
@@ -118,6 +119,8 @@ def setup_tempestcfg(**kwargs):
     file.write("neutron = True\n")
     file.write("swift = False\n")
     file.write("ceilometer = false\n")
+    file.write("[auth]\n")
+    file.write("test_accounts_file = %s\n" % accounts_file)    
     file.write("[volume]\n")
     file.write("region = regionOne\n")
     file.write("[compute-admin]\n")

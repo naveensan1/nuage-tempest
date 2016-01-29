@@ -26,9 +26,9 @@ def setup_tempest_public_network(osc):
 
 def setup_cmsid(osc):
 
-    plugin_file = "/etc/neutron/plugin.ini"
+    plugin_file = "/etc/neutron/plugins/nuage/plugin.ini"
     audit_cmd = ('python set_and_audit_cms.py '
-                 '--plugin-config-file /etc/neutron/plugin.ini '
+                 '--plugin-config-file ' + plugin_file
                  '--neutron-config-file /etc/neutron/neutron.conf')
     path = '/opt/upgrade-script/upgrade-scripts'
     cmd = 'cd {path} ; {audit_cmd}'.format(path=path, audit_cmd=audit_cmd)
@@ -38,7 +38,7 @@ def setup_cmsid(osc):
     time.sleep(5)
     osc.cmd('service neutron-server status')
 
-    cmd = "cat /etc/neutron/plugin.ini | grep cms_id"
+    cmd = "cat " + plugin_file + " | grep cms_id"
     out = osc.cmd(cmd, timeout=30, strict=False)
     m = re.search(r"cms_id = (\w+\-\w+\-\w+\-\w+\-\w+)", out[0][0])
     if m:
@@ -52,7 +52,7 @@ def setup_cmsid(osc):
 def setup_tempestcfg(**kwargs):
 
     api_extensions = "security-group, provider, binding, quotas, external-net, router, extraroute, ext-gw-mode, allowed-address-pairs, extra_dhcp_opt, net-partition, nuage-router, nuage-subnet, nuage-floatingip, nuage-gateway, vsd-resource, nuage-redirect-target, nuage-external-security-group, appdesigner"
-    nuage_plugin_file = "/etc/neutron/plugin.ini"
+    nuage_plugin_file = "/etc/neutron/plugins/nuage/plugin.ini" 
 
     file = open(kwargs['tempest_cfg_file'], "w")
     file.write("[DEFAULT]\n")

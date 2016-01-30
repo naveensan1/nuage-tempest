@@ -28,7 +28,7 @@ def setup_cmsid(osc):
 
     plugin_file = "/etc/neutron/plugins/nuage/plugin.ini"
     audit_cmd = ('python set_and_audit_cms.py '
-                 '--plugin-config-file ' + plugin_file
+                 '--plugin-config-file ' + plugin_file +
                  '--neutron-config-file /etc/neutron/neutron.conf')
     path = '/opt/upgrade-script/upgrade-scripts'
     cmd = 'cd {path} ; {audit_cmd}'.format(path=path, audit_cmd=audit_cmd)

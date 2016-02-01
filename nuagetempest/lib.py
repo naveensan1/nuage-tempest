@@ -24,6 +24,50 @@ def setup_tempest_public_network(osc):
 
     return net_id
 
+def setup_tempest_tenant_user(osc, tenant, user, pwd, role):
+
+    # Tenant
+    # Looking if the tenant exists
+    tenantid = osc.cmd("source ~/admin_rc;keystone tenant-get " + tenant + " | awk '/ id / {print $4}'",
+                   timeout=30, strict=False)
+
+    # If tenant does not exists creating the tenant
+    if not tenantid[0]:
+       tenantid = osc.cmd("source ~/admin_rc; keystone tenant-create --name " + tenant + "| awk '/ id / {print $4}'",
+                            timeout=30, strict=False)
+
+    tenantid = str(tenantid[0][0])
+    print "Tenant: " + tenant + " ID: " + tenantid
+
+    # User
+    # Looking if the user exists
+    userid = osc.cmd("source ~/admin_rc;keystone user-get " + user + " | awk '/ id / {print $4}'",
+                   timeout=30, strict=False)
+
+    # If user does not exists creating the user
+    if not userid[0]:
+       userid = osc.cmd("source ~/admin_rc; keystone user-create --name " + user +
+                         " --pass " + pwd + " --tenant " + tenant +
+                         " | awk '/ id / {print $4}'", timeout=30, strict=False)
+
+    userid = str(userid[0][0])
+    print "User: " + user + " ID: " + userid
+
+    # Role
+    roleid = osc.cmd("source ~/admin_rc;keystone role-get " + role + " | awk '/ id / {print $4}'",
+                   timeout=30, strict=False)
+
+    if not roleid[0]:
+       roleid = osc.cmd("source ~/admin_rc; keystone user-role-add --user " + user +
+                         " --role " + role + " --tenant " + tenant +
+                         " | awk '/ id / {print $4}'", timeout=30, strict=False)
+
+    roleid = str(roleid[0][0])
+    print "Role: " + role + " ID: " + roleid
+
+    print("User: %s (ID: %s)\nTenant: %s (ID: %s)\nRole: %s (ID: %s)" % (user, userid, tenant, tenantid, role, roleid))
+    return None
+
 def setup_cmsid(osc):
 
     plugin_file = "/etc/neutron/plugins/nuage/plugin.ini"

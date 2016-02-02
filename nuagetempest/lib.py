@@ -78,7 +78,7 @@ def setup_cmsid(osc):
     cmd = 'cd {path} ; {audit_cmd}'.format(path=path, audit_cmd=audit_cmd)
     osc.cmd(cmd, timeout=30, strict=False)
 
-    osc.cmd('service neutron-server restart')
+    osc.cmd('service neutron-server restart', strict=False)
     time.sleep(5)
     osc.cmd('service neutron-server status')
 

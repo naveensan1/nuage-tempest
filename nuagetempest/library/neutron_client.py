@@ -42,10 +42,10 @@ class neutron_client_setup():
 
   def get_keystone_creds(self):
     d = {}
-    d['username'] = 'admin'
-    d['password'] = 'tigris'
-    d['auth_url'] = 'http://localhost:5000/v2.0'
-    d['tenant_name'] = 'admin'
+    d['username'] = os.environ['OS_USERNAME']
+    d['password'] = os.environ['OS_PASSWORD']
+    d['auth_url'] = os.environ['OS_AUTH_URL']
+    d['tenant_name'] = os.environ['OS_TENANT_NAME']
     return d
 
   def get_neutron_creds(self,tenant_name):

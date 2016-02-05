@@ -2,14 +2,13 @@ import os
 
 from tempest import config
 from tempest.test_discover import plugins
-from nuagetempest import config as config_share
+from nuagetempest import config as project_config
 
 
 class NuageTempestPlugin(plugins.TempestPlugin):
     def get_opt_lists(self):
-        return [(
-            config_share.third_party_verification.vendor,
-            config_share.thirdPartyVerificationGroup)]
+        return [(project_config.nuage_tempest_group.name,
+                  project_config.NuageTempestGroup)]
 
     def load_tests(self):
         base_path = os.path.split(os.path.dirname(
@@ -20,6 +19,5 @@ class NuageTempestPlugin(plugins.TempestPlugin):
 
     def register_opts(self, conf):
         config.register_opt_group(
-            conf,
-            config_share.third_party_verification,
-            config_share.thirdPartyVerificationGroup)
+            conf, project_config.nuage_tempest_group,
+            project_config.NuageTempestGroup)

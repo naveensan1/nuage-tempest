@@ -1,0 +1,21 @@
+import traceback
+from nuagetempest.library import nuage_ext
+import re
+
+class NuageExtensionInit():
+    
+    def __init__(self):
+        self.nuage_extension = nuage_ext.NuageExtension()
+
+    def _generate_tag(self, tag, class_name):
+        tb = traceback.extract_stack()
+        for t in tb:
+            if re.search('_generate_tag\(', str(t)):
+                l = len(str.split(t[0], '/'))
+                t_part1 = str.split(t[0], '/')[l-2]
+                t_part2_1 = str.split(t[0], '/')[l-1]
+                t_part2 = str.split(t_part2_1, '.')[0]
+                t_part4 = str.split(t[2])[0][4:]
+                return t_part1 + '.' + t_part2 + '.' + class_name + '.' + t_part4 + '.' + tag
+            
+nuage_ext = NuageExtensionInit()

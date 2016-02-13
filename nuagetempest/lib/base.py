@@ -1,5 +1,8 @@
 import time
 import re
+import logging
+
+LOG = logging.getLogger(__name__)
 
 def setup_tempest_public_network(osc):
 
@@ -45,7 +48,7 @@ def setup_tempest_tenant_user(osc, tenant, user, password, role):
     userid = userid[0][0]
     LOG.info('User: {} ID: {}'.format(user, userid))
 
-    roleid = ks_cmd('keystone role-get {}'.format(role))
+    roleid = ks_cmd('role-get {}'.format(role))
     if not roleid[0]:
         cmd = 'user-role-add --name {} --pass {} --tenant {} --role {}'
         roleid = ks_cmd(cmd.format(user, password, tenant, role))

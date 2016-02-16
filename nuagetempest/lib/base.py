@@ -33,7 +33,7 @@ def setup_tempest_tenant_user(osc, tenant, user, password, role):
         ks_base_cmd = 'source ~/admin_rc ; keystone'
         awk_cmd = 'awk "/ id / {print $4}"'
         command = '{} {} | {}'.format(ks_base_cmd, cmd, awk_cmd)
-        return osc.cmd(command, timeout=30)
+        return osc.cmd(command, timeout=30, strict=False)
 
     tenantid = ks_cmd('tenant-get {}'.format(tenant))
     if not tenantid[0]:
@@ -67,7 +67,7 @@ def setup_cmsid(osc):
 
     osc.cmd('service neutron-server restart', strict=False)
     time.sleep(5)
-    osc.cmd('service neutron-server status')
+    osc.cmd('service neutron-server status', strict=False)
 
     cmd = "cat {} | grep cms_id".format(plugin_file)
     out = osc.cmd(cmd, timeout=30, strict=False)

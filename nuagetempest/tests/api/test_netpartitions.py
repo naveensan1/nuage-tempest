@@ -3,18 +3,31 @@ from tempest_lib.common.utils.data_utils import rand_name
 from tempest import exceptions
 from oslo_log import log as logging
 from tempest import config
+from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 
+
 class NetPartitionTestJSON(base.BaseNetworkTest):
     _interface = 'json'
 
     @classmethod
+    def setup_clients(cls):
+        super(NetPartitionTestJSON, cls).setup_clients()
+        cls.client = NuageNetworkClientJSON(
+            cls.os.auth_provider,
+            CONF.network.catalog_type,
+            CONF.network.region or CONF.identity.region,
+            endpoint_type=CONF.network.endpoint_type,
+            build_interval=CONF.network.build_interval,
+            build_timeout=CONF.network.build_timeout,
+            **cls.os.default_params)
+
+    @classmethod
     def setUpClass(cls):
         super(NetPartitionTestJSON, cls).setUpClass()
-        cls.client = cls.get_client_manager().nuage_network_client
         cls.net_partitions = []
 
     @classmethod
@@ -58,4 +71,3 @@ class NetPartitionTestJSON(base.BaseNetworkTest):
         self.assertIn(netpart['name'], netpartition_namelist)
         body = self.client.delete_netpartition(netpart['id'])
         self.assertEqual('204', body.response['status'])
-

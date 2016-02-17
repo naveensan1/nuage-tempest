@@ -15,13 +15,13 @@
 
 from netaddr import IPNetwork
 
+from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from tempest import config
-from nuagetempest.lib.utils import constants as n_constants
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions
-import testtools
 import test_vsd_managed_network
+import testtools
 
 CONF = config.CONF
 

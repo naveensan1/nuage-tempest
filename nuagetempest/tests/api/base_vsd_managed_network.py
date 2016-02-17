@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from nuagetempest.services.nuage_client import NuageRestClient
 from tempest.api.network import base
 from tempest import config
-from nuagetempest.services.nuage_client import NuageRestClient
 
 
 CONF = config.CONF

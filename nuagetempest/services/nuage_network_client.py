@@ -17,6 +17,7 @@ import json
 
 from tempest.services.network.json import network_client
 from tempest.common import service_client
+import nuagetempest.lib.utils.constants as constants
 
 
 class NuageNetworkClientJSON(network_client.NetworkClient):
@@ -173,7 +174,6 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
         self.expected_success(204, resp.status)
         return service_client.ResponseBody(resp, body)
 
-
     # Add router interface
     def add_router_interface(self, router_id, subnet_id):
         uri = '%s/routers/%s/add_router_interface' % (self.uri_prefix,
@@ -243,3 +243,37 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
     def list_flows(self, app_id):
         uri = '%s/flows?app_id=%s' % (self.uri_prefix, app_id)
         return self._get_request(uri)
+
+    def list_nuage_external_security_group(self, router_id):
+        uri = '%s/nuage-external-security-groups.json?router=%s' % (self.uri_prefix, router_id)
+        return self._get_request(uri)
+
+    def list_nuage_external_security_group_rule(self, remote_group_id):
+        uri = '%s/nuage-external-security-group-rules.json?external_group=%s' % (self.uri_prefix,
+                                                                                 remote_group_id)
+        return self._get_request(uri)
+
+    def list_nuage_external_security_group_l2domain(self, subnet_id):
+        uri = '%s/nuage-external-security-groups.json?subnet=%s' % (self.uri_prefix, subnet_id)
+        return self._get_request(uri)
+
+    # FloatingIp
+    def create_floatingip(self, parent_id, shared_netid,
+                          address, parent=None, externalId=None,
+                          extra_params=None):
+        data = {
+            "associatedSharedNetworkResourceID": shared_netid,
+            "address": address
+        }
+        if externalId:
+            data['externalID'] = self.get_vsd_external_id(externalId)
+        if self.extra_params:
+            data.update(self.extra_params)
+        if not parent:
+            parent = constants.DOMAIN
+        res_path = self.build_resource_path(
+            parent, parent_id, constants.FLOATINGIP)
+        return self.post(res_path, data)
+
+
+

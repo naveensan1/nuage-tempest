@@ -7,6 +7,11 @@ from nuagetempest.lib.utils import constants
 from nuagetempest.lib.utils import exceptions as n_exceptions
 from nuagetempest.lib.utils import restproxy
 
+import time
+import re
+import six
+from tempest_lib.common.utils import misc as misc_utils
+from oslo_log import log as logging
 
 CONF = config.CONF
 SERVERSSL = True
@@ -15,7 +20,21 @@ RESPONSECHOICE = '?responseChoice=1'
 CMS_ID = None
 
 
+# convert a structure into a string safely
+def safe_body(body, maxlen=5000):
+    try:
+        text = six.text_type(body)
+    except UnicodeDecodeError:
+        # if this isn't actually text, return marker that
+        return "<BinaryData: removed>"
+    if len(text) > maxlen:
+        return text[:maxlen]
+    else:
+        return text
+
+
 class NuageRestClient(object):
+    LOG = logging.getLogger(__name__)
 
     def __init__(self):
         server = CONF.nuage.nuage_vsd_server
@@ -69,9 +88,85 @@ class NuageRestClient(object):
         if resp.status >= 400:
             raise n_exceptions.UnexpectedResponseCode(str(resp.status))
 
+    def _log_request_start(self, method, req_url, req_headers=None,
+                           req_body=None):
+        if req_headers is None:
+            req_headers = {}
+        caller_name = misc_utils.find_test_caller()
+        trace_regex = CONF.debug.trace_requests
+        if trace_regex and re.search(trace_regex, caller_name):
+            self.LOG.debug('Starting Request (%s): %s %s' %
+                           (caller_name, method, req_url))
+
+    def _log_request_full(self, method, req_url, resp,
+                          secs="", req_headers=None,
+                          req_body=None, resp_body=None,
+                          caller_name=None, extra=None):
+        if 'X-Auth-Token' in req_headers:
+            req_headers['X-Auth-Token'] = '<omitted>'
+        log_fmt = """Request (%s):
+            HTTP %s %s %s%s
+            Request - Headers: %s
+                Body: %s
+            Response - Headers: %s
+                Body: %s"""
+
+        self.LOG.debug(
+            log_fmt % (
+                caller_name,
+                resp.status,
+                method,
+                req_url,
+                secs,
+                str(req_headers),
+                safe_body(req_body),
+                "Not supported by Nuage REST proxy",
+                safe_body(resp_body)),
+            extra=extra)
+
+    def _log_request(self, method, req_url, resp,
+                     secs="", req_headers=None,
+                     req_body=None, resp_body=None):
+        if req_headers is None:
+            req_headers = {}
+
+        # if we have the request id, put it in the right part of the log
+        ### extra = dict(request_id=self._get_request_id(resp))
+        extra = {}
+
+        # NOTE(sdague): while we still have 6 callers to this function
+        # we're going to just provide work around on who is actually
+        # providing timings by gracefully adding no content if they don't.
+        # Once we're down to 1 caller, clean this up.
+        caller_name = misc_utils.find_test_caller()
+        if secs:
+            secs = " %.3fs" % secs
+        self.LOG.info(
+            'Request (%s): %s %s %s%s' % (
+                caller_name,
+                resp.status,
+                method,
+                req_url,
+                secs),
+            extra=extra)
+
+        # Also look everything at DEBUG if you want to filter this
+        # out, don't run at debug.
+        self._log_request_full(method, req_url, resp, secs, req_headers,
+                               req_body, resp_body, caller_name, extra)
+
     def request(self, method, url, body=None, extra_headers=None):
+        self._log_request_start(method, url)
+
+        start = time.time()
         resp = self.restproxy.rest_call(
             method, url, data=body, extra_headers=extra_headers)
+        end = time.time()
+
+        self._log_request(method, url, resp, secs=(end - start),
+                          req_headers=extra_headers, req_body=body,
+                          resp_body=resp.data)
+
         # Verify HTTP response codes
         self._error_checker(resp)
         return resp
@@ -291,6 +386,16 @@ class NuageRestClient(object):
             constants.ZONE, parent_id, constants.SUBNETWORK)
         return self.post(res_path, data)
 
+    def create_domain_unmanaged_subnet(self, parent_id, name, extra_params=None):
+        data = {
+            "name": name
+        }
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            constants.ZONE, parent_id, constants.SUBNETWORK)
+        return self.post(res_path, data)
+
     def get_domain_subnet(self, parent, parent_id, filters=None,
                           filter_value=None):
         if parent:
@@ -299,13 +404,33 @@ class NuageRestClient(object):
         else:
             return self.get_global_resource(constants.SUBNETWORK, filters,
                                             filter_value)
+    def update_domain_subnet(self, subnet_id, externalId=None,
+                             update_params=None, netpart_name=None):
+        data = {}
+        #     'name': name,
+        # }
+        if externalId:
+            data['externalID'] = self.get_vsd_external_id(externalId)
+        if update_params:
+            data.update(update_params)
+        if not netpart_name:
+            netpart_name = self.def_netpart_name
+        net_part = self.get_net_partition(netpart_name)
+
+        res_path = self.build_resource_path(constants.SUBNETWORK, subnet_id, None)
+        return self.put(res_path, data)
 
     def delete_domain_subnet(self, subnet_id):
         return self.delete_resource(constants.SUBNETWORK, subnet_id)
 
     # DHCPOption
-    def create_dhcpoption(self):
-        pass
+    def create_dhcpoption(self, parent, option_number, option_values):
+        data = {
+            'actualType': option_number,
+            'actualValues': option_values
+        }
+        res_path = self.build_resource_path(constants.SHARED_NET_RES, parent, constants.DHCPOPTION)
+        return self.post(res_path, data)
 
     def get_dhcpoption(self, parent, parent_id):
         return self.get_child_resource(
@@ -315,6 +440,24 @@ class NuageRestClient(object):
     def get_sharedresource(self, filters=None, filter_value=None):
         return self.get_global_resource(constants.SHARED_NET_RES,
                                         filters, filter_value)
+
+    def create_vsd_shared_resource(self, name, externalId=None, extra_params=None, type=None):
+        if type is None:
+            type='L2DOMAIN'
+        data = {
+            "name": name,
+            "type": type
+        }
+        if externalId:
+            data['externalID'] = self.get_vsd_external_id(externalId)
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            constants.SHARED_NET_RES, None, None)
+        return self.post(res_path, data)
+
+    def delete_vsd_shared_resource(self, shared_resource_id):
+        self.delete_resource(constants.SHARED_NET_RES, shared_resource_id)
 
     # FloatingIp
     def create_floatingip(self, parent_id, shared_netid,
@@ -408,6 +551,24 @@ class NuageRestClient(object):
             constants.L2_DOMAIN)
         return self.post(res_path, data)
 
+    def update_l2domain(self, l2domain_id, externalId=None,
+                        update_params=None, netpart_name=None):
+        data = {}
+        #     'name': name,
+        # }
+        if externalId:
+            data['externalID'] = self.get_vsd_external_id(externalId)
+        if update_params:
+            data.update(update_params)
+        if not netpart_name:
+            netpart_name = self.def_netpart_name
+        net_part = self.get_net_partition(netpart_name)
+
+        res_path = self.build_resource_path(
+            constants.L2_DOMAIN, l2domain_id,
+            None)
+        return self.put(res_path, data)
+
     def delete_l2domain(self, l2dom_id):
         return self.delete_resource(constants.L2_DOMAIN, l2dom_id)
 
@@ -447,24 +608,24 @@ class NuageRestClient(object):
             filters, filter_value)
 
     def get_redirection_target_vports(self, parent, parent_id,
-                               filters=None, filter_value=None):
+                                      filters=None, filter_value=None):
         return self.get_child_resource(
             parent, parent_id, constants.VPORT, filters, filter_value)
 
     def get_redirection_target_vips(self, parent, parent_id,
-                               filters=None, filter_value=None):
+                                    filters=None, filter_value=None):
         return self.get_child_resource(
             parent, parent_id, constants.VIRTUAL_IP, filters, filter_value)
 
     # ADVFWDTemplate
     def get_advfwd_entrytemplate(self, parent, parent_id,
-                               filters=None, filter_value=None):
+                                 filters=None, filter_value=None):
         return self.get_child_resource(
             parent, parent_id, constants.INGRESS_ADV_FWD_ENTRY_TEMPLATE,
             filters, filter_value)
 
     def get_advfwd_template(self, parent, parent_id,
-                               filters=None, filter_value=None):
+                            filters=None, filter_value=None):
         return self.get_child_resource(
             parent, parent_id, constants.INGRESS_ADV_FWD_TEMPLATE,
             filters, filter_value)
@@ -590,6 +751,24 @@ class NuageRestClient(object):
         return self.get_resource(constants.GATEWAY,
                                  filters, filter_value, netpart_name)
 
+    # Gateway redundancy group
+    def create_redundancy_group(self, name, gateway_id_1,
+                                gateway_id_2, extra_params=None):
+        data = {
+            'name': name,
+            'gatewayPeer1ID': gateway_id_1,
+            'gatewayPeer2ID': gateway_id_2
+        }
+
+        if extra_params:
+            data.update(self.extra_params)
+
+        res_path = self.build_resource_path(resource=constants.REDUNDANCY_GROUPS)
+        return self.post(res_path, data)
+
+    def delete_redundancy_group(self, grp_id):
+        return self.delete_resource(constants.REDUNDANCY_GROUPS, grp_id)
+
     # GatewayPort
     def create_gateway_port(self, name, userMnemonic, type, gw_id,
                             extra_params=None):
@@ -639,6 +818,58 @@ class NuageRestClient(object):
         return self.get_child_resource(
             parent, parent_id, constants.VLAN, filters, filter_value)
 
+    def create_vsg_redundancy_ports(self, name, userMnemonic, type,
+                                    gw_1_port_id, gw_2_port_id, rdn_grp, extra_params=None):
+        data = {
+            'userMnemonic': userMnemonic,
+            'name': name,
+            'physicalName': name,
+            'portType': type,
+            'VLANRange': '0-4094',
+            'portPeer1ID': gw_1_port_id,
+            'portPeer2ID': gw_2_port_id
+        }
+        if extra_params:
+            data.update(self.extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.REDUNDANCY_GROUPS,
+            resource_id=rdn_grp[0]['ID'], child_resource=constants.VSG_REDUNDANT_PORTS)
+        return self.post(res_path, data)
+
+    def create_vrsg_redundancy_ports(self, name, userMnemonic, type, grp_id,
+                                     extra_params=None):
+        data = {
+            'userMnemonic': userMnemonic,
+            'name': name,
+            'physicalName': name,
+            'portType': type,
+            'VLANRange': '0-4094'
+        }
+
+        if extra_params:
+            data.update(self.extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.REDUNDANCY_GROUPS,
+            resource_id=grp_id, child_resource=constants.GATEWAY_PORT)
+        return self.post(res_path, data)
+
+    def delete_vsg_redundancy_ports(self, rd_port_id):
+        return self.delete_resource(constants.VSG_REDUNDANT_PORTS, rd_port_id)
+
+    def create_vsg_redundancy_vlans(self, rd_port_id, userMnemonic, value,
+                                    extra_params=None):
+        data = {
+            'userMnemonic': userMnemonic,
+            'value': value
+        }
+
+        if extra_params:
+            data.update(self.extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.VSG_REDUNDANT_PORTS,
+            resource_id=rd_port_id, child_resource=constants.VLAN)
+        return self.post(res_path, data)
+
     def get_host_vport(self, vport_id):
         res_path = self.build_resource_path(constants.VPORT, vport_id)
         return self.get(res_path)
@@ -653,7 +884,7 @@ class NuageRestClient(object):
         return self.delete_resource(constants.VPORT, vport_id, True)
 
     def create_gateway_redundancy_group(self, name,
-                       peer1, peer2, extra_params=None):
+                                        peer1, peer2, extra_params=None):
         data = {
             'name': name,
             'gatewayPeer1ID': peer1,
@@ -667,7 +898,7 @@ class NuageRestClient(object):
         return self.post(res_path, data)
 
     def create_vsg_redundant_port(self, name, userMnemonic, type, gw_id,
-                            extra_params=None):
+                                  extra_params=None):
         data = {
             'userMnemonic': userMnemonic,
             'name': name,
@@ -685,15 +916,14 @@ class NuageRestClient(object):
 
     def list_ports_by_redundancy_group(self, gw_id, personality):
         if personality == 'VSG':
-            child_resource=constants.GATEWAY_VSG_REDCY_PORT
+            child_resource = constants.GATEWAY_VSG_REDCY_PORT
         else:
-            child_resource=constants.GATEWAY_PORT
+            child_resource = constants.GATEWAY_PORT
         res_path = self.build_resource_path(
-             resource=constants.REDCY_GRP,
-             resource_id=gw_id,
-             child_resource=child_resource)
+            resource=constants.REDCY_GRP,
+            resource_id=gw_id,
+            child_resource=child_resource)
         return self.get(res_path)
-
 
     def delete_gateway_redundancy_group(self, grp_id):
         return self.delete_resource(constants.REDCY_GRP, grp_id)
@@ -800,7 +1030,7 @@ class NuageRestClient(object):
         data = {
             'name': name,
             'type': type,
-        }
+            }
         if type == 'STANDARD':
             net = netaddr.IPNetwork(cidr)
             data.update({'address': str(net.ip)})
@@ -852,7 +1082,7 @@ class NuageRestClient(object):
             'DSCP': dscp,
             'protocol': protocol,
             'direction': direction,
-        }
+            }
         if extra_params:
             data.update(extra_params)
         if not netpart_name:
@@ -865,6 +1095,45 @@ class NuageRestClient(object):
 
     def delete_service(self, svc):
         return self.delete_resource(constants.SERVICE, svc, True)
+
+    @staticmethod
+    def get_vsd_external_id(neutron_id):
+        if neutron_id and '@' not in neutron_id and CMS_ID:
+            return neutron_id + '@' + CMS_ID
+        return neutron_id
+
+    # System configs
+    def get_system_configuration(self):
+        res_path = self.build_resource_path(
+            resource=constants.SYSTEM_CONFIGS)
+        return self.get(res_path)
+
+    def update_system_configuration(self, configuration_id, configuration):
+        res_path = self.build_resource_path(
+            resource=constants.SYSTEM_CONFIGS,
+            resource_id=configuration_id)
+        return self.put(res_path, configuration)
+
+    def create_uplink_subnet(self, extra_params=None, **kwargs):
+
+        data = {'netmask': kwargs['netmask'],
+                'uplinkGWVlanAttachmentID': str(kwargs['uplinkGWVlanAttachmentID']),
+                'name': kwargs['name'],
+                'sharedResourceParentID': str(kwargs['sharedResourceParentID']),
+                'address': kwargs['address'],
+                'uplinkVPortName': kwargs['uplinkVportName'],
+                'uplinkInterfaceMAC': kwargs['uplinkInterfaceMAC'],
+                'type': 'UPLINK_SUBNET',
+                'gateway': kwargs['gateway'],
+                'uplinkInterfaceIP': kwargs['uplinkInterfaceIP']}
+
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(resource=constants.SHARED_NET_RES)
+        return self.post(res_path, data)
+
+    def delete_uplink_subnet(self, subnet_id):
+        return self.delete_resource(constants.SHARED_NET_RES, subnet_id)
 
     @staticmethod
     def get_vsd_external_id(neutron_id):

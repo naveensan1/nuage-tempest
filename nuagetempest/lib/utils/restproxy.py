@@ -19,6 +19,7 @@ class RESTResponse(object):
         self.data = data
         self.reason = reason
 
+
 class RESTProxyBaseException(Exception):
     message = ("An unknown exception occurred.")
 
@@ -97,14 +98,14 @@ class RESTProxyServer(object):
                 self.server, self.port, timeout=self.timeout)
             if conn is None:
                 LOG.error(('RESTProxy: Could not establish HTTPS '
-                            'connection'))
+                           'connection'))
                 return 0, None, None, None
         else:
             conn = httplib.HTTPConnection(
                 self.server, self.port, timeout=self.timeout)
             if conn is None:
                 LOG.error(('RESTProxy: Could not establish HTTP '
-                            'connection'))
+                           'connection'))
                 return 0, None, None, None
 
         try:
@@ -136,7 +137,7 @@ class RESTProxyServer(object):
         encoded_auth = base64.encodestring(self.serverauth).strip()
         self.auth = 'Basic ' + encoded_auth
         resp = self.rest_call('GET',
-                                        self.auth_resource, data)
+                              self.auth_resource, data)
         data = resp.data[0]
         if resp.status in self.success_codes and data['APIKey']:
             respkey = data['APIKey']
@@ -152,12 +153,12 @@ class RESTProxyServer(object):
 
     def rest_call(self, action, resource, data, extra_headers=None):
         response = self._rest_call(action, resource, data,
-                                            extra_headers=extra_headers)
+                                   extra_headers=extra_headers)
         '''
         If at all authentication expires with VSD, re-authenticate.
         '''
         if response.status == 401 and response.reason == 'Unauthorized':
             self.generate_nuage_auth()
             return self._rest_call(action, resource, data,
-                                            extra_headers=extra_headers)
+                                   extra_headers=extra_headers)
         return response

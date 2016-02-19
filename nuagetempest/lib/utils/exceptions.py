@@ -3,7 +3,7 @@ from tempest import exceptions
 
 
 class NuageRestClientException(exceptions.TempestException,
-                          testtools.TestCase.failureException):
+                               testtools.TestCase.failureException):
     pass
 
 

@@ -4,6 +4,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 def setup_tempest_public_network(osc):
 
     out = osc.cmd("source ~/admin_rc;neutron net-list", timeout=30, strict=False)
@@ -39,7 +40,8 @@ def get_glance_image_id(osc, imagename):
         LOG.info('Unable to find image ID for' + imagename)
         return None
 
-    return image_id 
+    return image_id
+
 
 def setup_tempest_tenant_user(osc, tenant, user, password, role):
 
@@ -91,6 +93,7 @@ def setup_cmsid(osc):
     else:
         raise Exception('Could not retrieve CMS ID')
     return cms_id
+
 
 def add_csproot_to_cms(vsd_api, vspk):
 

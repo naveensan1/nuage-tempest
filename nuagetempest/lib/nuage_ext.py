@@ -27,8 +27,9 @@ def skip_checks(fn):
             return
     return wrapped
 
+
 class NuageExtension(object):
-    
+
     def __init__(self):
         pass
 
@@ -40,8 +41,8 @@ class NuageExtension(object):
             module_name = base_path + '.' + m.group(1)
             vendor_module = importlib.import_module(module_name)
             if re.search(CONF.nuagext.nuage_ext_mode,
-                          tag) or re.search(CONF.nuagext.nuage_ext_mode, 
-                                            'all'):
+                         tag) or re.search(CONF.nuagext.nuage_ext_mode,
+                                           'all'):
                 module_class = getattr(vendor_module, m.group(2))
                 verification_class = getattr(module_class, m.group(3))
                 verification_object = verification_class()

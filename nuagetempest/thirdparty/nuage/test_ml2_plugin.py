@@ -13,15 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import testtools
 from netaddr import IPNetwork
+from tempest_lib import exceptions
+from tempest_lib.common.utils import data_utils
 
+import test_vsd_managed_network
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from tempest import config
-from tempest_lib.common.utils import data_utils
-from tempest_lib import exceptions
-import test_vsd_managed_network
-import testtools
 
 CONF = config.CONF
 

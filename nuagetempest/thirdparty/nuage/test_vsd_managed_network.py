@@ -13,17 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import base_vsd_managed_network as base_vsdman
 from netaddr import IPNetwork
-from nuagetempest.lib.utils import constants
+from tempest_lib import exceptions
 
+import base_vsd_managed_network as base_vsdman
+import test_netpartitions
+from nuagetempest.lib.utils import constants
+from tempest import config
 from tempest.api.compute import base as serv_base
 from tempest.api.network import base
 from tempest.common.utils import data_utils
-from tempest import config
 from tempest.scenario import manager
-from tempest_lib import exceptions
-import test_netpartitions
 
 CONF = config.CONF
 

@@ -1,5 +1,5 @@
 from tempest import test
-from nuagetempest.tests import layer
+from nuagetempest.tests import topo
 
 class TestServerBasicOps(test.BaseTestCase):
     
@@ -13,5 +13,5 @@ class TestServerBasicOps(test.BaseTestCase):
     
         def verify_vm(self):
             verified = False
-            for k, vsc in layer.T.vsces.iteritems():
+            for k, vsc in topo.testbed.vsces.iteritems():
                 print vsc.cmd('show vswitch-controller vports type vm')

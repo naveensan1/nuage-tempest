@@ -1,5 +1,5 @@
 from tempest import test
-from nuagetempest.tests import layer
+from nuagetempest.tests import topo
 
 class TestServerBasicOps(test.BaseTestCase):
     
@@ -13,7 +13,7 @@ class TestServerBasicOps(test.BaseTestCase):
     
         def verify_vm(self):
             verified = False
-            for k, vrs in layer.T.vrses.iteritems():
+            for k, vrs in topo.testbed.vrses.iteritems():
                 out = vrs.cmd.vmportshow()
                 if out:
                     verified = True

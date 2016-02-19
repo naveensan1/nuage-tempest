@@ -1,5 +1,5 @@
 from tempest import config
-from nuagetempest.lib import vsd_client
+from nuagetempest.tests import helper
 from nuagetempest.tests.api.test_routers import RoutersTest
 from tempest import test
 import re
@@ -17,26 +17,19 @@ class RoutersTest(RoutersTest):
 
         def __init__(self):
             self.def_net_partition = CONF.nuage.nuage_default_netpartition
-            self.vsd_client = vsd_client.vsd_client()
 
         def verify_r_i(self):
-            neutron_routers = self.client.list_routers()['routers'][0]
-            neutron_subnets = self.subnets_client.list_subnets()['subnets'][0]
-            subnet_ids = neutron_subnets['id']
-            enterprises = self.vsd_client.get_enterprises()
-            for enterprise in enterprises:
-                if enterprise.name == self.def_net_partition:
-                    vsd_l3domains = self.vsd_client.get_l3domains(enterprise)
-            verified = False
-            for l3domain in vsd_l3domains:
-                if l3domain.description != None:
-                    if re.search('router-', l3domain.description):
-                        self.assertTrue(l3domain.name == neutron_routers['id'])
-                        self.assertTrue(l3domain.description == neutron_routers['name'])
-                        subnets = self.vsd_client.get_subnets(l3domain)
-                        for subnet in subnets:
-                            if re.search('tempest-subnet-', subnet.description):
-                                if subnet.name in subnet_ids:
-                                    verified = True
-            self.assertTrue(verified == True)
+            filter_str = 'name is "{}"'.format(self.def_net_partition)
+            vsd_enterprise = helper.get_enterprise(filter=filter_str)
+            filter_str = 'name is "{}"'.format(self.os.router['id'])
+            vsd_l3d = helper.get_domain(enterprise=vsd_enterprise.id,
+                                             filter=filter_str)
+            if vsd_l3d:
+                filter_str = 'name is "{}"'.format(self.os.subnet01['id'])
+                subnet = helper.get_subnet_from_domain(domain=vsd_l3d,
+                                                            filter=filter_str)
+                if not subnet:
+                    raise "Nuage Subnet not found"
+            else:
+                raise "Nuage Domain not found"
             print "verify_r_i"

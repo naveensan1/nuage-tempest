@@ -28,7 +28,7 @@ CONF = config.CONF
 class FIPtoUnderlayTestNuage(base_nuage_fip_underlay.NuageFipUnderlayBase):
     LOG = logging.getLogger(__name__)
     # user order of tests as in this file to avoid unnecessary neutron restart
-#   unittest.TestLoader.sortTestMethodsUsing(None)
+    #   unittest.TestLoader.sortTestMethodsUsing(None)
 
     @classmethod
     def resource_setup(cls):
@@ -145,9 +145,9 @@ class FIPtoUnderlayTestNuage(base_nuage_fip_underlay.NuageFipUnderlayBase):
         int_network = self.create_network()
         subnet_name = data_utils.rand_name('underlay-update-internal-subnet-not-allowed')
         create_body = self.admin_subnets_client.create_subnet(network_id=int_network['id'],
-                                                      cidr="99.97.95.0/24",
-                                                      ip_version=self._ip_version,
-                                                      name=subnet_name)
+                                                              cidr="99.97.95.0/24",
+                                                              ip_version=self._ip_version,
+                                                              name=subnet_name)
         subnet = create_body['subnet']
         new_name = subnet_name + '-updated'
         kvargs = {

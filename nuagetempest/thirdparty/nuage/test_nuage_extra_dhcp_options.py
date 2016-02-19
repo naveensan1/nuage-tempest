@@ -196,7 +196,7 @@ NUAGE_NETWORK_TYPE = {
     'OS_Managed_L2':  1,
     'OS_Managed_L3':  2,
     'VSD_Managed_L2': 3,
-    'VSD_Managed_L3': 4,
+    'VSD_Managed_L3': 4
 }
 
 
@@ -440,7 +440,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         for retrieved_option in retrieved:
             for option in extra_dhcp_opts:
                 if (retrieved_option['opt_value'] == option['opt_value'] and
-                            retrieved_option['opt_name'] == option['opt_name']):
+                    retrieved_option['opt_name'] == option['opt_name']):
                     break
             else:
                 self.fail('Extra DHCP option not found in port %s' %
@@ -1352,7 +1352,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
             {'opt_value': '/opt/more-than16/extension-path', 'opt_name': 'extension-path'},
             {'opt_value': '1', 'opt_name': 'ip-forward-enable'},
             {'opt_value': '1', 'opt_name': 'non-local-source-routing'},
-            {'opt_value': '1576', 'opt_name': 'max-datagram-reassembly'},
+            {'opt_value': '1576', 'opt_name': 'max-datagram-reassembly'}
         ]
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts_16,
@@ -2903,7 +2903,7 @@ class NuageExtraDHCPOptionsNegativeTest(NuageExtraDHCPOptionsBase):
             {'opt_value': '19.20.30.41', 'opt_name': 'router'},
             {'opt_value': '19.20.30.42', 'opt_name': 'router'},
             {'opt_value': '19.20.30.43', 'opt_name': 'router'},
-            {'opt_value': '19.20.30.44', 'opt_name': 'router'},
+            {'opt_value': '19.20.30.44', 'opt_name': 'router'}
         ]
         self.assertRaises(exceptions.BadRequest,
                           self._create_port_with_extra_dhcp_options,
@@ -2917,7 +2917,7 @@ class NuageExtraDHCPOptionsNegativeTest(NuageExtraDHCPOptionsBase):
             {'opt_value': '19.20.30.41', 'opt_name': 'router'},
             {'opt_value': '19.20.30.42', 'opt_name': 'router'},
             {'opt_value': '19.20.30.43', 'opt_name': 'router'},
-            {'opt_value': '19.20.30.44', 'opt_name': 'router'},
+            {'opt_value': '19.20.30.44', 'opt_name': 'router'}
         ]
         self.assertRaises(exceptions.BadRequest,
                           self._update_port_with_extra_dhcp_options,

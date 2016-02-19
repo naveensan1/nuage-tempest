@@ -51,3 +51,22 @@ NuageTempestGroup = [
                default='',
                help="Host name of execution server")
 ]
+
+nuage_sut_group = cfg.OptGroup(name='nuage_sut',
+                               title='Nuage SUT config options')
+
+NuageSutGroup = [
+    cfg.StrOpt('nuage_plugin_configuration',
+               default='/etc/neutron/plugins/nuage/plugin.ini',
+               help="Full path for the Nuage plugin configuration file."),
+    cfg.StrOpt('controller_service_management_mode',
+               default='devstack',
+               choices=['devstack', 'ubuntu', 'rhel'],
+               help="The mode for controlling services on controller node."),
+    cfg.StrOpt('controller_user',
+               default='root',
+               help="sudo user on controller node"),
+    cfg.StrOpt('controller_password',
+               default='password',
+               help='password for controller_user')
+]

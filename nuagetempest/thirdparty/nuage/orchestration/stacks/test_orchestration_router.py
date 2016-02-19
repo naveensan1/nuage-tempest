@@ -27,20 +27,19 @@ class OrchestrationRouterTest(nuage_base.NuageBaseOrchestrationTest):
         if not test.is_extension_enabled('router', 'network'):
             msg = "router extension not enabled."
             raise cls.skipException(msg)
-        
-##        cls.public_net = cls._create_ext_network()
+
+        ##        cls.public_net = cls._create_ext_network()
         system_configurations = cls.vsd_client.get_system_configuration()
         cls.system_configuration = system_configurations[0]
 
     @classmethod
     def resource_cleanup(cls):
         super(OrchestrationRouterTest, cls).resource_cleanup()
-##        cls.network_client.delete_network(cls.public_net['id'])
+    ##        cls.network_client.delete_network(cls.public_net['id'])
 
     @classmethod
     def _create_ext_network(cls):
-        post_body = {'name': data_utils.rand_name('ext-network-')}
-        post_body['router:external'] = True
+        post_body = {'name': data_utils.rand_name('ext-network-'), 'router:external': True}
         body = cls.network_client.create_network(**post_body)
         network = body['network']
         # cls.addCleanup(cls.network_client.delete_network, network['id'])
@@ -54,16 +53,18 @@ class OrchestrationRouterTest(nuage_base.NuageBaseOrchestrationTest):
 
     def _verify_router_with_vsd_l3domain(self, router):
         nuage_domain = self._get_vsd_l3domain(self.vsd_client.get_vsd_external_id(router['id']))
-        externalID = self.vsd_client.get_vsd_external_id(router['id'])
+        external_id = self.vsd_client.get_vsd_external_id(router['id'])
 
-        self.assertEqual(nuage_domain['externalID'], externalID, "External ID")
+        self.assertEqual(nuage_domain['externalID'], external_id, "External ID")
         self.assertEqual(nuage_domain['routeDistinguisher'], router['rd'], "Route distinguisher")
         self.assertEqual(nuage_domain['routeTarget'], router['rt'], "Route target")
         self.assertEqual(nuage_domain['tunnelType'], router['tunnel_type'], "Domain tunnel type")
-        enable_snat = False if router['external_gateway_info'] is None else router['external_gateway_info']['enable_snat']
+        # enable_snat = False if router['external_gateway_info'] is \
+        #     None else router['external_gateway_info']['enable_snat']
 
         # TODO: adapt to new logic
-        # If enable snat was not explicit defined at OS router creation, PAT_VSD_Enabled does NOT match the enable snat value
+        # If enable snat was not explicit defined at OS router creation,
+        # PAT_VSD_Enabled does NOT match the enable snat value
         # self.assertEqual(
         #     nuage_domain['PATEnabled'],
         #     nuage_constants.NUAGE_PAT_VSD_ENABLED if enable_snat else nuage_constants.NUAGE_PAT_VSD_DISABLED)

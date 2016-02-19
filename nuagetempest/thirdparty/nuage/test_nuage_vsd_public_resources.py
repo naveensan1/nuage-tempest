@@ -224,6 +224,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         ext_id = 0
         port_list = cls.admin_ports_client.list_ports()
         port_found = False
+        the_port = []
         for port in port_list['ports']:
             if port['device_id'] == vm_id:
                 the_port = port
@@ -566,6 +567,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         security_groups = [{'name': self.security_group['name']}]
 
         self.instance = self.create_server(
+            name=name,
             image_id=self.image_ref,
             flavor=self.flavor_ref,
             key_name=keypair['name'],
@@ -865,8 +867,8 @@ class VSDPublicResourcesTest(BaseVSDPublicResourcesTest):
             # Then the OS  VM-IPaddress is in the  CIDR range
             # And the VM_interface-IPaddress in the VSD-L3-domain equals the OS VM-IPaddress
             # And the VM_interface-IPaddress is different from the gateway_ip address
-            expect_vm_ip_addresses_equal=True,
-            )
+            expect_vm_ip_addresses_equal=True
+        )
         pass
 
     @nuage_test.header()
@@ -896,8 +898,8 @@ class VSDPublicResourcesTest(BaseVSDPublicResourcesTest):
             # Then the OS  VM-IPaddress is in the CIDR range
             # And the VM_interface-IPaddress in the VSD-L3-domain equals the OS VM-IPaddress
             # And the OS VM-IPaddress is different from the gateway-ip
-            expect_vm_ip_addresses_equal=True,
-            )
+            expect_vm_ip_addresses_equal=True
+        )
         pass
 
     @test.attr(type=['negative'])
@@ -932,8 +934,8 @@ class VSDPublicResourcesTest(BaseVSDPublicResourcesTest):
             # Then the OS  VM-IPaddress is in the CIDR range
             # And the VM_interface-IPaddress in the VSD-L3-domain equals the OS VM-IPaddress
             # And the OS VM-IPaddress is different from the gateway-ip
-            expect_vm_ip_addresses_equal=True,
-            )
+            expect_vm_ip_addresses_equal=True
+        )
         pass
 
     #
@@ -1588,8 +1590,8 @@ class VSDPublicResourcesTest(BaseVSDPublicResourcesTest):
             gateway_ip=None,
             expect_network_dhcp_nuage_port=True,
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
-            expect_vm_ip_addresses_equal=True,
-            )
+            expect_vm_ip_addresses_equal=True
+        )
         pass
 
     @test.attr(type=['negative'])

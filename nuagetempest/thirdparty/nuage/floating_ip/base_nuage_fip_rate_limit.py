@@ -70,14 +70,15 @@ class NuageFipRateLimitBase(base.BaseNetworkTest):
         for i in range(2):
             cls.create_port(cls.network)
 
-    def _create_fip_for_port_with_rate_limit(self, port_id, rate_limit):
-        body = self.floating_ips_client.create_floatingip(
-            floating_network_id=self.ext_net_id,
+    @classmethod
+    def _create_fip_for_port_with_rate_limit(cls, port_id, rate_limit):
+        body = cls.floating_ips_client.create_floatingip(
+            floating_network_id=cls.ext_net_id,
             port_id=port_id,
             nuage_fip_rate=rate_limit)
 
         created_floating_ip = body['floatingip']
-        self.floating_ips.append(created_floating_ip)
+        cls.floating_ips.append(created_floating_ip)
 
         return created_floating_ip
 

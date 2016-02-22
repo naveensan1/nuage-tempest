@@ -26,7 +26,7 @@ from tempest import test
 from nuagetempest.lib.utils import constants as nuage_constants
 
 from nuagetempest.services import nuage_client
-import lib.service_mgmt as service_mgmt
+from nuagetempest.lib import service_mgmt
 
 CONF = config.CONF
 

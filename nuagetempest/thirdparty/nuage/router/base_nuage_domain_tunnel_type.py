@@ -15,8 +15,8 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
     _interface = 'json'
 
     @classmethod
-    def resource_setup(cls):
-        super(NuageDomainTunnelTypeBase, cls).resource_setup()
+    def setup_clients(cls):
+        super(NuageDomainTunnelTypeBase, cls).setup_clients()
         os = cls.get_client_manager()
         cls.client = os.network_client
 
@@ -24,14 +24,10 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
         cls.os_adm = cls.get_client_manager(credential_type='admin')
 
         cls.nuage_vsd_client = nuage_client.NuageRestClient()
-        cls.nuage_network_client = nuage_network_client.NuageNetworkClientJSON(
-            os.auth_provider,
-            CONF.network.catalog_type,
-            CONF.network.region or CONF.identity.region,
-            endpoint_type=CONF.network.endpoint_type,
-            build_interval=CONF.network.build_interval,
-            build_timeout=CONF.network.build_timeout,
-            **os.default_params)
+
+    @classmethod
+    def resource_setup(cls):
+        super(NuageDomainTunnelTypeBase, cls).resource_setup()
 
         system_configurations = cls.nuage_vsd_client.get_system_configuration()
         cls.system_configuration = system_configurations[0]

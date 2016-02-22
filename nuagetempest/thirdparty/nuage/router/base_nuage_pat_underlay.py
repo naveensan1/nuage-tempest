@@ -23,7 +23,8 @@ from tempest_lib import exceptions
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib import service_mgmt
 from netaddr import IPNetwork
-import services.nuage_client as nuage_client
+# from nuagetempest.services import nuage_client
+from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 

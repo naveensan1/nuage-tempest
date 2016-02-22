@@ -6,8 +6,8 @@ from tempest import config
 from tempest import test
 from nuagetempest.lib.utils import constants
 
-import services.nuage_network_client as nuage_network_client
-import services.nuage_client as nuage_client
+from nuagetempest.services import nuage_network_client
+from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 

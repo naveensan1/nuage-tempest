@@ -9,7 +9,7 @@ from tempest_lib import exceptions
 from nuagetempest.lib.remote_cli import remote_cli_base_testcase
 from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants
-import services.nuage_client as nuage_client
+from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 

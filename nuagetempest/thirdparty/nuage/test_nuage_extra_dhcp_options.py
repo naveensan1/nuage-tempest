@@ -1,19 +1,16 @@
 # Copyright 2015 Alcatel-Lucent
 
 from netaddr import *
+from oslo_log import log as logging
 
-from tempest_lib.common.utils import data_utils
-
-from tempest.api.network import base
 from tempest import test
+from tempest import config
+from tempest_lib.common.utils import data_utils
+from tempest_lib import exceptions
+from tempest.api.network import base
 
 from nuagetempest.lib.utils import constants as constants
-
-import services.nuage_client as nuage_client
-
-from tempest_lib import exceptions
-from tempest import config
-from oslo_log import log as logging
+from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 

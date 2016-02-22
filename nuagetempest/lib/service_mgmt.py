@@ -7,7 +7,7 @@ import urlparse
 from tempest import config
 from oslo_log import log as logging
 from tempest_lib.common import ssh as ssh
-from lib.utils import constants as constants
+from nuagetempest.lib.utils import constants as constants
 from tempest_lib import exceptions
 
 

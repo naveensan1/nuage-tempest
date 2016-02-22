@@ -20,7 +20,7 @@ from tempest_lib.common.utils import data_utils
 from tempest import config
 from tempest.scenario import manager
 
-import services.nuage_client as nuage_client
+from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 

@@ -9,7 +9,7 @@ from oslo_log import log as logging
 from nuagetempest.lib import service_mgmt
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
-import services.nuage_client as nuage_client
+from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 

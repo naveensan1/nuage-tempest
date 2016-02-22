@@ -7,9 +7,7 @@ from tempest import config
 from tempest import test
 
 from nuagetempest.lib.utils import constants
-
-import services.nuage_client as nuage_client
-
+from nuagetempest.services import nuage_client
 
 from oslo_log import log as logging
 CONF = config.CONF

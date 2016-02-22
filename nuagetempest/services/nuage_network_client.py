@@ -174,26 +174,6 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
         self.expected_success(204, resp.status)
         return service_client.ResponseBody(resp, body)
 
-    # Add router interface
-    def add_router_interface(self, router_id, subnet_id):
-        uri = '%s/routers/%s/add_router_interface' % (self.uri_prefix,
-                                                      router_id)
-        post_data = json.dumps({"subnet_id": subnet_id})
-        resp, body = self.put(uri, post_data)
-        self.expected_success(200, resp.status)
-        body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
-
-    # Remove router interface
-    def remove_router_interface(self, router_id, subnet_id):
-        uri = '%s/routers/%s/remove_router_interface' % (self.uri_prefix,
-                                                         router_id)
-        post_data = json.dumps({"subnet_id": subnet_id})
-        resp, body = self.put(uri, post_data)
-        self.expected_success(200, resp.status)
-        body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
-
     def assign_gateway_vlan(self, id, **kwargs):
         post_body = {'nuage_gateway_vlan': kwargs}
         body = json.dumps(post_body)
@@ -275,5 +255,8 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
             parent, parent_id, constants.FLOATINGIP)
         return self.post(res_path, data)
 
-
-
+    def update_router_rdrt(self, router_id, **kwargs):
+        uri = '/routers/%s' % router_id
+        update_body = {}
+        update_body['router'] = kwargs
+        return self.update_resource(uri, update_body)

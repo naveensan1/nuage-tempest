@@ -48,7 +48,7 @@ class TestNuageFipUnderlayConfigurationCliNone(remote_cli_base_testcase.RemoteCl
         self._cli_list_external_subnets_underlay()
 
 
-class TestNuageFipUnderlayConfigurationCliDefaultFalse(remote_cli_base_testcase.RemoteCliBaseTestCase,
+class TestNuageFipUnderlayConfigCliDefaultFalse(remote_cli_base_testcase.RemoteCliBaseTestCase,
                                                        base_nuage_fip_underlay.NuageFipUnderlayBase):
     """
     FIP to Underlay tests using Neutron CLI client.
@@ -57,7 +57,7 @@ class TestNuageFipUnderlayConfigurationCliDefaultFalse(remote_cli_base_testcase.
 
     @classmethod
     def resource_setup(cls):
-        super(TestNuageFipUnderlayConfigurationCliDefaultFalse, cls).resource_setup()
+        super(TestNuageFipUnderlayConfigCliDefaultFalse, cls).resource_setup()
         cls.needs_ini_nuage_fip_underlay(False)
 
     @nuage_test.header()
@@ -86,7 +86,7 @@ class TestNuageFipUnderlayConfigurationCliDefaultFalse(remote_cli_base_testcase.
         self._cli_list_external_subnets_underlay()
 
 
-class TestNuageFipUnderlayConfigurationCliDefaultTrue(remote_cli_base_testcase.RemoteCliBaseTestCase,
+class TestNuageFipUnderlayConfigCliDefaultTrue(remote_cli_base_testcase.RemoteCliBaseTestCase,
                                                       base_nuage_fip_underlay.NuageFipUnderlayBase):
     """
     FIP to Underlay tests using Neutron CLI client.
@@ -95,7 +95,7 @@ class TestNuageFipUnderlayConfigurationCliDefaultTrue(remote_cli_base_testcase.R
 
     @classmethod
     def resource_setup(cls):
-        super(TestNuageFipUnderlayConfigurationCliDefaultTrue, cls).resource_setup()
+        super(TestNuageFipUnderlayConfigCliDefaultTrue, cls).resource_setup()
         cls.needs_ini_nuage_fip_underlay(True)
 
     @nuage_test.header()

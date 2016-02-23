@@ -122,7 +122,7 @@ class TestNuageFipRateLimitBaseAssociationNegative(base_nuage_fip_rate_limit.Nua
     def test_fail_to_create_floatingip_with_rate_limit_without_port_association(self):
         self.assertRaisesRegexp(lib_exc.BadRequest,
                                 "Rate limiting requires the floating ip to be associated to a port.",
-                                self.client.create_floatingip,
+                                self.floating_ips_client.create_floatingip,
                                 floating_network_id=self.ext_net_id,
                                 nuage_fip_rate=321)
 
@@ -132,11 +132,11 @@ class TestNuageFipRateLimitBaseAssociationNegative(base_nuage_fip_rate_limit.Nua
         fip2 = self._do_create_fip_for_port_with_rate_limit(self.ports[1]['id'], 456)
 
         # Disassociate the port
-        self.client.update_floatingip(fip2['id'], port_id=None)
+        self.floating_ips_client.update_floatingip(fip2['id'], port_id=None)
         self.assertRaisesRegexp(lib_exc.BadRequest,
                                 "Bad floatingip request: " +
                                 "Rate limiting requires the floating ip to be associated to a port.",
-                                self.client.update_floatingip,
+                                self.floating_ips_client.update_floatingip,
                                 fip2['id'],
                                 nuage_fip_rate=321)
 
@@ -147,7 +147,7 @@ class TestNuageFipRateLimitBaseAssociationNegative(base_nuage_fip_rate_limit.Nua
         self.assertRaisesRegexp(lib_exc.BadRequest,
                                 "Bad floatingip request: " +
                                 "Rate limiting requires the floating ip to be associated to a port.",
-                                self.client.update_floatingip,
+                                self.floating_ips_client.update_floatingip,
                                 fip2['id'],
                                 port_id=None,
                                 nuage_fip_rate=321)

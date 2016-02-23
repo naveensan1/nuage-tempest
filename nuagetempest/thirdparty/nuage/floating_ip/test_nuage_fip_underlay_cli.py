@@ -164,7 +164,7 @@ class TestNuageFipUnderlayCli(remote_cli_base_testcase.RemoteCliBaseTestCase,
                                 self.network['name'],
                                 str(cidr.cidr),
                                 '--name subnet-VSD-managed '
-                                '--net-partition', CONF.nuage_vsd_group.nuage_default_netpartition,
+                                '--net-partition', CONF.nuage.nuage_default_netpartition,
                                 '--nuagenet', vsd_l2domain[0][u'ID'],
                                 '--underlay=True')
         # Delete the VSD manged subnet

@@ -348,36 +348,40 @@ echo "$DEMO_USER"
 CMS_ID=`fetchSetCMSid`
 
 
-
 iniset ${TEMPEST_CONF} DEFAULT debug true
-iniset ${TEMPEST_CONF} DEFAULT verbose true
 iniset ${TEMPEST_CONF} DEFAULT log_file tempest.log
 
 # [auth]
-iniset ${TEMPEST_CONF} auth allow_tenant_isolation true
-iniset ${TEMPEST_CONF} auth test_accounts_file ${ACCOUNTS}
+#iniset ${TEMPEST_CONF} auth allow_tenant_isolation true
+#iniset ${TEMPEST_CONF} auth test_accounts_file ${ACCOUNTS}
+iniset ${TEMPEST_CONF} auth use_dynamic_credentials true
+
+# [validation]
+iniset ${TEMPEST_CONF} validation network_for_ssh public
 
 # [Compute]
 iniset ${TEMPEST_CONF} compute image_ref "${IMAGE_UUID}"
-iniset ${TEMPEST_CONF} compute network_for_ssh public
 iniset ${TEMPEST_CONF} compute-admin password tigris
 iniset ${TEMPEST_CONF} compute-admin tenant_name admin
 
-# [Identity]
-iniset ${TEMPEST_CONF} identity admin_domain_name regionOne
-iniset ${TEMPEST_CONF} identity admin_password    tigris
-iniset ${TEMPEST_CONF} identity admin_role        admin
-iniset ${TEMPEST_CONF} identity admin_username    admin
-iniset ${TEMPEST_CONF} identity admin_tenant_name admin
+# [Auth]
+iniset ${TEMPEST_CONF} auth admin_domain_name regionOne
+iniset ${TEMPEST_CONF} auth admin_password    tigris
+iniset ${TEMPEST_CONF} auth admin_role        admin
+iniset ${TEMPEST_CONF} auth admin_username    admin
+iniset ${TEMPEST_CONF} auth admin_tenant_name admin
 
-iniset ${TEMPEST_CONF} identity alt_username    demo
-iniset ${TEMPEST_CONF} identity alt_password    tigris
-iniset ${TEMPEST_CONF} identity alt_tenant_name demo
+# deprecated
+#iniset ${TEMPEST_CONF} identity alt_username    demo
+#iniset ${TEMPEST_CONF} identity alt_password    tigris
+#iniset ${TEMPEST_CONF} identity alt_tenant_name demo
 
 iniset ${TEMPEST_CONF} identity region      regionOne
-iniset ${TEMPEST_CONF} identity username    admin
-iniset ${TEMPEST_CONF} identity password    tigris
-iniset ${TEMPEST_CONF} identity tenant_name admin
+
+# depreciated
+#iniset ${TEMPEST_CONF} identity username    admin
+#iniset ${TEMPEST_CONF} identity password    tigris
+#iniset ${TEMPEST_CONF} identity tenant_name admin
 
 iniset ${TEMPEST_CONF} identity uri "http:\/\/$CONTROLLER_IP:5000\/v2.0"
 iniset ${TEMPEST_CONF} identity uri_v3 "http:\/\/$CONTROLLER_IP:5000\/v2.0\/tokens"

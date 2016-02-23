@@ -58,9 +58,9 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         cls.network_cfg = CONF.network
 
         # cls.cli = ssh_cli.CLIClient(
-        #     username=CONF.identity.admin_username,
-        #     tenant_name=CONF.identity.admin_tenant_name,
-        #     password=CONF.identity.admin_password,
+        #     username=CONF.auth.admin_username,
+        #     tenant_name=CONF.auth.admin_tenant_name,
+        #     password=CONF.auth.admin_password,
         #     uri=CONF.identity.uri)
         cls.cli = ssh_cli.CLIClient(
             username=CONF.auth.admin_username,
@@ -534,9 +534,9 @@ class RemoteCliAdminBaseTestCase(RemoteCliBaseTestCase):
 
     def _get_clients(self):
         self.cli = ssh_cli.CLIClient(
-            username=CONF.identity.admin_username,
-            tenant_name=CONF.identity.admin_tenant_name,
-            password=CONF.identity.admin_password,
+            username=CONF.auth.admin_username,
+            tenant_name=CONF.auth.admin_tenant_name,
+            password=CONF.auth.admin_password,
             uri=CONF.identity.uri)
 
         return self.cli

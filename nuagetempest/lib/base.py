@@ -27,6 +27,20 @@ def setup_tempest_public_network(osc):
 
     return net_id
 
+
+def get_glance_image_id(osc, imagename):
+
+    cmd = "source ~/admin_rc;glance image-list | grep "
+    cmd = cmd + imagename + " | awk '{print $2}'"
+    out = osc.cmd(cmd, timeout=30, strict=False)
+    if re.search(r"(\w+\-\w+\-\w+\-\w+\-\w+)", out[0][0]):
+        image_id = out[0][0]
+    else:
+        LOG.info('Unable to find image ID for' + imagename)
+        return None
+
+    return image_id 
+
 def setup_tempest_tenant_user(osc, tenant, user, password, role):
 
     def ks_cmd(cmd):

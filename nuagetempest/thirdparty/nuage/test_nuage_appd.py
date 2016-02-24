@@ -44,6 +44,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         cls.application = []
         cls.tier = []
         cls.flow = []
+        cls.appdport = []
         cls.vsd_l3dom_template = []
         cls.service = []
 
@@ -91,6 +92,14 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         return flow
 
     @classmethod
+    def create_app_port(cls, **kwargs):
+        post_body = {'appdport': kwargs}
+        body = cls.client.create_resource('/appdports', post_body)
+        appdport = body['appdport']
+        cls.appdport.append(appdport)
+        return appdport
+
+    @classmethod
     def create_vsd_l3dom_template(cls, **kwargs):
         vsd_l3dom_tmplt = cls.nuageclient.create_l3domaintemplate(
             kwargs['name'] + '-template')
@@ -112,6 +121,14 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         for flow in cls.flow:
             try:
                 uri = '/flows/' + flow['id']
+                cls.client.delete_resource(uri)
+            except Exception as exc:
+                LOG.exception(exc)
+                has_exception = True
+
+        for appdport in cls.appdport:
+            try:
+                uri = '/appdports/' + appdport['id']
                 cls.client.delete_resource(uri)
             except Exception as exc:
                 LOG.exception(exc)
@@ -208,6 +225,21 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self.assertEqual(appd_domain['name'], name)
         self.assertEqual(appd_domain['applicationDeploymentPolicy'], 'ZONE')
 
+    def test_create_app_domain_with_rt_rd_fields(self):
+        name = data_utils.rand_name('app_domain-')
+        kwargs = {'name': name,
+                  'rt': '1010:1011',
+                  'rd': '2020:2021',
+                  'tunnel_type': 'VXLAN'}
+
+        appd_domain = self.create_app_domain(**kwargs)
+
+        self.assertEqual(appd_domain['name'], name)
+        self.assertEqual(appd_domain['applicationDeploymentPolicy'], 'ZONE')
+        self.assertEqual(appd_domain['rt'], '1010:1011')
+        self.assertEqual(appd_domain['rd'], '2020:2021')
+        self.assertEqual(appd_domain['tunnel_type'], 'VXLAN')
+
     def test_create_application_domain_with_template(self):
         name = data_utils.rand_name('app_domain-')
         l3_dom_templ = self.create_vsd_l3dom_template(name=name)
@@ -283,6 +315,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         show_resp = self.client.show_resource('/tiers', **kwargs)
         self._verify_tier_properties(show_resp['tiers'][0], show_vsd_resp[0])
         # Update tier
+        # TODO: tier-update code to be added after VSD-8991 fix
         kwargs = {'name': 'updated-tier'}
         post_body = {'tier': kwargs}
         uri = '/tiers/' + tier['id']
@@ -412,6 +445,60 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self._compare_resource_lists(list_resp['services'], list_vsd_resp,
                                      self._verify_service_properties)
 
+    def test_create_update_show_list_appdport(self):
+        name = data_utils.rand_name('app_domain-')
+        app_name = data_utils.rand_name('app-')
+        kwargs = {'name': name}
+        appd = self.create_app_domain(**kwargs)
+        kwargs = {'name': app_name,
+                  'applicationdomain_id': appd['id']}
+        app = self.create_application(**kwargs)
+        kwargs = {'name': 'tier_1',
+                  'app_id': app['id'],
+                  'type': 'STANDARD',
+                  'cidr': '2.2.2.0/24'}
+        tier = self.create_tier(**kwargs)
+        kwargs = {'name': 'app-port',
+                  'tier_id': tier['id']}
+        appdport = self.create_app_port(**kwargs)
+        self.assertEqual(appdport['name'], 'app-port')
+        self.assertEqual(appdport['device_owner'], 'appd')
+        # show appdport
+        show_vsd_resp = self.nuageclient.get_vport(constants.TIER, tier['id'])
+
+        kwargs = {}
+        show_resp = self.client.show_resource('/appdports/' + appdport['id'], **kwargs)
+
+        self.assertEqual(show_resp['appdport']['name'],
+                         show_vsd_resp[0]['name'])
+        # update_port
+        kwargs = {'name': 'updated-port'}
+        post_body = {'appdport': kwargs}
+        uri = '/appdports/' + appdport['id']
+        show_resp = self.client.update_resource(uri, post_body)
+
+        self.assertEqual(show_resp['appdport']['name'], 'updated-port')
+        show_vsd_resp = self.nuageclient.get_vport(constants.TIER,
+                                                   tier['id'])
+        self.assertEqual(show_vsd_resp[0]['name'],
+                         show_resp['appdport']['name'])
+        # list_appdport
+        res_path = self.nuageclient.build_resource_path(
+            constants.TIER,
+            resource_id=tier['id'],
+            child_resource=constants.VPORT)
+        list_vsd_resp = self.nuageclient.get(res_path)
+
+        list_resp = self.client.list_resources('/appdports')
+
+        appdport_ext_id = self.nuageclient.get_vsd_external_id(
+            list_resp['appdports'][0]['id'])
+        self.assertEqual(appdport_ext_id,
+                         list_vsd_resp[0]['externalID'])
+        self.assertEqual(list_resp['appdports'][0]['name'],
+                         list_vsd_resp[0]['name'])
+
+
     def test_create_delete_invalid_application(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -497,6 +584,10 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
                   'type': 'APPLICATION'}
         tier_2 = self.create_tier(**kwargs)
         # create flow with invalid origin tier UUID
+        # Issue with Liberty:
+        # UUID = <8>-<4>-<4>-<4>-<12> while we used to specify here: <8>-<4>-<4>-<16> : total is the same
+        # so for Liberty it is a valid UUID, resulting in NotFound
+        # -> make it for sure an invalid UUID (remove some '1's)
         kwargs = {'name': 'flow',
                   'origin_tier': '11111111-1111-1111-1111-111111111111',
                   'dest_tier': tier_2['id']}

@@ -22,14 +22,14 @@ import base_nuage_fip_underlay
 CONF = config.CONF
 
 
-class FIPtoUnderlayTestNuageConfigurationNone(base_nuage_fip_underlay.NuageFipUnderlayBase):
+class FIPtoUnderlayTestNuageConfigNone(base_nuage_fip_underlay.NuageFipUnderlayBase):
     LOG = logging.getLogger(__name__)
     # user order of tests as in this file to avoid unnecessary neutron restart
 #   unittest.TestLoader.sortTestMethodsUsing(None)
 
     @classmethod
     def resource_setup(cls):
-        super(FIPtoUnderlayTestNuageConfigurationNone, cls).resource_setup()
+        super(FIPtoUnderlayTestNuageConfigNone, cls).resource_setup()
         cls.needs_ini_nuage_fip_underlay(None)
 
     @nuage_test.header()
@@ -91,14 +91,14 @@ class FIPtoUnderlayTestNuageConfigurationNone(base_nuage_fip_underlay.NuageFipUn
         #     self._verify_create_external_subnet_with_underlay_scale('VXLAN',400)
 
 
-class FIPtoUnderlayTestNuageConfigurationDefaultFalse(base_nuage_fip_underlay.NuageFipUnderlayBase):
+class FIPtoUnderlayTestNuageConfigDefaultFalse(base_nuage_fip_underlay.NuageFipUnderlayBase):
     LOG = logging.getLogger(__name__)
     # user order of tests as in this file to avoid unnecessary neutron restart
     #   unittest.TestLoader.sortTestMethodsUsing(None)
 
     @classmethod
     def resource_setup(cls):
-        super(FIPtoUnderlayTestNuageConfigurationDefaultFalse, cls).resource_setup()
+        super(FIPtoUnderlayTestNuageConfigDefaultFalse, cls).resource_setup()
         cls.needs_ini_nuage_fip_underlay(False)
 
     @nuage_test.header()
@@ -160,14 +160,14 @@ class FIPtoUnderlayTestNuageConfigurationDefaultFalse(base_nuage_fip_underlay.Nu
         #     self._verify_create_external_subnet_with_underlay_scale('VXLAN',400)
 
 
-class FIPtoUnderlayTestNuageConfigurationDefaultTrue(base_nuage_fip_underlay.NuageFipUnderlayBase):
+class FIPtoUnderlayTestNuageConfigDefaultTrue(base_nuage_fip_underlay.NuageFipUnderlayBase):
     LOG = logging.getLogger(__name__)
     # user order of tests as in this file to avoid unnecessary neutron restart
     #   unittest.TestLoader.sortTestMethodsUsing(None)
 
     @classmethod
     def resource_setup(cls):
-        super(FIPtoUnderlayTestNuageConfigurationDefaultTrue, cls).resource_setup()
+        super(FIPtoUnderlayTestNuageConfigDefaultTrue, cls).resource_setup()
         cls.needs_ini_nuage_fip_underlay(True)
 
     @nuage_test.header()
@@ -208,7 +208,7 @@ class FIPtoUnderlayTestNuageConfigurationDefaultTrue(base_nuage_fip_underlay.Nua
 
     @nuage_test.header()
     def test_list_external_subnets_underlay_default_true(self):
-        """
+        """FIPtoUnderlayTestNuageConfigurationDefaultTrue
         List external fip subnets with underlay without nuage_fip_underlay in .ini file
 
         Response must include underlay True for those subnets created with underlay True

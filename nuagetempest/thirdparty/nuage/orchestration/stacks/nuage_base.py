@@ -43,10 +43,6 @@ class NuageBaseOrchestrationTest(base.BaseOrchestrationTest):
         cls.admin_network_client = cls.os_adm.network_client
         cls.admin_networks_client = cls.os_adm.networks_client
 
-        # cls.admin_networks_client.list_networks()
-        # network = cls.admin_networks_client.create_network()['network']
-        # cls.admin_networks_client.show_network(network['id'])
-
     @classmethod
     def resource_setup(cls):
         super(NuageBaseOrchestrationTest, cls).resource_setup()

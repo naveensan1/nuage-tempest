@@ -260,3 +260,27 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
         update_body = {}
         update_body['router'] = kwargs
         return self.update_resource(uri, update_body)
+
+    def show_application_domain(self, domain_id):
+        uri = ('%s/application-domains/%s' % (self.uri_prefix, domain_id))
+        return self._get_request(uri)
+
+    def show_application(self, id):
+        uri = ('%s/applications/%s' % (self.uri_prefix, id))
+        return self._get_request(uri)
+
+    def show_service(self, id):
+        uri = ('%s/services/%s' % (self.uri_prefix, id))
+        return self._get_request(uri)
+
+    def show_tier(self, id):
+        uri = ('%s/tiers/%s' % (self.uri_prefix, id))
+        return self._get_request(uri)
+
+    def show_flow(self, id):
+        uri = ('%s/flows/%s' % (self.uri_prefix, id))
+        return self._get_request(uri)
+
+    def show_appdport(self, id):
+        uri = ('%s/appdports/%s' % (self.uri_prefix, id))
+        return self._get_request(uri)

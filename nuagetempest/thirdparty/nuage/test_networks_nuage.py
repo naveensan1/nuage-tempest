@@ -217,10 +217,9 @@ class NetworksTestJSONNuage(test_networks.NetworksTest):
 
 class NetworkNuageAdminTest(base.BaseAdminNetworkTest):
     @classmethod
-    def resource_setup(cls):
-        super(NetworkNuageAdminTest, cls).resource_setup()
-        os = cls.get_client_manager()
-        cls.nuage_vsd_client = os.nuage_vsd_client
+    def setup_clients(cls):
+        super(NetworkNuageAdminTest, cls).setup_clients()
+        cls.nuage_vsd_client = NuageRestClient()
 
     def _create_network(self, external=True):
         post_body = {'name': data_utils.rand_name('network-')}

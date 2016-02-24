@@ -212,14 +212,14 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
     def setup_clients(cls):
         super(NuageExtraDHCPOptionsBase, cls).setup_clients()
         cls.nuage_vsd_client = nuage_client.NuageRestClient()
+        # os = cls.get_client_manager()
+        #
+        # # TODO: Hendrik: only use admin credentials where required!
+        # cls.client = cls.admin_client
 
     @classmethod
     def resource_setup(cls):
         super(NuageExtraDHCPOptionsBase, cls).resource_setup()
-        os = cls.get_client_manager()
-
-        # TODO: Hendrik: only use admin credentials where required!
-        cls.client = cls.admin_client
 
         cls.vsd_l2dom_template = []
         cls.vsd_l2domain = []
@@ -332,9 +332,9 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
             post_body = {'name': data_utils.rand_name('ext-network'), 'router:external': external}
         else:
             post_body = {'name': data_utils.rand_name('network')}
-        body = self.client.create_network(**post_body)
+        body = self.admin_networks_client.create_network(**post_body)
         network = body['network']
-        self.addCleanup(self.client.delete_network, network['id'])
+        self.addCleanup(self.admin_networks_client.delete_network, network['id'])
         return network
 
     def _create_port_with_extra_dhcp_options(self, network_id, extra_dhcp_opts):

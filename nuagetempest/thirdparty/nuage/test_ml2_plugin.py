@@ -15,8 +15,8 @@
 
 import testtools
 from netaddr import IPNetwork
-from tempest_lib import exceptions
-from tempest_lib.common.utils import data_utils
+from tempest.lib import exceptions
+from tempest.lib.common.utils import data_utils
 
 import test_vsd_managed_network
 from nuagetempest.lib.utils import constants as n_constants

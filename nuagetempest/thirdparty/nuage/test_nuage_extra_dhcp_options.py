@@ -5,8 +5,8 @@ from oslo_log import log as logging
 
 from tempest import test
 from tempest import config
-from tempest_lib.common.utils import data_utils
-from tempest_lib import exceptions
+from tempest.lib.common.utils import data_utils
+from tempest.lib import exceptions
 from tempest.api.network import base
 
 from nuagetempest.lib.utils import constants as constants

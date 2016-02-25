@@ -17,7 +17,7 @@ import yaml
 
 from tempest import config
 from tempest.api.orchestration import base
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from nuagetempest.services import nuage_client
 
 CONF = config.CONF

@@ -2,9 +2,9 @@
 # All Rights Reserved.
 
 from tempest import config
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 from netaddr import IPNetwork
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 import base_nuage_fip_underlay
 from nuagetempest.lib.remote_cli import remote_cli_base_testcase
 from nuagetempest.lib.test import nuage_test

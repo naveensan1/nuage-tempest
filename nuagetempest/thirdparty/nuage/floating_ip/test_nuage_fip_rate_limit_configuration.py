@@ -4,7 +4,7 @@
 from tempest.api.network import base
 from tempest import config
 from tempest import test
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from oslo_log import log as logging
 from nuagetempest.lib import service_mgmt
 from nuagetempest.lib.utils import constants

@@ -4,7 +4,7 @@
 import logging
 
 from netaddr import *
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from tempest import config
 from tempest import test
 from nuagetempest.lib.test import nuage_test

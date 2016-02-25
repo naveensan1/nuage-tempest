@@ -17,7 +17,7 @@ import base_nuage_gateway as base
 from nuagetempest.lib.utils import constants as n_constants
 from oslo_log import log as logging
 from tempest import config
-from tempest_lib import exceptions as lib_exec
+from tempest.lib import exceptions as lib_exec
 import uuid
 
 CONF = config.CONF

@@ -6,7 +6,7 @@ import json
 from tempest import config
 from tempest import test
 from oslo_log import log as logging
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 
 from nuagetempest.lib import service_mgmt
 from nuagetempest.lib.remote_cli import remote_cli_base_testcase

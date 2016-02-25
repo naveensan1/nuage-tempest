@@ -10,7 +10,7 @@ from nuagetempest.lib.utils import restproxy
 import time
 import re
 import six
-from tempest_lib.common.utils import misc as misc_utils
+from tempest.lib.common.utils import misc as misc_utils
 from oslo_log import log as logging
 
 CONF = config.CONF

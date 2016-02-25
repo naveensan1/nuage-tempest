@@ -15,7 +15,7 @@ import logging
 import uuid
 from tempest import test
 
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 
 from tempest import config
 import nuage_base

@@ -4,7 +4,7 @@
 
 from tempest import config
 from tempest import test
-from tempest_lib import exceptions as lib_exc
+from tempest.lib import exceptions as lib_exc
 
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test

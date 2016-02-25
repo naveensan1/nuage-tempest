@@ -3,7 +3,7 @@ from oslo_log import log as logging
 from tempest.api.network import base
 from tempest import config
 from tempest import exceptions
-from tempest_lib.common.utils.data_utils import rand_name
+from tempest.lib.common.utils.data_utils import rand_name
 
 
 CONF = config.CONF

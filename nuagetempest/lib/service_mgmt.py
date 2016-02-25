@@ -6,9 +6,9 @@ import time
 import urlparse
 from tempest import config
 from oslo_log import log as logging
-from tempest_lib.common import ssh as ssh
+from tempest.lib.common import ssh as ssh
 from nuagetempest.lib.utils import constants as constants
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 
 
 CONF = config.CONF

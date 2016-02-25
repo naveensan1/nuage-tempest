@@ -5,12 +5,12 @@ from netaddr import IPNetwork
 
 from tempest import config
 from tempest import test
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from oslo_log import log as logging
 import base_nuage_pat_underlay
 from nuagetempest.lib.remote_cli import remote_cli_base_testcase
 from nuagetempest.lib.test import nuage_test
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 
 CONF = config.CONF
 

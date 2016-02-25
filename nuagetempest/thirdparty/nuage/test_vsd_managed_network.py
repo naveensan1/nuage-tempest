@@ -14,7 +14,7 @@
 #    under the License.
 
 from netaddr import IPNetwork
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 
 import base_vsd_managed_network as base_vsdman
 import test_netpartitions

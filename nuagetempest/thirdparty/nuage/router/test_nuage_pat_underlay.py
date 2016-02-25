@@ -16,10 +16,10 @@
 from netaddr import IPNetwork
 
 import base_nuage_pat_underlay
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from oslo_log import log as logging
 from tempest import config
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
 CONF = config.CONF

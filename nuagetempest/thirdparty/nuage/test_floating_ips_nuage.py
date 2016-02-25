@@ -19,7 +19,7 @@ from tempest.api.network import test_floating_ips
 from tempest.common.utils import data_utils
 from tempest import config
 from tempest import test
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 import uuid
 
 CONF = config.CONF

@@ -15,11 +15,11 @@
 import re
 
 from tempest.api.network import base_routers as base
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from oslo_log import log as logging
 from tempest import config
 from tempest import test
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib import service_mgmt
 from netaddr import IPNetwork

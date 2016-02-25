@@ -4,7 +4,7 @@
 import logging
 
 from netaddr import *
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from tempest import config
 from tempest import exceptions
 from tempest import test

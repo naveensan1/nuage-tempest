@@ -1,7 +1,7 @@
 # Copyright 2015 Alcatel-Lucent
 # All Rights Reserved.
 
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from tempest import config
 from tempest import test
 from nuagetempest.lib.utils import constants

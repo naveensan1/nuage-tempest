@@ -16,13 +16,13 @@
 from netaddr import *
 
 import base_vsd_managed_networks
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from tempest import config
 from tempest import test
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
-from tempest_lib import exceptions as lib_exc
+from tempest.lib import exceptions as lib_exc
 
 CONF = config.CONF
 

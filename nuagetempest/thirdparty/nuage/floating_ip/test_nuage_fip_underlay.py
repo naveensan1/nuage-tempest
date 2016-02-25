@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from oslo_log import log as logging
 from tempest import config
 from tempest import test
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 from nuagetempest.lib.test import nuage_test
 
 import base_nuage_fip_underlay

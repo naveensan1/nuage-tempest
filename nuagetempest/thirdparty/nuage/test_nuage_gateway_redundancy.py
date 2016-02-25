@@ -24,7 +24,7 @@ from tempest import config
 from tempest import exceptions
 
 
-from tempest_lib.common.utils.data_utils import rand_name
+from tempest.lib.common.utils.data_utils import rand_name
 
 CONF = config.CONF
 

@@ -21,7 +21,7 @@ from tempest.api.network import test_routers
 from tempest.common.utils import data_utils
 from tempest import config
 from tempest import test
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 import testtools
 import uuid
 

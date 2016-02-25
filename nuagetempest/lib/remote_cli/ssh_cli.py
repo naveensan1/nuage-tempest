@@ -21,7 +21,7 @@ from tempest import test
 from tempest import config
 
 #from tempest.thirdparty.nuage.common import ssh as ssh
-from tempest_lib.common import ssh
+from tempest.lib.common import ssh
 import output_parser as cli_output_parser
 
 CONF = config.CONF

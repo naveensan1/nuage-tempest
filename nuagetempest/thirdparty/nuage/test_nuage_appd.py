@@ -19,7 +19,7 @@ from oslo_log import log as logging
 from tempest.common.utils import data_utils
 from tempest import config
 from tempest import exceptions
-from tempest_lib import exceptions as lib_exceptions
+from tempest.lib import exceptions as lib_exceptions
 import test_netpartitions
 
 

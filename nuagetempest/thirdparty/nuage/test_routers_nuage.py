@@ -559,7 +559,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
          test_create_router_with_default_snat_value())
         nuage_domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID', filter_value=self.routers[-1]['id'])
-        self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_ENABLED)
+        self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_DISABLED)
 
     @test.requires_ext(extension='ext-gw-mode', service='network')
     @test.attr(type='smoke')
@@ -611,7 +611,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
             external_network_id=CONF.network.public_network_id)
         nuage_domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID', filter_value=router['id'])
-        self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_ENABLED)
+        self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_DISABLED)
         self.admin_client.update_router_with_snat_gw_info(
             router['id'],
             external_gateway_info={
@@ -626,6 +626,50 @@ class RoutersTestNuage(test_routers.RoutersTest):
             filters='externalID', filter_value=router['id'])
         self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_DISABLED)
 
+# TODO: waelj: submit an upstream pull request on tempest.services.network.json.network_client to process
+# all attributes in kwargs (to support extended attribute updates)
+
+# overrule the parent class in order to allow update of tunnel_type
+    def _patch_update_router(self, router_id, set_enable_snat, **kwargs):
+        uri = '/routers/%s' % router_id
+        body = self.client.show_resource(uri)
+
+        # patch for tunnel_type, and backhaul-attributes
+        update_body = {'name': kwargs.get('name', body['router']['name']), 'admin_state_up': kwargs.get(
+            'admin_state_up', body['router']['admin_state_up']),
+            'tunnel_type': kwargs.get('tunnel_type', body['router']['tunnel_type']),
+            'nuage_backhaul_vnid': kwargs.get('nuage_backhaul_vnid', body['router']['nuage_backhaul_vnid']),
+            'nuage_backhaul_rt': kwargs.get('nuage_backhaul_rt', body['router']['nuage_backhaul_rt']),
+            'nuage_backhaul_rd': kwargs.get('nuage_backhaul_rd', body['router']['nuage_backhaul_rd'])
+        }
+        # end of patch for tunnel_type
+
+        cur_gw_info = body['router']['external_gateway_info']
+        if cur_gw_info:
+            # TODO(kevinbenton): setting the external gateway info is not
+            # allowed for a regular tenant. If the ability to update is also
+            # merged, a test case for this will need to be added similar to
+            # the SNAT case.
+            cur_gw_info.pop('external_fixed_ips', None)
+            if not set_enable_snat:
+                cur_gw_info.pop('enable_snat', None)
+        update_body['external_gateway_info'] = kwargs.get(
+            'external_gateway_info', body['router']['external_gateway_info'])
+        if 'distributed' in kwargs:
+            update_body['distributed'] = kwargs['distributed']
+        update_body = dict(router=update_body)
+        return self.client.update_resource(uri, update_body)
+
+    def patch_update_router(self, router_id, **kwargs):
+        """Update a router leaving enable_snat to its default value."""
+        # If external_gateway_info contains enable_snat the request will fail
+        # with 404 unless executed with admin client, and therefore we instruct
+        # _update_router to not set this attribute
+        # NOTE(salv-orlando): The above applies as long as Neutron's default
+        # policy is to restrict enable_snat usage to admins only.
+        return self._patch_update_router(router_id, set_enable_snat=False, **kwargs)
+
+    # end of overruled messages
 
     @test.attr(type='smoke')
     def test_router_create_update_show_delete_with_backhaul_vnid_rt_rd(self):
@@ -668,7 +712,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         updated_bkhaul_vnid = 91
         updated_bkhaul_rt = "3:3"
         updated_bkhaul_rd = "4:4"
-        update_body = self.client.update_router(create_body['router']['id'],
+        update_body = self.patch_update_router(create_body['router']['id'],
                                                 nuage_backhaul_vnid=str(updated_bkhaul_vnid),
                                                 nuage_backhaul_rt=updated_bkhaul_rt,
                                                 nuage_backhaul_rd=updated_bkhaul_rd)

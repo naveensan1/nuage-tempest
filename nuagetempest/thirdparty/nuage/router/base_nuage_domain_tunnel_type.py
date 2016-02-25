@@ -35,6 +35,7 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
 
     @classmethod
     def resource_cleanup(cls):
+        cls.must_have_default_domain_tunnel_type(constants.DOMAIN_TUNNEL_TYPE_VXLAN)
         super(NuageDomainTunnelTypeBase, cls).resource_cleanup()
 
     @classmethod
@@ -73,11 +74,11 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
     def _upstream_update_router(self, router_id, set_enable_snat, **kwargs):
         uri = '/routers/%s' % router_id
         body = self.client.show_resource(uri)
+
+        # patch for tunnel_type
         update_body = {'name': kwargs.get('name', body['router']['name']), 'admin_state_up': kwargs.get(
             'admin_state_up', body['router']['admin_state_up']), 'tunnel_type': kwargs.get(
                 'tunnel_type', body['router']['tunnel_type'])}
-
-        # patch for tunnel_type
         # end of patch for tunnel_type
 
         cur_gw_info = body['router']['external_gateway_info']

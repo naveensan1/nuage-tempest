@@ -3,8 +3,6 @@ from tempest.common.utils import data_utils
 import netaddr
 from tempest import test
 from nuagetempest.tests import nuage_ext
-from nuagetempest.lib.utilscripts import dict2obj
-from nuagetempest.lib import objview
 
 class RoutersTest(test_routers.RoutersTest):
 

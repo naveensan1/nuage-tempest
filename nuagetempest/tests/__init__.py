@@ -35,7 +35,7 @@ for dut in dir(topology.testbed):
             obj.ssh.open()
 
 def add_csproot_to_cms():
-    vsd = topology.testbed.vsd_0
+    vsd = topology.testbed.vsd_1
     global_ent_id = vsd.session.user.enterprise_id
     global_ent = vsd.vspk.NUEnterprise(id=global_ent_id)
     grps = global_ent.groups.get()

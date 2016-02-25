@@ -178,9 +178,13 @@ class Topology(object):
 
     def make_testbed(self):
         vrs_counter = itertools.count()
+        vrs_counter.next()
         vsc_counter = itertools.count()
+        vsc_counter.next()
         vsd_counter = itertools.count()
+        vsd_counter.next()
         osc_counter = itertools.count()
+        osc_counter.next()
         for dut in self.duts_list:
             if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:
                 dutobj = 'vrs_' + str(vrs_counter.next())

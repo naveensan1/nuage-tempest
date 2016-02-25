@@ -1,11 +1,21 @@
 import itertools
+import libVSD
 import threading
+from tempest import config
 from libduts import sros, linux
 import re
 
+CONF = config.CONF
+
 class Topology(object):
 
-    def __init__(self, path_to_esrcalls):
+    def __init__(self):
+        path_to_esrcalls = CONF.nuagext.esr_calls_file
+        testbed = CONF.nuagext.exec_server
+        testbed_user = CONF.nuagext.exec_server_user
+        if not (path_to_esrcalls or testbed or testbed_user):
+            raise Exception('Testbed topo file or exec server is not provided')
+        self.nuage_components = CONF.nuagext.nuage_components
         self.esrcalls = path_to_esrcalls
         self.duts_list = self.parse_esrcalls()
         self.make_testbed()
@@ -31,12 +41,11 @@ class Topology(object):
         [thread.join() for thread in threads]
 
     @property
-    def vrs(self):
+    def _vrs(self):
         vrs = {}
         for dutname, dut in self.duts.iteritems():
             if isinstance(dut, linux.VRS):
                 vrs[dutname] = dut
-        return vrs
 
     def parse_esrcalls(self):
 
@@ -44,23 +53,28 @@ class Topology(object):
             line = line.split()
             try:
                 if line[0] == 'None':
-                    return (None, None, None, None)
-                elif re.search('component', line[len(line)-2]):
-                    return (line[0], line[1], line[2], line[len(line)-1])
-                return (line[0], line[1], line[2], None)
+                    return (None, None, None, None, None, None)
+                elif '-component' in line and '-username' in line and '-password' in line:
+                    idx = line.index('-component') + 1
+                    idx_u = line.index('-username') + 1
+                    idx_p = line.index('-password') + 1
+                    return (line[0], line[1], line[2], line[idx], line[idx_u], line[idx_p])
+                return (line[0], line[1], line[2], None, None, None)
             except:
-                return (None, None, None, None)
+                return (None, None, None, None, None, None)
 
         duts_list = []
         with open(self.esrcalls, 'r') as esrcalls_file:
             for line in esrcalls_file.readlines():
-                dut_type, dut_name, dut_ip, component = parse_line(line)
+                dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
                 if dut_type in ['LINUX', 'ESR']:
                     duts_list.append({
                         'name': dut_name,
                         'type': dut_type,
                         'ip': dut_ip,
-                        'component': component
+                        'component': component,
+                        'username': username,
+                        'password': password
                     })
         return duts_list
 
@@ -137,71 +151,48 @@ class Topology(object):
         component = dut['component']
 
         if self._is_ovs(component):
-            return linux.VRS(ip, id=name)
+            return linux.VRS(ip, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsd(component):
-            api = linux.ApiClient(dut['ip'])
-            return linux.VSD(ip, api=api, id=name)
+            vsd_ip = CONF.nuage_vsd_group.nuage_vsd_server.split(':')[0]
+            vsd_port = CONF.nuage_vsd_group.nuage_vsd_server.split(':')[1]
+            api = libVSD.client.ApiClient(vsd_ip, port=vsd_port)
+            helper = libVSD.helpers.VSDHelpers(api)
+            setattr(helper, 'api', api)
+            return helper
 
         if self._is_7750(component):
-            return sros.SROS(ip, name, id=name)
+            return sros.SROS(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsg(component):
-            return sros.VSG(ip, name, id=name)
+            return sros.VSG(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsc(component):
-            return sros.VSC(ip, name, id=name)
-
-        if self._is_util(component):
-            return linux.Linux(ip, password='Alcateldc', id=name)
-
-        if self._is_nsg(component):
-            return linux.NSG(ip, id=name)
+            return sros.VSC(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_osc(component):
-            return linux.OSC(ip, id=name)
+            return linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
 
         err = 'Cannot find a class corresponding to {}'.format(name)
         raise Exception(err)
 
     def make_testbed(self):
-        self.vrs_counter = itertools.count()
-        self.vsc_counter = itertools.count()
-        self.vsd_counter = itertools.count()
-        self.osc_counter = itertools.count()
-        self.duts = {}
-        self.vsces = {}
-        self.vrses = {}
-        self.vsdes = {}
-        self.osces = {}
+        vrs_counter = itertools.count()
+        vsc_counter = itertools.count()
+        vsd_counter = itertools.count()
+        osc_counter = itertools.count()
         for dut in self.duts_list:
-            if dut['component'] is not None:
-                switcher = {
-                    'VSC': self.make_testbed_vsc,
-                    'VRS': self.make_testbed_vrs,
-                    'VSD': self.make_testbed_vsd,
-                    'OSC': self.make_testbed_osc,
-                }
-                func = switcher.get(dut['component'], None)
-                if func:
-                    func(dut)
+            if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:
+                dutobj = 'vrs_' + str(vrs_counter.next())
+                setattr(self, dutobj, self.make_dut(dut['name']))
+            elif dut['component'] == "VSC" and 'vsc' in CONF.nuagext.nuage_components:
+                dutobj = 'vsc_' + str(vsc_counter.next())
+                setattr(self, dutobj, self.make_dut(dut['name']))
+            elif dut['component'] == "VSD" and 'vsd' in CONF.nuagext.nuage_components:
+                dutobj = 'vsd_' + str(vsd_counter.next())
+                setattr(self, dutobj, self.make_dut(dut['name']))
+            elif dut['component'] == "OSC":
+                dutobj = 'osc_' + str(osc_counter.next())
+                setattr(self, dutobj, self.make_dut(dut['name']))
 
-    def make_testbed_vrs(self, dut):
-        dut_count = self.vrs_counter.next()
-        self.vrses['vrs-{}'.format(dut_count)] = self.make_dut(dut['name'])
-        self.duts['vrs-{}'.format(dut_count)] = self.vrses['vrs-{}'.format(dut_count)]
-
-    def make_testbed_vsc(self, dut):
-        dut_count = self.vsc_counter.next()
-        self.vsces['vsc-{}'.format(dut_count)] = self.make_dut(dut['name'])
-        self.duts['vsc-{}'.format(dut_count)] = self.vsces['vsc-{}'.format(dut_count)]
-        
-    def make_testbed_vsd(self, dut):
-        dut_count = self.vsd_counter.next()
-        self.vsdes['vsd-{}'.format(dut_count)] = self.make_dut(dut['name'])
-        self.duts['vsd-{}'.format(dut_count)] = self.vsdes['vsd-{}'.format(dut_count)]
-        
-    def make_testbed_osc(self, dut):
-        dut_count = self.osc_counter.next()
-        self.osces['osc-{}'.format(dut_count)] = self.make_dut(dut['name'])
-        self.duts['osc-{}'.format(dut_count)] = self.osces['osc-{}'.format(dut_count)]
+testbed = Topology()

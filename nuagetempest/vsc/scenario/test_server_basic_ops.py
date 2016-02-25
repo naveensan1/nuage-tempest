@@ -11,7 +11,5 @@ class TestServerBasicOps(test.BaseTestCase):
         def __init__(self):
             pass
     
-        def verify_vm(self):
-            verified = False
-            for k, vsc in topo.testbed.vsces.iteritems():
-                print vsc.cmd('show vswitch-controller vports type vm')
+        def verify_vm(self, cls):
+            pass

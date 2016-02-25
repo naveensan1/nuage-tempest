@@ -16,5 +16,4 @@ class TestServerBasicOps(test_server_basic_ops.TestServerBasicOps):
         self.boot_instance()
         nuage_ext.nuage_extension.nuage_components(
                 nuage_ext._generate_tag('verify_vm', self.__class__.__name__))
-        self.verify_ssh()
         self.servers_client.delete_server(self.instance['id'])

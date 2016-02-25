@@ -33,7 +33,7 @@ class NuageExtension(object):
         pass
 
     @skip_checks
-    def nuage_components(self, tag):
+    def nuage_components(self, tag, cls):
         m = re.search(r"(.*)\.(\w+)\.(\w+)\.(\w+)", tag)
         for comp in CONF.nuagext.nuage_components:
             base_path = 'nuagetempest.%s' % comp
@@ -46,6 +46,6 @@ class NuageExtension(object):
                 verification_class = getattr(module_class, m.group(3))
                 verification_object = verification_class()
                 verify_function = getattr(verification_object, m.group(4))
-                verify_function()
+                verify_function(cls)
             else:
                 LOG.info("Enabled mode and tag don't match")

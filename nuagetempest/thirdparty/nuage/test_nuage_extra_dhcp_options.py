@@ -215,7 +215,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         # os = cls.get_client_manager()
         #
         # # TODO: Hendrik: only use admin credentials where required!
-        # cls.client = cls.admin_client
+        cls.client = cls.admin_client
 
     @classmethod
     def resource_setup(cls):
@@ -337,23 +337,30 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         self.addCleanup(self.admin_networks_client.delete_network, network['id'])
         return network
 
-    def _create_port_with_extra_dhcp_options(self, network_id, extra_dhcp_opts):
+    def _create_port_with_extra_dhcp_options(self, network_id, extra_dhcp_opts, client=None):
+        # allow tests to use admin client
+        if not client:
+            client = self.ports_client
+
         name = data_utils.rand_name('extra-dhcp-opt-port-name')
-        create_body = self.ports_client.create_port(
+        create_body = client.create_port(
             name=name,
             network_id=network_id,
             extra_dhcp_opts=extra_dhcp_opts)
-        self.addCleanup(self.ports_client.delete_port, create_body['port']['id'])
+        self.addCleanup(client.delete_port, create_body['port']['id'])
 
-    def _update_port_with_extra_dhcp_options(self, port_id, extra_dhcp_opts):
+    def _update_port_with_extra_dhcp_options(self, port_id, extra_dhcp_opts, client=None):
+        # allow tests to use admin client
+        if not client:
+            client = self.ports_client
         name = data_utils.rand_name('updated-extra-dhcp-opt-port-name')
-        update_body = self.ports_client.update_port(
+        update_body = client.update_port(
             port_id,
             name=name,
             extra_dhcp_opts=extra_dhcp_opts)
         # Confirm extra dhcp options were added to the port
         self._confirm_extra_dhcp_options(update_body['port'], extra_dhcp_opts)
-        upd_show_body = self.ports_client.show_port(port_id)
+        upd_show_body = client.show_port(port_id)
         self._confirm_extra_dhcp_options(upd_show_body['port'], extra_dhcp_opts)
 
     def _nuage_create_list_show_update_layer_x_port_with_extra_dhcp_options(self, network_id,
@@ -2827,7 +2834,7 @@ class NuageExtraDHCPOptionsNegativeTest(NuageExtraDHCPOptionsBase):
         # Should fail, as DHCP is handled externally
         ext_network = self._create_network()
         # subnet is needed for trying port creation
-        ext_subnet = self.create_subnet(ext_network)
+        ext_subnet = self.create_subnet(ext_network, client=self.admin_subnets_client)
         # check whether this subnet is not empty: avoid pep8 local variable not used
         self.assertNotEmpty(ext_subnet)
         extra_dhcp_opts = [
@@ -2836,7 +2843,8 @@ class NuageExtraDHCPOptionsNegativeTest(NuageExtraDHCPOptionsBase):
         self.assertRaises(exceptions.BadRequest,
                           self._create_port_with_extra_dhcp_options,
                           ext_network['id'],
-                          extra_dhcp_opts)
+                          extra_dhcp_opts,
+                          client=self.admin_ports_client)
         pass
 
     def test_nuage_update_port_with_extra_dhcp_options_external_network_neg(self):
@@ -2844,16 +2852,16 @@ class NuageExtraDHCPOptionsNegativeTest(NuageExtraDHCPOptionsBase):
         # Should fail, as DHCP is handled externally
         ext_network = self._create_network()
         # subnet is needed for trying port creation
-        ext_subnet = self.create_subnet(ext_network)
+        ext_subnet = self.create_subnet(ext_network, client=self.admin_subnets_client)
         # check whether this subnet is not empty: avoid pep8 local variable not used
         self.assertNotEmpty(ext_subnet)
         # create a port
         name = data_utils.rand_name('extra-dhcp-opt-port-name')
-        create_body = self.ports_client.create_port(
+        create_body = self.admin_ports_client.create_port(
             name=name,
             network_id=ext_network['id']
         )
-        self.addCleanup(self.ports_client.delete_port, create_body['port']['id'])
+        self.addCleanup(self.admin_ports_client.delete_port, create_body['port']['id'])
         # Now try to update
         extra_dhcp_opts = [
             {'opt_value': '12.22.32.42', 'opt_name': 'router'}
@@ -2861,7 +2869,8 @@ class NuageExtraDHCPOptionsNegativeTest(NuageExtraDHCPOptionsBase):
         self.assertRaises(exceptions.BadRequest,
                           self._update_port_with_extra_dhcp_options,
                           create_body['port']['id'],
-                          extra_dhcp_opts)
+                          extra_dhcp_opts,
+                          client=self.admin_ports_client)
 
     def test_nuage_create_port_with_extra_dhcp_options_nuage_l2_to_l3_migration_port_neg(self):
         # Try to create a port with bad extra dhcp options values

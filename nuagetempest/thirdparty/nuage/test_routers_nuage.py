@@ -625,3 +625,82 @@ class RoutersTestNuage(test_routers.RoutersTest):
         nuage_domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID', filter_value=router['id'])
         self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_DISABLED)
+
+
+    @test.attr(type='smoke')
+    def test_router_create_update_show_delete_with_backhaul_vnid_rt_rd(self):
+        name = data_utils.rand_name('router-')
+        bkhaul_vnid = 81
+        bkhaul_rt = "1:1"
+        bkhaul_rd = "2:2"
+        create_body = self.client.create_router(
+            name, nuage_backhaul_vnid=str(bkhaul_vnid),
+            nuage_backhaul_rt=bkhaul_rt,
+            nuage_backhaul_rd=bkhaul_rd,
+            tunnel_type="VXLAN")
+        self.addCleanup(self._delete_router, create_body['router']['id'])
+        self.assertEqual(create_body['router']['name'], name)
+        self.assertEqual(create_body['router']['nuage_backhaul_vnid'],
+                         bkhaul_vnid)
+        self.assertEqual(create_body['router']['nuage_backhaul_rt'],
+                         bkhaul_rt)
+        self.assertEqual(create_body['router']['nuage_backhaul_rd'],
+                         bkhaul_rd)
+        # VSD validation
+        rtr_id = create_body['router']['id']
+        l3dom_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            rtr_id)
+        nuage_domain = self.nuage_vsd_client.get_l3domain(
+            filters='externalID', filter_value=l3dom_ext_id)
+        self.assertEqual(nuage_domain[0][u'description'], name)
+        self.assertEqual(nuage_domain[0][u'backHaulVNID'], bkhaul_vnid)
+        self.assertEqual(nuage_domain[0][u'backHaulRouteTarget'], bkhaul_rt)
+        self.assertEqual(nuage_domain[0][u'backHaulRouteDistinguisher'],
+                         bkhaul_rd)
+        # Show details of the created router
+        show_body = self.client.show_router(create_body['router']['id'])
+        self.assertEqual(show_body['router']['name'], name)
+        self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
+                         bkhaul_vnid)
+        self.assertEqual(show_body['router']['nuage_backhaul_rt'], bkhaul_rt)
+        self.assertEqual(show_body['router']['nuage_backhaul_rd'], bkhaul_rd)
+        # Update the backhaul rt:rd to new values
+        updated_bkhaul_vnid = 91
+        updated_bkhaul_rt = "3:3"
+        updated_bkhaul_rd = "4:4"
+        update_body = self.client.update_router(create_body['router']['id'],
+                                                nuage_backhaul_vnid=str(updated_bkhaul_vnid),
+                                                nuage_backhaul_rt=updated_bkhaul_rt,
+                                                nuage_backhaul_rd=updated_bkhaul_rd)
+        show_body = self.client.show_router(create_body['router']['id'])
+        self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
+                         updated_bkhaul_vnid)
+        self.assertEqual(show_body['router']['nuage_backhaul_rt'],
+                         updated_bkhaul_rt)
+        self.assertEqual(show_body['router']['nuage_backhaul_rd'],
+                         updated_bkhaul_rd)
+        nuage_domain = self.nuage_vsd_client.get_l3domain(
+            filters='externalID', filter_value=l3dom_ext_id)
+        self.assertEqual(nuage_domain[0][u'backHaulVNID'],
+                         updated_bkhaul_vnid)
+        self.assertEqual(nuage_domain[0][u'backHaulRouteTarget'],
+                         updated_bkhaul_rt)
+        self.assertEqual(nuage_domain[0][u'backHaulRouteDistinguisher'],
+                         updated_bkhaul_rd)
+
+
+    def test_router_backhaul_vnid_rt_rd_negative(self):
+        # Incorrect backhaul-vnid value
+        self.assertRaises(exceptions.ServerFault,
+                          self.client.create_router,
+                          data_utils.rand_name('router-'),
+                          nuage_backhaul_vnid="0xb")
+        self.assertRaises(exceptions.ServerFault,
+                          self.client.create_router,
+                          data_utils.rand_name('router-'),
+                          nuage_backhaul_rt="-1:1")
+        self.assertRaises(exceptions.ServerFault,
+                          self.client.create_router,
+                          data_utils.rand_name('router-'),
+                          nuage_backhaul_rd="2:-3")
+

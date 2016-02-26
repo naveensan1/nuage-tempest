@@ -38,17 +38,9 @@ def add_csproot_to_cms():
     vsd = topology.testbed.vsd_1
     global_ent_id = vsd.session.user.enterprise_id
     global_ent = vsd.vspk.NUEnterprise(id=global_ent_id)
-    grps = global_ent.groups.get()
-    for grp in grps:
-        if grp.name == "CMS Group":
-            cms_grp = grp
-            break
-    global_users = global_ent.users.get()
-    for usr in global_users:
-        if usr.first_name == "csproot":
-            cspusr = usr
-            break
-    vsd.add_user_to_group(cspusr, cms_grp)
+    grp_filter = 'name IS "CMS Group"'
+    usr_filter = 'userName IS "csproot"'
+    vsd.add_user_to_group(global_ent, usr_filter=usr_filter, grp_filter=grp_filter)
 
 nuage_ext = NuageExtensionInit()
 add_csproot_to_cms()

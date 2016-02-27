@@ -91,3 +91,11 @@ def setup_cmsid(osc):
     else:
         raise Exception('Could not retrieve CMS ID')
     return cms_id
+
+def add_csproot_to_cms(vsd_api, vspk):
+
+    global_ent_id = vsd_api.session.user.enterprise_id
+    global_ent = vspk.NUEnterprise(id=global_ent_id)
+    grp_filter = 'name IS "CMS Group"'
+    usr_filter = 'userName IS "csproot"'
+    vsd.add_user_to_group(global_ent, usr_filter=usr_filter, grp_filter=grp_filter)

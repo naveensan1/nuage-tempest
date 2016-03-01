@@ -394,7 +394,7 @@ iniset ${TEMPEST_CONF} network region regionOne
 
 ## need larger network
 iniset ${TEMPEST_CONF} network tenant_network_cidr 13.100.0.0/16
-iniset ${TEMPEST_CONF} network tenant_network_mask_bits 16
+iniset ${TEMPEST_CONF} network tenant_network_mask_bits 24
 
 # TODO: get the list of capabilities from the testbed
 #API_EXT_LIST='router, binding, external-net, net-partition, nuage-router, nuage-subnet, quotas, security-group, compute, network, image'

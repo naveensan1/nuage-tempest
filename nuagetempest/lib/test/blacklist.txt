@@ -1,0 +1,7 @@
+# Do not run these tests
+
+# require ML2 plugin
+^nuagetempest.thirdparty.nuage.test_ml2_plugin
+
+# no scaling tests
+scale

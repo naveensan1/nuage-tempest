@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.12: http://docutils.sourceforge.net/" />
+<title>Porting documentation for thirdparty/nuage tests cases</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7614 2013-02-21 15:55:51Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="porting-documentation-for-thirdparty-nuage-tests-cases">
+<h1 class="title">Porting documentation for thirdparty/nuage tests cases</h1>
+
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#introduction" id="id1">Introduction</a></li>
+<li><a class="reference internal" href="#syncronisation-with-upstream" id="id2">Syncronisation with upstream</a><ul>
+<li><a class="reference internal" href="#tempest-lib" id="id3">tempest_lib</a></li>
+<li><a class="reference internal" href="#vsd-client-is-no-longer-managed-by-the-tempest-client-manager" id="id4">VSD client is no longer managed by the tempest client manager</a></li>
+<li><a class="reference internal" href="#all-neutron-resources-have-a-dedicated-client" id="id5">All neutron resources have a dedicated client</a></li>
+<li><a class="reference internal" href="#patch-update-router" id="id6">Patch_update_router</a></li>
+<li><a class="reference internal" href="#tempest-conf" id="id7">Tempest.conf</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#differences-dev-qa-repo" id="id8">Differences dev/qa repo</a><ul>
+<li><a class="reference internal" href="#external-id-wrapper" id="id9">External ID wrapper</a></li>
+<li><a class="reference internal" href="#pat-enabled-tests" id="id10">PAT enabled tests</a></li>
+<li><a class="reference internal" href="#additional-tests-in-openstack-qa-tempest" id="id11">Additional tests in OpenStack-QA/tempest</a></li>
+<li><a class="reference internal" href="#other-differences" id="id12">Other differences</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#refactoring" id="id13">Refactoring</a><ul>
+<li><a class="reference internal" href="#use-standard-classmethods-from-basetestcase" id="id14">Use standard classmethods from BaseTestCase</a></li>
+<li><a class="reference internal" href="#remove-duplicate-code" id="id15">Remove duplicate code</a></li>
+<li><a class="reference internal" href="#remove-unappropriate-inheritence" id="id16">Remove unappropriate inheritence</a></li>
+<li><a class="reference internal" href="#dynamic-credentials" id="id17">Dynamic credentials</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h1><a class="toc-backref" href="#id1">Introduction</a></h1>
+<p>This document clarifies changes on the merge of the original Nuage tempestr repo's toward the new repo based on the
+tempest plugin architecture.</p>
+<p>Original repo's:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.mv.usa.alcatel.com/OpenStack-QA/tempest">https://github.mv.usa.alcatel.com/OpenStack-QA/tempest</a></li>
+<li><a class="reference external" href="https://github.mv.usa.alcatel.com/openstack/tempest">https://github.mv.usa.alcatel.com/openstack/tempest</a></li>
+</ul>
+<p>New repo:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.mv.usa.alcatel.com/pygash/nuage-tempest">https://github.mv.usa.alcatel.com/pygash/nuage-tempest</a></li>
+</ul>
+<p>See branch porting-tests</p>
+<p>Execution results can be found at:</p>
+<blockquote>
+<a class="reference external" href="http://172.31.222.216:8080/job/NuagePlugin-QA-Tempest-Kilo/Tempest_Test_Results/">http://172.31.222.216:8080/job/NuagePlugin-QA-Tempest-Kilo/Tempest_Test_Results/</a></blockquote>
+</div>
+<div class="section" id="syncronisation-with-upstream">
+<h1><a class="toc-backref" href="#id2">Syncronisation with upstream</a></h1>
+<div class="section" id="tempest-lib">
+<h2><a class="toc-backref" href="#id3">tempest_lib</a></h2>
+<p>The tempest_lib repo has again been merged with tempest project. The package should no longer be installed and is
+removed from requirements.txt</p>
+<p>To avoid conflicts, you have to uninstall it from your current work (virtual) environment</p>
+<p>OLD:</p>
+<pre class="code python literal-block">
+<span class="keyword namespace">from</span> <span class="name namespace">tempest_lib</span> <span class="keyword namespace">import</span> <span class="name">exceptions</span>
+</pre>
+<p>NEW:</p>
+<pre class="code python literal-block">
+<span class="keyword namespace">from</span> <span class="name namespace">tempest.lib</span> <span class="keyword namespace">import</span> <span class="name">exceptions</span>
+</pre>
+</div>
+<div class="section" id="vsd-client-is-no-longer-managed-by-the-tempest-client-manager">
+<h2><a class="toc-backref" href="#id4">VSD client is no longer managed by the tempest client manager</a></h2>
+<p>OLD:</p>
+<pre class="code python literal-block">
+<span class="name decorator">&#64;classmethod</span>
+<span class="keyword">def</span> <span class="name function">resource_setup</span><span class="punctuation">(</span><span class="name">cls</span><span class="punctuation">):</span>
+    <span class="name builtin">super</span><span class="punctuation">(</span><span class="name">AllowedAddressPairTestJSON</span><span class="punctuation">,</span> <span class="name">cls</span><span class="punctuation">)</span><span class="operator">.</span><span class="name">resource_setup</span><span class="punctuation">()</span>
+    <span class="keyword">if</span> <span class="operator word">not</span> <span class="name">test</span><span class="operator">.</span><span class="name">is_extension_enabled</span><span class="punctuation">(</span><span class="literal string single">'allowed-address-pairs'</span><span class="punctuation">,</span> <span class="literal string single">'network'</span><span class="punctuation">):</span>
+        <span class="name">msg</span> <span class="operator">=</span> <span class="literal string double">&quot;Allowed Address Pairs extension not enabled.&quot;</span>
+        <span class="keyword">raise</span> <span class="name">cls</span><span class="operator">.</span><span class="name">skipException</span><span class="punctuation">(</span><span class="name">msg</span><span class="punctuation">)</span>
+
+    <span class="name">cls</span><span class="operator">.</span><span class="name">nuage_vsd_client</span> <span class="operator">=</span> <span class="name">cls</span><span class="operator">.</span><span class="name">get_client_manager</span><span class="punctuation">()</span><span class="operator">.</span><span class="name">nuage_vsd_client</span>
+</pre>
+<p>NEW:</p>
+<pre class="code python literal-block">
+<span class="keyword namespace">from</span> <span class="name namespace">nuagetempest.services</span> <span class="keyword namespace">import</span> <span class="name">nuage_client</span>
+
+<span class="punctuation">[</span><span class="operator">...</span><span class="punctuation">]</span>
+
+<span class="name decorator">&#64;classmethod</span>
+<span class="keyword">def</span> <span class="name function">setup_clients</span><span class="punctuation">(</span><span class="name">cls</span><span class="punctuation">):</span>
+    <span class="name builtin">super</span><span class="punctuation">(</span><span class="name">NuagePatUnderlayBase</span><span class="punctuation">,</span> <span class="name">cls</span><span class="punctuation">)</span><span class="operator">.</span><span class="name">setup_clients</span><span class="punctuation">()</span>
+    <span class="name">cls</span><span class="operator">.</span><span class="name">nuage_vsd_client</span> <span class="operator">=</span> <span class="name">nuage_client</span><span class="operator">.</span><span class="name">NuageRestClient</span><span class="punctuation">()</span>
+</pre>
+</div>
+<div class="section" id="all-neutron-resources-have-a-dedicated-client">
+<h2><a class="toc-backref" href="#id5">All neutron resources have a dedicated client</a></h2>
+<p>Change:</p>
+<ul class="simple">
+<li><em>self.client.create_subnet</em> to <em>self.subnets_client.create_subnet</em></li>
+</ul>
+</div>
+<div class="section" id="patch-update-router">
+<h2><a class="toc-backref" href="#id6">Patch_update_router</a></h2>
+<p>Overruled the upstream network_client/update_router method,
+to allow update of Nuage extended attributes.</p>
+<p>See nuagetempest/thirdparty/nuage/test_routers_nuage/#test_router_create_update_show_delete_with_backhaul_vnid_rt_rd
+See nuagetempest/thirdparty/nuage/router/test_nuage_domain_tunnel_type.</p>
+</div>
+<div class="section" id="tempest-conf">
+<h2><a class="toc-backref" href="#id7">Tempest.conf</a></h2>
+<ul class="simple">
+<li>removed deprecated attributes</li>
+</ul>
+<p>OLD:</p>
+<pre class="code ini literal-block">
+<span class="keyword">[identity]</span>
+<span class="name attribute">allow_tenant_isolation</span> <span class="operator">=</span> <span class="literal string">true</span>
+</pre>
+<ul class="simple">
+<li>move some attributes to new section</li>
+</ul>
+<p>NEW:</p>
+<pre class="code ini literal-block">
+<span class="keyword">[auth]</span>
+<span class="name attribute">admin_tenant_name</span> <span class="operator">=</span> <span class="literal string">admin</span>
+<span class="name attribute">admin_username</span> <span class="operator">=</span> <span class="literal string">admin</span>
+<span class="name attribute">admin_role</span> <span class="operator">=</span> <span class="literal string">admin</span>
+<span class="name attribute">admin_password</span> <span class="operator">=</span> <span class="literal string">tigris</span>
+<span class="name attribute">admin_domain_name</span> <span class="operator">=</span> <span class="literal string">regionOne</span>
+<span class="name attribute">use_dynamic_credentials</span> <span class="operator">=</span> <span class="literal string">true</span>
+</pre>
+</div>
+</div>
+<div class="section" id="differences-dev-qa-repo">
+<h1><a class="toc-backref" href="#id8">Differences dev/qa repo</a></h1>
+<div class="section" id="external-id-wrapper">
+<h2><a class="toc-backref" href="#id9">External ID wrapper</a></h2>
+<dl class="docutils">
+<dt>DEV-REPO:</dt>
+<dd>Assumes the External ID is decorated by the client.</dd>
+</dl>
+<pre class="code python literal-block">
+<span class="name">nuage_vport</span> <span class="operator">=</span> <span class="name builtin pseudo">self</span><span class="operator">.</span><span class="name">nuage_vsd_client</span><span class="operator">.</span><span class="name">get_vport</span><span class="punctuation">(</span><span class="name">n_constants</span><span class="operator">.</span><span class="name">L2_DOMAIN</span><span class="punctuation">,</span>
+                                              <span class="name">nuage_subnet</span><span class="punctuation">[</span><span class="literal number integer">0</span><span class="punctuation">][</span><span class="literal string single">'ID'</span><span class="punctuation">],</span>
+                                              <span class="name">filters</span><span class="operator">=</span><span class="literal string single">'externalID'</span><span class="punctuation">,</span>
+                                              <span class="name">filter_value</span><span class="operator">=</span><span class="name">port_id</span><span class="punctuation">)</span>
+</pre>
+<dl class="docutils">
+<dt>QA-REPO:</dt>
+<dd>Method <em>get_vsd_external_id</em> is always used to ensure External ID is decorated with CMS_ID</dd>
+</dl>
+<pre class="code python literal-block">
+<span class="name">port_ext_id</span> <span class="operator">=</span> <span class="name builtin pseudo">self</span><span class="operator">.</span><span class="name">nuage_vsd_client</span><span class="operator">.</span><span class="name">get_vsd_external_id</span><span class="punctuation">(</span><span class="name">port_id</span><span class="punctuation">)</span>
+<span class="name">nuage_vport</span> <span class="operator">=</span> <span class="name builtin pseudo">self</span><span class="operator">.</span><span class="name">nuage_vsd_client</span><span class="operator">.</span><span class="name">get_vport</span><span class="punctuation">(</span><span class="name">n_constants</span><span class="operator">.</span><span class="name">L2_DOMAIN</span><span class="punctuation">,</span>
+                                              <span class="name">nuage_subnet</span><span class="punctuation">[</span><span class="literal number integer">0</span><span class="punctuation">][</span><span class="literal string single">'ID'</span><span class="punctuation">],</span>
+                                              <span class="name">filters</span><span class="operator">=</span><span class="literal string single">'externalID'</span><span class="punctuation">,</span>
+                                              <span class="name">filter_value</span><span class="operator">=</span><span class="name">port_ext_id</span><span class="punctuation">)</span>
+</pre>
+</div>
+<div class="section" id="pat-enabled-tests">
+<h2><a class="toc-backref" href="#id10">PAT enabled tests</a></h2>
+<p>For 2 tests, the check of PATenabled flag was</p>
+<p>See nuagetempest/thirdparty/nuage/test_routers_nuage/#test_create_router_with_default_snat_value
+See</p>
+</div>
+<div class="section" id="additional-tests-in-openstack-qa-tempest">
+<h2><a class="toc-backref" href="#id11">Additional tests in OpenStack-QA/tempest</a></h2>
+<p>See nuagetempest/thirdparty/nuage/test_routers_nuage/#test_router_create_update_show_delete_with_backhaul_vnid_rt_rd
+See nuagetempest/thirdparty/nuage/test_routers_nuage/#test_router_backhaul_vnid_rt_rd_negative</p>
+</div>
+<div class="section" id="other-differences">
+<h2><a class="toc-backref" href="#id12">Other differences</a></h2>
+<p>Most of the tests in /nuagetempest/thirdparty/nuage where available in both of the repo's,
+but have been changed or extended without keeping both repo's in sync.</p>
+<div class="attention">
+<p class="first admonition-title">Attention!</p>
+<p class="last">Please check your tests in the new merge repo. In some cases, it was not clear which repo has the desired
+code.</p>
+</div>
+</div>
+</div>
+<div class="section" id="refactoring">
+<h1><a class="toc-backref" href="#id13">Refactoring</a></h1>
+<div class="section" id="use-standard-classmethods-from-basetestcase">
+<h2><a class="toc-backref" href="#id14">Use standard classmethods from BaseTestCase</a></h2>
+<p>Tempest base test class has dedicated methods for</p>
+<ul class="simple">
+<li>setup_clients</li>
+<li>resource_setup</li>
+<li>resource_cleanup</li>
+<li>skip_checks</li>
+</ul>
+<p>These methods shall be used, rather that doing all these actions in the <em>SetUp()</em> / <em>TearDown()</em> or <em>__init__</em>
+See <a class="reference external" href="http://docs.openstack.org/developer/tempest/HACKING.html#test-fixtures-and-resources">http://docs.openstack.org/developer/tempest/HACKING.html#test-fixtures-and-resources</a></p>
+<p>OLD:</p>
+<pre class="code python literal-block">
+<span class="name decorator">&#64;classmethod</span>
+<span class="keyword">def</span> <span class="name function">resource_setup</span><span class="punctuation">(</span><span class="name">cls</span><span class="punctuation">):</span>
+    <span class="name builtin">super</span><span class="punctuation">(</span><span class="name">AllowedAddressPairTestJSON</span><span class="punctuation">,</span> <span class="name">cls</span><span class="punctuation">)</span><span class="operator">.</span><span class="name">resource_setup</span><span class="punctuation">()</span>
+    <span class="keyword">if</span> <span class="operator word">not</span> <span class="name">test</span><span class="operator">.</span><span class="name">is_extension_enabled</span><span class="punctuation">(</span><span class="literal string single">'allowed-address-pairs'</span><span class="punctuation">,</span> <span class="literal string single">'network'</span><span class="punctuation">):</span>
+        <span class="name">msg</span> <span class="operator">=</span> <span class="literal string double">&quot;Allowed Address Pairs extension not enabled.&quot;</span>
+        <span class="keyword">raise</span> <span class="name">cls</span><span class="operator">.</span><span class="name">skipException</span><span class="punctuation">(</span><span class="name">msg</span><span class="punctuation">)</span>
+
+    <span class="name">cls</span><span class="operator">.</span><span class="name">nuage_vsd_client</span> <span class="operator">=</span> <span class="name">cls</span><span class="operator">.</span><span class="name">get_client_manager</span><span class="punctuation">()</span><span class="operator">.</span><span class="name">nuage_vsd_client</span>
+</pre>
+<p>NEW:</p>
+<pre class="code python literal-block">
+<span class="name decorator">&#64;classmethod</span>
+ <span class="keyword">def</span> <span class="name function">setup_clients</span><span class="punctuation">(</span><span class="name">cls</span><span class="punctuation">):</span>
+     <span class="name builtin">super</span><span class="punctuation">(</span><span class="name">NuagePatUnderlayBase</span><span class="punctuation">,</span> <span class="name">cls</span><span class="punctuation">)</span><span class="operator">.</span><span class="name">setup_clients</span><span class="punctuation">()</span>
+     <span class="name">cls</span><span class="operator">.</span><span class="name">nuage_vsd_client</span> <span class="operator">=</span> <span class="name">nuage_client</span><span class="operator">.</span><span class="name">NuageRestClient</span><span class="punctuation">()</span>
+
+ <span class="name decorator">&#64;classmethod</span>
+ <span class="keyword">def</span> <span class="name function">skip_checks</span><span class="punctuation">(</span><span class="name">cls</span><span class="punctuation">):</span>
+     <span class="name builtin">super</span><span class="punctuation">(</span><span class="name">NuagePatUnderlayBase</span><span class="punctuation">,</span> <span class="name">cls</span><span class="punctuation">)</span><span class="operator">.</span><span class="name">skip_checks</span><span class="punctuation">()</span>
+     <span class="keyword">if</span> <span class="operator word">not</span> <span class="name">test</span><span class="operator">.</span><span class="name">is_extension_enabled</span><span class="punctuation">(</span><span class="literal string single">'router'</span><span class="punctuation">,</span> <span class="literal string single">'network'</span><span class="punctuation">):</span>
+         <span class="name">msg</span> <span class="operator">=</span> <span class="literal string double">&quot;router extension not enabled.&quot;</span>
+         <span class="keyword">raise</span> <span class="name">cls</span><span class="operator">.</span><span class="name">skipException</span><span class="punctuation">(</span><span class="name">msg</span><span class="punctuation">)</span>
+
+     <span class="keyword">if</span> <span class="operator word">not</span> <span class="name">CONF</span><span class="operator">.</span><span class="name">service_available</span><span class="operator">.</span><span class="name">neutron</span><span class="punctuation">:</span>
+         <span class="name">msg</span> <span class="operator">=</span> <span class="literal string double">&quot;Skipping all Neutron cli tests because it is not available&quot;</span>
+         <span class="keyword">raise</span> <span class="name">cls</span><span class="operator">.</span><span class="name">skipException</span><span class="punctuation">(</span><span class="name">msg</span><span class="punctuation">)</span>
+
+ <span class="name decorator">&#64;classmethod</span>
+ <span class="keyword">def</span> <span class="name function">resource_setup</span><span class="punctuation">(</span><span class="name">cls</span><span class="punctuation">):</span>
+     <span class="name builtin">super</span><span class="punctuation">(</span><span class="name">NuagePatUnderlayBase</span><span class="punctuation">,</span> <span class="name">cls</span><span class="punctuation">)</span><span class="operator">.</span><span class="name">resource_setup</span><span class="punctuation">()</span>
+
+     <span class="name">cls</span><span class="operator">.</span><span class="name">ext_net_id</span> <span class="operator">=</span> <span class="name">CONF</span><span class="operator">.</span><span class="name">network</span><span class="operator">.</span><span class="name">public_network_id</span>
+</pre>
+</div>
+<div class="section" id="remove-duplicate-code">
+<h2><a class="toc-backref" href="#id15">Remove duplicate code</a></h2>
+<p>As a lot of helper methods are actually the test-class,
+tests tend to either:</p>
+<ul class="simple">
+<li>inherit from multipe test classes</li>
+<li>duplicate the code</li>
+</ul>
+<p>Better approach is to isolate domain specific code in dedicated classes.</p>
+<p>To be defined...</p>
+</div>
+<div class="section" id="remove-unappropriate-inheritence">
+<h2><a class="toc-backref" href="#id16">Remove unappropriate inheritence</a></h2>
+<p>Several classes superclass from an upstream base class, although not all behaviour is desired.
+e.g. the baseNetworkClass always creates a set of resources for network, subnet, ports,...</p>
+<p>Better to not inherit if the parent class behavior is not desired.</p>
+<p>To be defined.</p>
+</div>
+<div class="section" id="dynamic-credentials">
+<h2><a class="toc-backref" href="#id17">Dynamic credentials</a></h2>
+<p>When the option is enabled in the tempest.conf, for each test class, credentials are created for:</p>
+<ul class="simple">
+<li>a tenant user (user with _member_ role)</li>
+<li>an admin user (user with &quot;admin&quot; role)</li>
+</ul>
+<p>Both users are created for a different tenant !!!
+As result, tests that require administration permissions for one resource, use the admin credentials for ALL resources.</p>
+<p>For strict permission verification, we should have both a tenant_user (member role) and admin user (admin role)
+for the SAME tenant.</p>
+<p>To be defined.</p>
+</div>
+</div>
+</div>
+</body>
+</html>

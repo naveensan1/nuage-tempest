@@ -1,0 +1,4 @@
+# Do run these tests
+
+# network API tests
+^tempest.api.network

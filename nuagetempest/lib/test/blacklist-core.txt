@@ -1,0 +1,19 @@
+# Do not run these tests
+
+# See OPENSTACK-1252
+^tempest.api.network.test_extra_dhcp_options.ExtraDHCPOptionsTestJSON.test_create_list_port_with_extra_dhcp_options
+^tempest.api.network.test_extra_dhcp_options.ExtraDHCPOptionsTestJSON.test_update_show_port_with_extra_dhcp_options
+
+# See OPENSTACK-761 - Documented Neutron incompatibility in Nuage
+^tempest.api.network.test_routers.RoutersTest.test_add_remove_router_interface_with_port_id
+^tempest.api.network.test_ports.PortsTestJSON.test_port_list_filter_by_router_id
+
+# See OPENSTACK-1254 -  Neutron create port does not return all attributes
+^tempest.api.network.test_ports.PortsTestJSON.test_show_port
+
+# See OPENSTACK-1256
+^tempest.api.network.test_floating_ips.FloatingIPTestJSON.test_floating_ip_update_different_router
+
+# See OPENSTACK-1258
+^tempest.api.network.test_ports.PortsTestJSON.test_update_port_with_security_group_and_extra_attributes
+^tempest.api.network.test_ports.PortsTestJSON.test_update_port_with_two_security_groups_and_extra_attributes

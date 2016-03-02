@@ -1,6 +1,7 @@
 import time
 import re
 
+
 def setup_tempest_public_network(osc):
 
     out = osc.cmd("source ~/admin_rc;neutron net-list", timeout=30, strict=False)
@@ -24,17 +25,19 @@ def setup_tempest_public_network(osc):
 
     return net_id
 
+
 def setup_tempest_tenant_user(osc, **kwargs):
 
     # Tenant
     # Looking if the tenant exists
     tenantid = osc.cmd("source ~/admin_rc;keystone tenant-get " + kwargs['tenant'] + " | awk '/ id / {print $4}'",
-                   timeout=30, strict=False)
+                       timeout=30, strict=False)
 
     # If tenant does not exists creating the tenant
     if not tenantid[0]:
-       tenantid = osc.cmd("source ~/admin_rc; keystone tenant-create --name " + kwargs['tenant'] + "| awk '/ id / {print $4}'",
-                            timeout=30, strict=False)
+        tenantid = osc.cmd("source ~/admin_rc; keystone tenant-create --name "
+                           + kwargs['tenant'] + "| awk '/ id / {print $4}'",
+                           timeout=30, strict=False)
 
     tenantid = str(tenantid[0][0])
     print "Tenant: " + kwargs['tenant'] + " ID: " + tenantid
@@ -42,11 +45,11 @@ def setup_tempest_tenant_user(osc, **kwargs):
     # User
     # Looking if the user exists
     userid = osc.cmd("source ~/admin_rc;keystone user-get " + kwargs['user'] + " | awk '/ id / {print $4}'",
-                   timeout=30, strict=False)
+                     timeout=30, strict=False)
 
     # If user does not exists creating the user
     if not userid[0]:
-       userid = osc.cmd("source ~/admin_rc; keystone user-create --name " + kwargs['user'] +
+        userid = osc.cmd("source ~/admin_rc; keystone user-create --name " + kwargs['user'] +
                          " --pass " + kwargs['pwd'] + " --tenant " + kwargs['tenant'] +
                          " | awk '/ id / {print $4}'", timeout=30, strict=False)
 
@@ -55,18 +58,19 @@ def setup_tempest_tenant_user(osc, **kwargs):
 
     # Role
     roleid = osc.cmd("source ~/admin_rc;keystone role-get " + kwargs['role'] + " | awk '/ id / {print $4}'",
-                   timeout=30, strict=False)
+                     timeout=30, strict=False)
 
     if not roleid[0]:
-       roleid = osc.cmd("source ~/admin_rc; keystone user-role-add --user " + kwargs['user'] + 
+        roleid = osc.cmd("source ~/admin_rc; keystone user-role-add --user " + kwargs['user'] +
                          " --role " + kwargs['role'] + " --tenant " + kwargs['tenant'] +
                          " | awk '/ id / {print $4}'", timeout=30, strict=False)
-       
+
     roleid = str(roleid[0][0])
     print "Role: " + kwargs['role'] + " ID: " + roleid
 
     print("User: %s (ID: %s)\nTenant: %s (ID: %s)\nRole: %s (ID: %s)" % (kwargs['user'], userid, kwargs['tenant'], tenantid, kwargs['role'], roleid))
     return None
+
 
 def setup_cmsid(osc):
 
@@ -113,7 +117,7 @@ def setup_accountsyaml():
 def setup_tempestcfg(**kwargs):
 
     api_extensions = "security-group, provider, binding, quotas, external-net, router, extraroute, ext-gw-mode, allowed-address-pairs, extra_dhcp_opt, net-partition, nuage-router, nuage-subnet, nuage-floatingip, nuage-gateway, vsd-resource, nuage-redirect-target, nuage-external-security-group, appdesigner"
-    nuage_plugin_file = "/etc/neutron/plugins/nuage/plugin.ini" 
+    nuage_plugin_file = "/etc/neutron/plugins/nuage/plugin.ini"
     accounts_file = "/etc/accounts.yaml"
 
     file = open(kwargs['tempest_cfg_file'], "w")
@@ -181,7 +185,7 @@ def setup_tempestcfg(**kwargs):
     file.write("swift = False\n")
     file.write("ceilometer = false\n")
     file.write("[auth]\n")
-    file.write("test_accounts_file = %s\n" % accounts_file)    
+    file.write("test_accounts_file = %s\n" % accounts_file)
     file.write("[volume]\n")
     file.write("region = regionOne\n")
     file.write("[compute-admin]\n")

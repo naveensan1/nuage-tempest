@@ -102,7 +102,31 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
             endpoint_type=CONF.network.endpoint_type,
             build_interval=CONF.network.build_interval,
             build_timeout=CONF.network.build_timeout,
-            **cls.os.default_params)
+            **cls.os_adm.default_params)
+
+    @classmethod
+    def create_router(cls, router_name=None, admin_state_up=False,
+                      external_network_id=None, enable_snat=None,
+                      **kwargs):
+        ext_gw_info = {}
+        if external_network_id:
+            ext_gw_info['network_id'] = external_network_id
+        if enable_snat is not None:
+            ext_gw_info['enable_snat'] = enable_snat
+        body = cls.admin_client.create_router(
+            router_name, external_gateway_info=ext_gw_info,
+            admin_state_up=admin_state_up, **kwargs)
+        router = body['router']
+        cls.routers.append(router)
+        return router
+
+    @classmethod
+    def create_router_interface(cls, router_id, subnet_id):
+        """Wrapper utility that returns a router interface."""
+        interface = cls.admin_client.add_router_interface(router_id,
+                                                    subnet_id=subnet_id)
+        cls.router_interfaces.append(interface)
+        return interface
 
     @classmethod
     def resource_setup(cls):
@@ -112,6 +136,7 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
         cls.gatewayports = []
         cls.gatewayvlans = []
         cls.gatewayvports = []
+        cls.router_interfaces = []
 
         cls.ext_net_id = CONF.network.public_network_id
         cls.network = cls.create_network()
@@ -164,6 +189,14 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
         for gateway in cls.gateways:
             try:
                 cls.nuage_vsd_client.delete_gateway(gateway[0]['ID'])
+            except Exception as exc:
+                LOG.exception(exc)
+                has_exception = True
+
+        for router_interface in cls.router_interfaces:
+            try:
+                cls.admin_client.remove_router_interface(router_interface['id'],
+                                                         subnet_id=router_interface['subnet_id'])
             except Exception as exc:
                 LOG.exception(exc)
                 has_exception = True

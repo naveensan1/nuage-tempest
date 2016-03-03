@@ -632,7 +632,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
 # overrule the parent class in order to allow update of tunnel_type
     def _patch_update_router(self, router_id, set_enable_snat, **kwargs):
         uri = '/routers/%s' % router_id
-        body = self.client.show_resource(uri)
+        body = self.admin_client.show_resource(uri)
 
         # patch for tunnel_type, and backhaul-attributes
         update_body = {'name': kwargs.get('name', body['router']['name']), 'admin_state_up': kwargs.get(
@@ -658,7 +658,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         if 'distributed' in kwargs:
             update_body['distributed'] = kwargs['distributed']
         update_body = dict(router=update_body)
-        return self.client.update_resource(uri, update_body)
+        return self.admin_client.update_resource(uri, update_body)
 
     def patch_update_router(self, router_id, **kwargs):
         """Update a router leaving enable_snat to its default value."""
@@ -677,12 +677,12 @@ class RoutersTestNuage(test_routers.RoutersTest):
         bkhaul_vnid = 81
         bkhaul_rt = "1:1"
         bkhaul_rd = "2:2"
-        create_body = self.client.create_router(
+        create_body = self.admin_client.create_router(
             name, nuage_backhaul_vnid=str(bkhaul_vnid),
             nuage_backhaul_rt=bkhaul_rt,
             nuage_backhaul_rd=bkhaul_rd,
             tunnel_type="VXLAN")
-        self.addCleanup(self._delete_router, create_body['router']['id'])
+        self.addCleanup(self._delete_router, create_body['router']['id'], network_client=self.admin_client)
         self.assertEqual(create_body['router']['name'], name)
         self.assertEqual(create_body['router']['nuage_backhaul_vnid'],
                          bkhaul_vnid)
@@ -702,7 +702,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         self.assertEqual(nuage_domain[0][u'backHaulRouteDistinguisher'],
                          bkhaul_rd)
         # Show details of the created router
-        show_body = self.client.show_router(create_body['router']['id'])
+        show_body = self.admin_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['name'], name)
         self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
                          bkhaul_vnid)
@@ -716,7 +716,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
                                                 nuage_backhaul_vnid=str(updated_bkhaul_vnid),
                                                 nuage_backhaul_rt=updated_bkhaul_rt,
                                                 nuage_backhaul_rd=updated_bkhaul_rd)
-        show_body = self.client.show_router(create_body['router']['id'])
+        show_body = self.admin_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
                          updated_bkhaul_vnid)
         self.assertEqual(show_body['router']['nuage_backhaul_rt'],

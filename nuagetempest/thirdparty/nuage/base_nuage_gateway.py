@@ -16,6 +16,7 @@
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
+
 from oslo_log import log as logging
 
 from tempest.api.network import base

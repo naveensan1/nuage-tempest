@@ -3,6 +3,11 @@
 
 # GATEWAY
 GATEWAY = 'gateways'
+
+# TODO: duplicate
+REDUNDANCY_GROUPS = 'redundancygroups'
+VSG_REDUNDANT_PORTS = 'vsgredundantports'
+
 REDCY_GRP = 'redundancygroups'
 GATEWAY_VSG_REDCY_PORT = 'vsgredundantports'
 GATEWAY_PORT = 'ports'

@@ -1,5 +1,13 @@
 # Copyright 2015 Alcatel-Lucent USA Inc.
 # All Rights Reserved.
+#
+#
+#    -----------------------WARNING----------------------------
+#     This file is present to support Legacy Test Code only.
+#     DO not use this file for writing the new tests.
+#    ----------------------------------------------------------
+#
+#
 
 import base64
 import httplib

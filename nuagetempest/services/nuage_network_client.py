@@ -12,7 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-
+#    -----------------------WARNING----------------------------
+#     This file is present to support Legacy Test Code only.
+#     DO not use this file for writing the new tests.
+#    ----------------------------------------------------------
+#
 import json
 
 from tempest.services.network.json import network_client

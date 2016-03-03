@@ -14,6 +14,6 @@
 # See OPENSTACK-1256
 ^tempest.api.network.test_floating_ips.FloatingIPTestJSON.test_floating_ip_update_different_router
 
-# See OPENSTACK-1258
+# See OPENSTACK-1258, OPENSTACK-1244
 ^tempest.api.network.test_ports.PortsTestJSON.test_update_port_with_security_group_and_extra_attributes
 ^tempest.api.network.test_ports.PortsTestJSON.test_update_port_with_two_security_groups_and_extra_attributes

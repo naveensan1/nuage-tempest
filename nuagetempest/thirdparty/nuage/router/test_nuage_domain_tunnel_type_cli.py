@@ -153,16 +153,17 @@ class TestNuageDomainTunnelTypeAsTenantCli(remote_cli_base_testcase.RemoteCliBas
     """DomainTunnelType tests using Neutron CLI client.
 
     """
-    CREATE_POLICY_ERROR = "Policy doesn't allow \(rule:create_router and rule:create_router:tunnel_type\)" \
-                          " to be performed"
-    UPDATE_POLICY_ERROR = "Policy doesn't allow \(rule:update_router and rule:update_router:tunnel_type\)" \
-                          " to be performed"
+    # CREATE_POLICY_ERROR = "Policy doesn't allow \(rule:create_router and rule:create_router:tunnel_type\)" \
+    #                       " to be performed"
+    # UPDATE_POLICY_ERROR = "Policy doesn't allow \(rule:update_router and rule:update_router:tunnel_type\)" \
+    #                        " to be performed"
+    CREATE_POLICY_ERROR = "disallowed by policy"
+    UPDATE_POLICY_ERROR = "disallowed by policy"
 
-    # @classmethod
-    # def resource_setup(cls):
-    #     super(TestNuageDomainTunnelTypeAsTenantCli, cls).resource_setup()
-    #     os = cls.get_client_manager()
-    #     cls.nuage_vsd_client = os.nuage_vsd_client
+    @classmethod
+    def setup_clients(cls):
+        super(TestNuageDomainTunnelTypeAsTenantCli, cls).setup_clients()
+        cls.nuage_vsd_client = nuage_client.NuageRestClient()
 
     @classmethod
     def get_data_center_default_domain_tunnel_type(cls):
@@ -170,7 +171,6 @@ class TestNuageDomainTunnelTypeAsTenantCli(remote_cli_base_testcase.RemoteCliBas
         cls.system_configuration = system_configurations[0]
         return cls.system_configuration['domainTunnelType']
 
-    @nuage_test.nuage_skip_because(message="needs modified policy.json file to pass")
     @nuage_test.header()
     def test_tenant_shall_not_see_the_router_with_domain_tunnel_type(self):
         def get_attr(a_dict, key):
@@ -202,7 +202,6 @@ class TestNuageDomainTunnelTypeAsTenantCli(remote_cli_base_testcase.RemoteCliBas
                                 self.update_router_with_args, created_router['id'], "--tunnel-type",
                                 new_domain_tunnel_type)
 
-    @nuage_test.nuage_skip_because(message="needs modified policy.json file to pass")
     @nuage_test.header()
     def test_tenant_shall_not_create_router_with_domain_tunnel_type(self):
         router_name = data_utils.rand_name('test-router')

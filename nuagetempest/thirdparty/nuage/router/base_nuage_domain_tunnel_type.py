@@ -18,10 +18,10 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
     def setup_clients(cls):
         super(NuageDomainTunnelTypeBase, cls).setup_clients()
         os = cls.get_client_manager()
-        cls.client = os.network_client
 
         # initialize admin client
         cls.os_adm = cls.get_client_manager(credential_type='admin')
+        cls.client = cls.os_adm.network_client
 
         cls.nuage_vsd_client = nuage_client.NuageRestClient()
 

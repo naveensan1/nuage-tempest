@@ -50,9 +50,19 @@ class TestNuageFipRateLimit(base_nuage_fip_rate_limit.NuageFipRateLimitBase):
     def test_create_floatingip_with_rate_limit_minimal_value(self):
         self._create_fip_with_fip_rate_limit(self.ports[0], 0)
 
+    # No max defined on API
+    # @nuage_test.header()
+    # def test_create_floatingip_with_rate_limit_maximal_value(self):
+    #     self._create_fip_with_fip_rate_limit(self.ports[0], constants.MAX_INT)
+
     @nuage_test.header()
-    def test_create_floatingip_with_rate_limit_maximal_value(self):
-        self._create_fip_with_fip_rate_limit(self.ports[0], constants.MAX_INT)
+    def test_create_floatingip_with_rate_limit_high_value(self):
+        self._create_fip_with_fip_rate_limit(self.ports[0], 100000)
+
+    @nuage_test.header()
+    #See: OPENSTACK-1105
+    def test_create_floatingip_with_rate_limit_fractional_value(self):
+        self._create_fip_with_fip_rate_limit(self.ports[0], 0.5)
 
     @nuage_test.header()
     def test_create_floatingip_with_rate_limit_unlimited_value(self):
@@ -69,10 +79,15 @@ class TestNuageFipRateLimit(base_nuage_fip_rate_limit.NuageFipRateLimitBase):
         fip = self._create_fip_with_fip_rate_limit(self.ports[0], 123)
         self._update_fip_with_fip_rate_limit(self.ports[0], fip, constants.UNLIMITED)
 
-    @nuage_test.header()
-    def test_update_floatingip_with_rate_limit_maximal_value(self):
+    # NO Max value defined in API
+    # @nuage_test.header()
+    # def test_update_floatingip_with_rate_limit_maximal_value(self):
+    #     fip = self._create_fip_with_fip_rate_limit(self.ports[0], 123)
+    #     self._update_fip_with_fip_rate_limit(self.ports[0], fip, constants.MAX_INT)
+
+    def test_update_floatingip_with_rate_limit_high_value(self):
         fip = self._create_fip_with_fip_rate_limit(self.ports[0], 123)
-        self._update_fip_with_fip_rate_limit(self.ports[0], fip, constants.MAX_INT)
+        self._update_fip_with_fip_rate_limit(self.ports[0], fip, 100000)
 
     @nuage_test.header()
     def test_list_floatingip_does_not_show_rate_limit_value(self):

@@ -272,7 +272,8 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
         # create subnet on OS with nuagenet param set to l2domain UUID
         net_name = data_utils.rand_name('network-')
         network = self.create_network(network_name=net_name)
-        netpart = self.create_netpartition('np1')
+        netpart_name = data_utils.rand_name('netpart-')
+        netpart = self.create_netpartition(netpart_name)
         self.assertRaises(self.failure_type,
                           self.create_subnet,
                           network,

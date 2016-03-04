@@ -688,10 +688,10 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
         # Create a neutron port
         post_body = {"network_id": self.network['id'],
                      "device_owner": 'compute:ironic'}
-        body = self.client.create_port(**post_body)
+        body = self.ports_client.create_port(**post_body)
         port = body['port']
 
-        self.addCleanup(self.client.delete_port, port['id'])
+        self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
             'gatewayvlan': gw_vlan1[0]['ID'],
@@ -751,10 +751,10 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
     def test_show_nuage_vport(self):
         post_body = {"network_id": self.network['id'],
                      "device_owner": 'compute:ironic'}
-        body = self.client.create_port(**post_body)
+        body = self.ports_client.create_port(**post_body)
         port = body['port']
 
-        self.addCleanup(self.client.delete_port, port['id'])
+        self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
             'gatewayvlan': self.gatewayvlans[2][0]['ID'],
@@ -776,10 +776,10 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
     def test_default_security_group_host_port(self):
         post_body = {"network_id": self.network['id'],
                      "device_owner": 'nuage:vip'}
-        body = self.client.create_port(**post_body)
+        body = self.ports_client.create_port(**post_body)
         port = body['port']
 
-        self.addCleanup(self.client.delete_port, port['id'])
+        self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
             'gatewayvlan': self.gatewayvlans[3][0]['ID'],

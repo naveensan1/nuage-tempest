@@ -25,18 +25,21 @@ from nuagetempest.lib import service_mgmt
 from nuagetempest.lib.utils import constants as nuage_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
+from tempest.api.network import base
+
 
 from tempest import test
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
-class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTestJSON):
+class FloatingIPTestAdminNuage(base.BaseAdminNetworkTest):
 
     @classmethod
     def setup_clients(cls):
         super(FloatingIPTestAdminNuage, cls).setup_clients()
         cls.nuage_vsd_client = NuageRestClient()
+
         # Overriding cls.client with Nuage network client
         cls.client = NuageNetworkClientJSON(
             cls.os.auth_provider,
@@ -46,32 +49,25 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
             build_interval=CONF.network.build_interval,
             build_timeout=CONF.network.build_timeout,
             **cls.os.default_params)
-        # # initialize admin client
-        # cls.admin_client = NuageNetworkClientJSON(
-        #     cls.os_adm.auth_provider,
-        #     CONF.network.catalog_type,
-        #     CONF.network.region or CONF.identity.region,
-        #     endpoint_type=CONF.network.endpoint_type,
-        #     build_interval=CONF.network.build_interval,
-        #     build_timeout=CONF.network.build_timeout,
-        #     **cls.os_adm.default_params)
+
+        cls.service_manager = service_mgmt.ServiceManager()
+
+        if not cls.service_manager.is_service_running(nuage_constants.NEUTRON_SERVICE):
+            cls.service_manager.comment_configuration_attribute(
+                CONF.nuage_sut.nuage_plugin_configuration,
+                nuage_constants.NUAGE_UPLINK_GROUP,
+                nuage_constants.NUAGE_UPLINK)
+            cls.service_manager.start_service(nuage_constants.NEUTRON_SERVICE)
+            cls.service_manager.wait_for_service_status(nuage_constants.NEUTRON_SERVICE)
 
     @classmethod
     def resource_setup(cls):
         super(FloatingIPTestAdminNuage, cls).resource_setup()
-        # cls.nuage_vsd_client = cls.get_client_manager().nuage_vsd_client
-
-        # # Overriding cls.client with Nuage network client
-        # cls.client = cls.os.nuage_network_client
-        # # initialize admin client
-        # cls.admin_client = cls.os_adm.nuage_network_client
-        cls.service_manager = service_mgmt.ServiceManager()
         # resources required for uplink subnet
         cls.gateway = None
         cls.gatewayport = None
         cls.gatewayvlan = None
         cls.uplinksubnet = None
-   
 
     @classmethod
     def resource_cleanup(cls):
@@ -98,7 +94,7 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
             cls.gatewayport[0]['ID'], 'test', vlan_no)
         
 
-    @classmethod
+#    @classmethod
     def create_uplink_subnet(cls, parentID=""):
         uplink_subnet_dict = {}
         uplink_subnet_dict['name'] = "uplink-sub1"
@@ -112,8 +108,12 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
         uplink_subnet_dict['sharedResourceParentID'] = parentID
         cls.uplinksubnet = cls.nuage_vsd_client.create_uplink_subnet(
                                **uplink_subnet_dict)
-        
-       
+        cls.addCleanup(cls.delete_uplink_subnet, str(cls.uplinksubnet[0]['ID']))
+
+    def delete_uplink_subnet(self, subnet_id):
+        self.uplinksubnet = None
+        return self.nuage_vsd_client.delete_uplink_subnet(subnet_id)
+
     @classmethod
     def delete_gateway_port_vlan(cls):
         if cls.gatewayvlan:
@@ -130,9 +130,9 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
         name = data_utils.rand_name('network-')
         kwargs = {'name': name,
                   'router:external': True}
-        body = self.admin_client.create_network(**kwargs)
+        body = self.admin_networks_client.create_network(**kwargs)
         pubnet = body['network']
-        self.addCleanup(self.admin_client.delete_network, pubnet['id'])
+        self.addCleanup(self.admin_networks_client.delete_network, pubnet['id'])
         fipsub_name = data_utils.rand_name('fipsub-')
         kwargs = {'name': fipsub_name,
                   'network_id': pubnet['id'],
@@ -140,14 +140,14 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
                   'cidr': cidr}
         if nuage_uplink:
             kwargs.update({'nuage_uplink': nuage_uplink})
-        body = self.admin_client.create_subnet(**kwargs)
+        body = self.admin_subnets_client.create_subnet(**kwargs)
         self.assertEqual(fipsub_name, body['subnet']['name'])
         self.assertEqual(cidr, body['subnet']['cidr'])
         return  body['subnet']
 
     def delete_fip_subnet(self, fipsubID):
         try:
-            self.admin_client.delete_subnet(fipsubID)
+            self.admin_subnets_client.delete_subnet(fipsubID)
         except Exception as exc:
             LOG.exception(exc)
 
@@ -156,38 +156,45 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
        # Add the shared zone ID to the plugin.ini file
        self.service_manager.set_configuration_attribute(
            CONF.nuage_sut.nuage_plugin_configuration,
-           # nuage_constants.NUAGE_PLUGIN_CONFIG_FILE,
            nuage_constants.NUAGE_UPLINK_GROUP,
            nuage_constants.NUAGE_UPLINK, 
            nuage_uplink)
        self.service_manager.start_service(nuage_constants.NEUTRON_SERVICE)
+       self.service_manager.wait_for_service_status(nuage_constants.NEUTRON_SERVICE)
 
 
     def delete_uplink_key_from_plugin_file(self):
        self.service_manager.stop_service(nuage_constants.NEUTRON_SERVICE)
        self.service_manager.comment_configuration_attribute(
-           nuage_constants.NUAGE_PLUGIN_CONFIG_FILE,
+           CONF.nuage_sut.nuage_plugin_configuration,
            nuage_constants.NUAGE_UPLINK_GROUP,
            nuage_constants.NUAGE_UPLINK)
-       self.service_manager.start_service(nuage_constants.NEUTRON_SERVICE) 
-        
+       self.service_manager.start_service(nuage_constants.NEUTRON_SERVICE)
+       self.service_manager.wait_for_service_status(nuage_constants.NEUTRON_SERVICE)
+
     @test.attr(type='smoke')
     def test_fipsubs_in_shared_domain_with_plugin_file(self):
+        # TODO: add the test code here
+        raise(exceptions.NotImplemented)
         pass
 
     @test.attr(type='smoke')
     def test_create_fipsubs_in_shared_domain(self):
         # Create first FIP subnet
         fipsub1 = self.create_fip_subnet('172.40.0.0/24')
+        self.addCleanup(self.delete_fip_subnet, fipsub1['id'])
+
         # Get FIP parentID
         fip_extID =  self.nuage_vsd_client.get_vsd_external_id(fipsub1['id'])
-        self.addCleanup(self.delete_fip_subnet, fipsub1['id'])
         nuage_fipsubnet1 = self.nuage_vsd_client.get_sharedresource(
           filters='externalID', filter_value= fip_extID)
         self.assertEqual(fipsub1['id'], nuage_fipsubnet1[0]['name'])      
+
         # Create uplink subnet on VSD
         self.create_gateway_port_vlan()
+
         self.create_uplink_subnet(parentID=nuage_fipsubnet1[0]['parentID'])
+
         # Verify the uplink-subnet parentID with the FIPsubnet parentID
         self.assertEqual(nuage_fipsubnet1[0]['parentID'],
                          self.uplinksubnet[0]['sharedResourceParentID'])
@@ -200,7 +207,6 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
         self.assertEqual(fipsub2['id'], nuage_fipsubnet2[0]['name'])      
         self.assertEqual(nuage_fipsubnet1[0]['parentID'],
                          nuage_fipsubnet2[0]['parentID'])
-        self.nuage_vsd_client.delete_uplink_subnet(str(self.uplinksubnet[0]['ID']))
         #self.delete_gateway_port_vlan()
 
     @test.attr(type='smoke')
@@ -208,7 +214,7 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
         fipsub = self.create_fip_subnet('172.40.0.0/24')
         self.addCleanup(self.delete_fip_subnet, fipsub['id'])
         # Check the nuage_uplink field in subnet-show
-        body = self.admin_client.show_subnet(fipsub['id'])
+        body = self.admin_subnets_client.show_subnet(fipsub['id'])
         fipsub_show = body['subnet']
         # Get FIP parentID in VSD
         fip_extID =  self.nuage_vsd_client.get_vsd_external_id(fipsub['id'])
@@ -216,16 +222,15 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
           filters='externalID', filter_value= fip_extID)
         self.assertEqual(fipsub_show['id'], nuage_fipsubnet[0]['name'])
         self.assertEqual(fipsub_show['nuage_uplink'], nuage_fipsubnet[0]['parentID'])
-        
-   
+
     def test_fipsubs_in_shared_domain_negative(self):
         # Create fipsub with invalid UUID for nuage_uplink
         name = data_utils.rand_name('network-')
         kwargs = {'name': name,
                   'router:external': True}
-        body = self.admin_client.create_network(**kwargs)
+        body = self.admin_networks_client.create_network(**kwargs)
         pubnet = body['network']
-        self.addCleanup(self.admin_client.delete_network, pubnet['id'])
+        self.addCleanup(self.admin_networks_client.delete_network, pubnet['id'])
         fipsub_name = data_utils.rand_name('fipsub-')
         kwargs = {'name': fipsub_name,
                   'network_id': pubnet['id'],
@@ -233,7 +238,7 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
                   'cidr': '160.60.0.0/24',
                   'nuage_uplink' : '111111111'}
         self.assertRaises(exceptions.BadRequest,
-                          self.admin_client.create_subnet,
+                          self.admin_subnets_client.create_subnet,
                           **kwargs)        
 
         # Creation FIP subnet with same cidr and nuage_uplink should fail
@@ -249,24 +254,23 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
                   'cidr': '172.40.0.0/24',
                   'nuage_uplink' : nuage_fipsubnet1[0]['parentID']}
         self.assertRaises(exceptions.ServerFault,
-                          self.admin_client.create_subnet,
+                          self.admin_subnets_client.create_subnet,
                           **kwargs)
        
         # Update of nuage_uplink is should not be allowed
         # Will Fail due to OPENSTACK-1083
         self.assertRaises(exceptions.BadRequest,
-                         self.admin_client.update_subnet,
+                         self.admin_subnets_client.update_subnet,
                          fipsub1['id'],
                          nuage_uplink='c6166803-c4cb-40a0-805a-e42bbf4c0790')
       
-         
-
     def test_fipsub_with_nuageuplink_and_uplinksub_no_parentID(self):
        # Create gateway, port and vlan on VSD
        self.create_gateway_port_vlan()
        # Create uplink subnet without passing parentID
        self.create_uplink_subnet()
-       #self.uplinksubnet 
+
+       #self.uplinksubnet
        fipsub1 = self.create_fip_subnet('172.40.0.0/24', 
            self.uplinksubnet[0]['parentID'])
        self.addCleanup(self.delete_fip_subnet, fipsub1['id'])
@@ -329,8 +333,6 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
                         nuage_fipsubnet4[0]['parentID'])
        self.delete_uplink_key_from_plugin_file()
 
-
-     
     def test_multi_fipsubs_with_uplinkID_in_file_and_uplinksub_no_parentID(self):
        # Create gateway, port and vlan on VSD
        self.create_gateway_port_vlan()
@@ -367,6 +369,5 @@ class FloatingIPTestAdminNuage(test_floating_ips_admin_actions.FloatingIPAdminTe
        self.assertEqual(self.uplinksubnet[0]['parentID'],
                         nuage_fipsubnet3[0]['parentID'])
 
-              
        self.delete_uplink_key_from_plugin_file()
- 
+

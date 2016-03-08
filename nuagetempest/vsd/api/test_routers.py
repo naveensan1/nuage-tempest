@@ -1,6 +1,5 @@
 from tempest import config
 from nuagetempest.lib import topology
-from nuagetempest.tests.api.test_routers import RoutersTest
 from tempest import test
 import re
 import unittest
@@ -9,12 +8,12 @@ import sys
 CONF = config.CONF
 TB = topology.testbed
 
-class RoutersTest(RoutersTest):
+class RoutersTest():
     
     def __init__(self):
         pass  
 
-    class _create_router_interface(RoutersTest):
+    class _create_router_interface():
 
         def __init__(self):
             self.def_net_partition = CONF.nuage.nuage_default_netpartition

@@ -47,8 +47,6 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
     @classmethod
     def resource_setup(cls):
         super(NuageExtSecGroup, cls).resource_setup()
-        #cls.nuageclient = cls.get_client_manager().nuage_vsd_client
-        #cls.client = cls.get_client_manager().nuage_network_client
         cls.external_secgroups = []
         
     @classmethod

@@ -138,43 +138,46 @@ class RoutersTestNuage(test_routers.RoutersTest):
 
         self.assertEqual(nuage_domain_subnet[0][u'name'], subnet['id'])
 
-    @testtools.skip("Removed this user case for now")
-    @test.attr(type='smoke')
-    def test_add_remove_router_interface_with_port_id(self):
-        network = self.create_network()
-        subnet = self.create_subnet(network)
-        # Validate that an L2Domain is created on VSD for the subnet creation
-        nuage_l2dom = self.nuage_vsd_client.get_l2domain(
-            filters='externalID',
-            filter_value=subnet['id'])
-        self.assertEqual(nuage_l2dom[0][u'name'], subnet['id'])
-
-        router = self._create_router(data_utils.rand_name('router-'))
-        nuage_domain = self.nuage_vsd_client.get_l3domain(
-            filters='externalID', filter_value=router['id'])
-        port_body = self.ports_client.create_port(
-            network_id=network['id'])
-        # add router interface to port created above
-        interface = self.client.add_router_interface(
-            router['id'], port_id=port_body['port']['id'])
-        self.addCleanup(self._remove_router_interface_with_port_id,
-                        router['id'], port_id=port_body['port']['id'])
-        self.assertIn('subnet_id', interface.keys())
-        self.assertIn('port_id', interface.keys())
-        # Verify router id is equal to device id in port details
-        show_port_body = self.ports_client.show_port(
-            interface['port_id'])
-        self.assertEqual(show_port_body['port']['device_id'],
-                         router['id'])
-        # Validate L2 Domain created above is deleted and added as a L3Domain
-        # subnet
-        nuage_l2dom = self.nuage_vsd_client.get_l2domain(
-            filters='externalID', filter_value=subnet['id'])
-        self.assertEqual(
-            nuage_l2dom, '', "L2 domain is not deleted in VSD")
-        nuage_domain_subnet = self.nuage_vsd_client.get_domain_subnet(
-            n_constants.DOMAIN, nuage_domain[0]['ID'])
-        self.assertEqual(nuage_domain_subnet[0][u'name'], subnet['id'])
+    # Router interface by port_id is not supported by Nuage
+    # See OPENSTACK-759 Known Neutron incompatibility in Nuage
+    #
+    # @testtools.skip("Removed this user case for now")
+    # @test.attr(type='smoke')
+    # def test_add_remove_router_interface_with_port_id(self):
+    #     network = self.create_network()
+    #     subnet = self.create_subnet(network)
+    #     # Validate that an L2Domain is created on VSD for the subnet creation
+    #     nuage_l2dom = self.nuage_vsd_client.get_l2domain(
+    #         filters='externalID',
+    #         filter_value=subnet['id'])
+    #     self.assertEqual(nuage_l2dom[0][u'name'], subnet['id'])
+    #
+    #     router = self._create_router(data_utils.rand_name('router-'))
+    #     nuage_domain = self.nuage_vsd_client.get_l3domain(
+    #         filters='externalID', filter_value=router['id'])
+    #     port_body = self.ports_client.create_port(
+    #         network_id=network['id'])
+    #     # add router interface to port created above
+    #     interface = self.client.add_router_interface(
+    #         router['id'], port_id=port_body['port']['id'])
+    #     self.addCleanup(self._remove_router_interface_with_port_id,
+    #                     router['id'], port_id=port_body['port']['id'])
+    #     self.assertIn('subnet_id', interface.keys())
+    #     self.assertIn('port_id', interface.keys())
+    #     # Verify router id is equal to device id in port details
+    #     show_port_body = self.ports_client.show_port(
+    #         interface['port_id'])
+    #     self.assertEqual(show_port_body['port']['device_id'],
+    #                      router['id'])
+    #     # Validate L2 Domain created above is deleted and added as a L3Domain
+    #     # subnet
+    #     nuage_l2dom = self.nuage_vsd_client.get_l2domain(
+    #         filters='externalID', filter_value=subnet['id'])
+    #     self.assertEqual(
+    #         nuage_l2dom, '', "L2 domain is not deleted in VSD")
+    #     nuage_domain_subnet = self.nuage_vsd_client.get_domain_subnet(
+    #         n_constants.DOMAIN, nuage_domain[0]['ID'])
+    #     self.assertEqual(nuage_domain_subnet[0][u'name'], subnet['id'])
 
     @test.requires_ext(extension='extraroute', service='network')
     @test.attr(type='smoke')

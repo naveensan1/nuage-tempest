@@ -34,13 +34,14 @@ class TestNuageFipRateLimitBaseCreateNegative(base_nuage_fip_rate_limit.NuageFip
         super(TestNuageFipRateLimitBaseCreateNegative, cls).resource_setup()
         cls.port = cls.ports[0]
 
-    @test.attr(type=['negative'])
-    @nuage_test.header()
-    @nuage_test.nuage_skip_because(message="VSD-13397 - FIP rate limiting: no maxim value")
-    def test_create_fip_with_default_rate_limit_above_max_value(self):
-        self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT,
-                                self._create_fip_with_fip_rate_limit, self.port, constants.MAX_INT + 1)
+    # VSD does not test on maximum anymore
+    # @test.attr(type=['negative'])
+    # @nuage_test.header()
+    # @nuage_test.nuage_skip_because(message="VSD-13397 - FIP rate limiting: no maxim value")
+    # def test_create_fip_with_default_rate_limit_above_max_value(self):
+    #     self.assertRaisesRegexp(lib_exc.BadRequest,
+    #                             MSG_INVALID_INPUT,
+    #                             self._create_fip_with_fip_rate_limit, self.port, constants.MAX_INT + 1)
 
     @nuage_test.header()
     @test.attr(type=['negative'])
@@ -78,13 +79,14 @@ class TestNuageFipRateLimitBaseUpdateNegative(base_nuage_fip_rate_limit.NuageFip
         cls.port = cls.ports[1]
         cls.fip = cls._create_fip_for_port_with_rate_limit(cls.port['id'], rate_limit=456)
 
-    @nuage_test.header()
-    @nuage_test.nuage_skip_because(message="VSD-13397 - FIP rate limiting: no maxim value")
-    def test_update_floatingip_with_rate_limit_above_maximal_value(self):
-        self.fip = self._create_fip_for_port_with_rate_limit(self.port['id'], 456)
-        self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT,
-                                self._update_fip_with_fip_rate_limit, self.port, self.fip, constants.MAX_INT + 1)
+    # VSD does not has maximum !
+    # @nuage_test.header()
+    # @nuage_test.nuage_skip_because(message="VSD-13397 - FIP rate limiting: no maxim value")
+    # def test_update_floatingip_with_rate_limit_above_maximal_value(self):
+    #     self.fip = self._create_fip_for_port_with_rate_limit(self.port['id'], 456)
+    #     self.assertRaisesRegexp(lib_exc.BadRequest,
+    #                             MSG_INVALID_INPUT,
+    #                             self._update_fip_with_fip_rate_limit, self.port, self.fip, constants.MAX_INT + 1)
 
     @nuage_test.header()
     @test.attr(type=['negative'])

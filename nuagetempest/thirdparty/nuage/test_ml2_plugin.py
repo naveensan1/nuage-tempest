@@ -28,6 +28,7 @@ CONF = config.CONF
 
 class VSDManagedNetworksTestJSONML2(
         test_vsd_managed_network.VSDManagedTestNetworks):
+    credentials = ['admin']
 
     def __init__(self, *args, **kwargs):
         super(VSDManagedNetworksTestJSONML2, self).__init__(*args, **kwargs)
@@ -35,20 +36,9 @@ class VSDManagedNetworksTestJSONML2(
 
     @classmethod
     def setup_clients(cls):
+        cls.os = cls.os_adm
+        cls.manager = cls.admin_manager
         super(VSDManagedNetworksTestJSONML2, cls).setup_clients()
-        cls.client = NuageNetworkClientJSON(
-            cls.os.auth_provider,
-            CONF.network.catalog_type,
-            CONF.network.region or CONF.identity.region,
-            endpoint_type=CONF.network.endpoint_type,
-            build_interval=CONF.network.build_interval,
-            build_timeout=CONF.network.build_timeout,
-            **cls.os.default_params)
-        cls.os_adm = cls.get_client_manager(credential_type='admin')
-        # Using admin client because provider:network_type is an admin
-        # attribute
-        cls.subnets_client = cls.os_adm.subnets_client
-        cls.servers_client = cls.os_adm.servers_client
 
     @classmethod
     def create_network(cls, network_name=None):

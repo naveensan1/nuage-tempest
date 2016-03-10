@@ -43,12 +43,6 @@ class BaseMixin(BaseTestCase):
         super(BaseMixin, cls).setup_clients()
         cls.manager = cls.get_client_manager()
         cls.admin_manager = cls.get_client_manager(credential_type='admin')
-
-class BGPVPNMixin(BaseMixin):
-
-    @classmethod
-    def setup_clients(cls):
-        super(BGPVPNMixin, cls).setup_clients()
         cls.manager.bgpvpn_client = bgpvpn_client.BGPVPNClient(
                                         cls.manager.auth_provider)
         cls.admin_manager.bgpvpn_client = bgpvpn_client.BGPVPNClient(
@@ -61,6 +55,12 @@ class BGPVPNMixin(BaseMixin):
                                             cls.manager.auth_provider)
         cls.admin_manager.rtr_assoc_client = bgpvpn_client.BGPVPNRouterAssociationClient(
                                             cls.manager.auth_provider)
+
+class BGPVPNMixin(BaseMixin):
+
+    @classmethod
+    def setup_clients(cls):
+        super(BGPVPNMixin, cls).setup_clients()
         cls.bgpvpn_client = cls.manager.bgpvpn_client
         cls.bgpvpn_client_admin = cls.admin_manager.bgpvpn_client
         cls.net_assoc_client = cls.manager.net_assoc_client

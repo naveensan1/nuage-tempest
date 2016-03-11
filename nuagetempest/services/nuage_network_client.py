@@ -16,7 +16,7 @@
 import json
 
 from tempest.services.network.json import network_client
-from tempest.common import service_client
+from tempest.lib.common import rest_client as service_client
 import nuagetempest.lib.utils.constants as constants
 
 

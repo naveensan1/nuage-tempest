@@ -133,9 +133,9 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
 
     def test_create_show_list_delete_ext_secgroup(self, *args):
         router_name = data_utils.rand_name('router-')
-        body = self.client.create_router(router_name)
+        body = self.routers_client.create_router(router_name)
         esg_router = body['router']
-        self.addCleanup(self.client.delete_router, esg_router['id'])
+        self.addCleanup(self.routers_client.delete_router, esg_router['id'])
         name = data_utils.rand_name('esg-')
         kwargs = {'name': name,
                   'router_id': esg_router['id'],
@@ -167,9 +167,9 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
 
     def test_create_show_list_delete_ext_secgroup_rule(self):
         router_name = data_utils.rand_name('router-')
-        body = self.client.create_router(router_name)
+        body = self.routers_client.create_router(router_name)
         esg_router = body['router']
-        self.addCleanup(self.client.delete_router, esg_router['id'])
+        self.addCleanup(self.routers_client.delete_router, esg_router['id'])
         body, name = self._create_security_group()
         sec_group = body['security_group']
         name = data_utils.rand_name('esg-')
@@ -243,9 +243,9 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
 
     def test_create_delete_invalid_ext_secgroup(self):
         router_name = data_utils.rand_name('router-')
-        body = self.client.create_router(router_name)
+        body = self.routers_client.create_router(router_name)
         esg_router = body['router']
-        self.addCleanup(self.client.delete_router, esg_router['id'])
+        self.addCleanup(self.routers_client.delete_router, esg_router['id'])
         body, name = self._create_security_group()
         sec_group = body['security_group']
         name = data_utils.rand_name('esg-')
@@ -276,9 +276,9 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
 
     def test_create_delete_invalid_ext_secgroup_rule(self):
         router_name = data_utils.rand_name('router-')
-        body = self.client.create_router(router_name)                    
+        body = self.routers_client.create_router(router_name)
         esg_router = body['router']
-        self.addCleanup(self.client.delete_router, esg_router['id'])                         
+        self.addCleanup(self.routers_client.delete_router, esg_router['id'])
         body, name = self._create_security_group()                           
         sec_group = body['security_group']                 
         name = data_utils.rand_name('esg-')

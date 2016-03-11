@@ -65,7 +65,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     def test_create_show_list_update_delete_router(self):
         # Create a router
         name = data_utils.rand_name('router-')
-        create_body = self.client.create_router(
+        create_body = self.routers_client.create_router(
             name, external_gateway_info={
                 "network_id": CONF.network.public_network_id},
             admin_state_up=False)
@@ -81,24 +81,24 @@ class RoutersTestNuage(test_routers.RoutersTest):
             CONF.network.public_network_id)
         self.assertEqual(create_body['router']['admin_state_up'], False)
         # Show details of the created router
-        show_body = self.client.show_router(create_body['router']['id'])
+        show_body = self.routers_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['name'], name)
         self.assertEqual(
             show_body['router']['external_gateway_info']['network_id'],
             CONF.network.public_network_id)
         self.assertEqual(show_body['router']['admin_state_up'], False)
         # List routers and verify if created router is there in response
-        list_body = self.client.list_routers()
+        list_body = self.routers_client.list_routers()
         routers_list = list()
         for router in list_body['routers']:
             routers_list.append(router['id'])
         self.assertIn(create_body['router']['id'], routers_list)
         # Update the name of router and verify if it is updated
         updated_name = 'updated ' + name
-        update_body = self.client.update_router(create_body['router']['id'],
+        update_body = self.routers_client.update_router(create_body['router']['id'],
                                                 name=updated_name)
         self.assertEqual(update_body['router']['name'], updated_name)
-        show_body = self.client.show_router(
+        show_body = self.routers_client.show_router(
             create_body['router']['id'])
         self.assertEqual(show_body['router']['name'], updated_name)
 
@@ -116,7 +116,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         nuage_domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID', filter_value=router['id'])
         # Add router interface with subnet id
-        interface = self.client.add_router_interface(
+        interface = self.routers_client.add_router_interface(
             router['id'], subnet_id=subnet['id'])
         self.addCleanup(self._remove_router_interface_with_subnet_id,
                         router['id'], subnet['id'])
@@ -158,7 +158,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     #     port_body = self.ports_client.create_port(
     #         network_id=network['id'])
     #     # add router interface to port created above
-    #     interface = self.client.add_router_interface(
+    #     interface = self.routers_client.add_router_interface(
     #         router['id'], port_id=port_body['port']['id'])
     #     self.addCleanup(self._remove_router_interface_with_port_id,
     #                     router['id'], port_id=port_body['port']['id'])
@@ -205,7 +205,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         next_hop = str(cidr[2])
         destination = str(self.subnet['cidr'])
         test_routes = [{'nexthop': next_hop, 'destination': destination}]
-        extra_route = self.client.update_extra_routes(
+        extra_route = self.routers_client.update_extra_routes(
             router_id=self.router['id'],
             routes=test_routes)
         self.assertEqual(1, len(extra_route['router']['routes']))
@@ -213,7 +213,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
                          extra_route['router']['routes'][0]['destination'])
         self.assertEqual(next_hop,
                          extra_route['router']['routes'][0]['nexthop'])
-        show_body = self.client.show_router(self.router['id'])
+        show_body = self.routers_client.show_router(self.router['id'])
         self.assertEqual(destination,
                          show_body['router']['routes'][0]['destination'])
         self.assertEqual(next_hop,
@@ -244,7 +244,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
                         netpart_body['net_partition']['id'])
 
         # Create router in new net-partition
-        rtr_body = self.client.create_router(
+        rtr_body = self.routers_client.create_router(
             data_utils.rand_name('router'), admin_state_up=True, **netpart)
         self.addCleanup(self._delete_router, rtr_body['router']['id'])
 
@@ -262,7 +262,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         # VSD should throw an exception
         self.assertRaises(
             exceptions.BadRequest,
-            self.client.add_router_interface,
+            self.routers_client.add_router_interface,
             rtr_body['router']['id'], subnet_id=subnet['id'])
 
     @test.attr(type='smoke')
@@ -293,7 +293,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
             'nuage_router_template': nuage_template[0]['ID']
         }
         # Create a router using new template
-        rtr_body = self.client.create_router(
+        rtr_body = self.routers_client.create_router(
             data_utils.rand_name('router'), admin_state_up=True,
             **rtr_template)
         self.addCleanup(self._delete_router, rtr_body['router']['id'])
@@ -315,7 +315,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         # Create a router using new template and verify correct exception is
         # raised
         self.assertRaises(exceptions.ServerFault,
-                          self.client.create_router,
+                          self.routers_client.create_router,
                           data_utils.rand_name('router'),
                           True,
                           **rtr_template)
@@ -338,7 +338,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         }
 
         self.assertRaises(exceptions.ServerFault,
-                          self.client.create_router,
+                          self.routers_client.create_router,
                           data_utils.rand_name('router'),
                           True,
                           **rtr_template)
@@ -356,7 +356,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
                         netpart_body['net_partition']['id'])
 
         # Create router in that net-partition
-        rtr_body = self.client.create_router(
+        rtr_body = self.routers_client.create_router(
             data_utils.rand_name('router'), admin_state_up=True, **netpart)
         self.addCleanup(self._delete_router, rtr_body['router']['id'])
 
@@ -376,7 +376,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
             'rt': '64435:' + str(randint(0, 1000)),
             'rd': '64435:' + str(randint(0, 1000)),
         }
-        create_body = self.client.create_router(
+        create_body = self.routers_client.create_router(
             data_utils.rand_name('router'), admin_state_up=True, **rtrd)
         self.addCleanup(self._delete_router, create_body['router']['id'])
 
@@ -391,7 +391,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     @test.attr(type='smoke')
     def test_router_update_rt_rd(self):
         # Create a router
-        create_body = self.client.create_router(
+        create_body = self.routers_client.create_router(
             data_utils.rand_name('router'), external_gateway_info=None,
             admin_state_up=True)
         self.addCleanup(self._delete_router, create_body['router']['id'])
@@ -417,7 +417,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     @test.attr(type='smoke')
     def test_router_update_no_rt_rd(self):
         # Create a router
-        create_body = self.client.create_router(
+        create_body = self.routers_client.create_router(
             data_utils.rand_name('router'), external_gateway_info=None,
             admin_state_up=True)
         self.addCleanup(self._delete_router, create_body['router']['id'])
@@ -429,7 +429,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
                          nuage_domain[0]['description'])
 
         update_dict = dict()
-        self.client.update_router(create_body['router']['id'], **update_dict)
+        self.routers_client.update_router(create_body['router']['id'], **update_dict)
 
         # Get the domain from VSD and verify that rt/rd is not updated
         nuage_domain = self.nuage_vsd_client.get_l3domain(
@@ -442,7 +442,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     @test.attr(type='smoke')
     def test_router_update_rt(self):
         # Create a router
-        create_body = self.client.create_router(
+        create_body = self.routers_client.create_router(
             data_utils.rand_name('router'), external_gateway_info=None,
             admin_state_up=True)
         self.addCleanup(self._delete_router, create_body['router']['id'])
@@ -465,7 +465,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     @test.attr(type='smoke')
     def test_router_update_rd(self):
         # Create a router
-        create_body = self.client.create_router(
+        create_body = self.routers_client.create_router(
             data_utils.rand_name('router'), external_gateway_info=None,
             admin_state_up=True)
         self.addCleanup(self._delete_router, create_body['router']['id'])
@@ -513,8 +513,8 @@ class RoutersTestNuage(test_routers.RoutersTest):
             'admin_state_up': True
         }
 
-        rtr_body = self.admin_client.create_router(**router)
-        self.addCleanup(self.admin_client.delete_router,
+        rtr_body = self.admin_routers_client.create_router(**router)
+        self.addCleanup(self.admin_routers_client.delete_router,
                         rtr_body['router']['id'])
 
         # Verify Router is created in VSD
@@ -523,7 +523,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         self.assertEqual(nuage_domain[0]['description'],
                          rtr_body['router']['name'])
 
-        self.admin_client.add_router_interface(
+        self.admin_routers_client.add_router_interface(
             rtr_body['router']['id'],
             subnet_id=subn_body['subnet']['id'])
 
@@ -540,7 +540,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         self.assertIsNotNone(nuage_domain_subn[0])
 
         # Delete the router interface
-        self.admin_client.remove_router_interface(
+        self.admin_routers_client.remove_router_interface(
             rtr_body['router']['id'],
             subnet_id=subn_body['subnet']['id'])
 
@@ -553,7 +553,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         self.assertIsNotNone(nuage_perm[0])
 
     def _delete_extra_routes(self, router_id):
-        self.client.delete_extra_routes(router_id)
+        self.routers_client.delete_extra_routes(router_id)
 
     @test.requires_ext(extension='ext-gw-mode', service='network')
     @test.attr(type='smoke')
@@ -574,9 +574,9 @@ class RoutersTestNuage(test_routers.RoutersTest):
             external_gateway_info = {
                 'network_id': CONF.network.public_network_id,
                 'enable_snat': enable_snat}
-            create_body = self.admin_client.create_router(
+            create_body = self.admin_routers_client.create_router(
                 name, external_gateway_info=external_gateway_info)
-            self.addCleanup(self.admin_client.delete_router,
+            self.addCleanup(self.admin_routers_client.delete_router,
                             create_body['router']['id'])
             # Verify snat attributes after router creation
             self._verify_router_gateway(create_body['router']['id'],
@@ -615,7 +615,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         nuage_domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID', filter_value=router['id'])
         self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_DISABLED)
-        self.admin_client.update_router_with_snat_gw_info(
+        self.admin_routers_client.update_router_with_snat_gw_info(
             router['id'],
             external_gateway_info={
                 'network_id': CONF.network.public_network_id,
@@ -680,12 +680,12 @@ class RoutersTestNuage(test_routers.RoutersTest):
         bkhaul_vnid = 81
         bkhaul_rt = "1:1"
         bkhaul_rd = "2:2"
-        create_body = self.admin_client.create_router(
+        create_body = self.admin_routers_client.create_router(
             name, nuage_backhaul_vnid=str(bkhaul_vnid),
             nuage_backhaul_rt=bkhaul_rt,
             nuage_backhaul_rd=bkhaul_rd,
             tunnel_type="VXLAN")
-        self.addCleanup(self._delete_router, create_body['router']['id'], network_client=self.admin_client)
+        self.addCleanup(self._delete_router, create_body['router']['id'], routers_client=self.admin_routers_client)
         self.assertEqual(create_body['router']['name'], name)
         self.assertEqual(create_body['router']['nuage_backhaul_vnid'],
                          bkhaul_vnid)
@@ -705,7 +705,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         self.assertEqual(nuage_domain[0][u'backHaulRouteDistinguisher'],
                          bkhaul_rd)
         # Show details of the created router
-        show_body = self.admin_client.show_router(create_body['router']['id'])
+        show_body = self.admin_routers_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['name'], name)
         self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
                          bkhaul_vnid)
@@ -719,7 +719,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
                                                 nuage_backhaul_vnid=str(updated_bkhaul_vnid),
                                                 nuage_backhaul_rt=updated_bkhaul_rt,
                                                 nuage_backhaul_rd=updated_bkhaul_rd)
-        show_body = self.admin_client.show_router(create_body['router']['id'])
+        show_body = self.admin_routers_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
                          updated_bkhaul_vnid)
         self.assertEqual(show_body['router']['nuage_backhaul_rt'],
@@ -739,15 +739,15 @@ class RoutersTestNuage(test_routers.RoutersTest):
     def test_router_backhaul_vnid_rt_rd_negative(self):
         # Incorrect backhaul-vnid value
         self.assertRaises(exceptions.ServerFault,
-                          self.client.create_router,
+                          self.routers_client.create_router,
                           data_utils.rand_name('router-'),
                           nuage_backhaul_vnid="0xb")
         self.assertRaises(exceptions.ServerFault,
-                          self.client.create_router,
+                          self.routers_client.create_router,
                           data_utils.rand_name('router-'),
                           nuage_backhaul_rt="-1:1")
         self.assertRaises(exceptions.ServerFault,
-                          self.client.create_router,
+                          self.routers_client.create_router,
                           data_utils.rand_name('router-'),
                           nuage_backhaul_rd="2:-3")
 

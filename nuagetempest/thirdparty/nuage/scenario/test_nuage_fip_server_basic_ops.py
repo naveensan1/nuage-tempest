@@ -184,13 +184,13 @@ class TestNetworkBasicOps(NuageNetworkScenarioTest,
         self._check_tenant_network_connectivity()
 
         # Create floating IP with FIP rate limiting
-        result = self.os.network_client.create_floatingip(
+        result = self.os.floating_ips_client.create_floatingip(
             floating_network_id=CONF.network.public_network_id,
             port_id=self.port_id,
             nuage_fip_rate=FIP_RATE_LIMIT)
         # convert to format used throughout this file
         floating_ip = net_resources.DeletableFloatingIp(
-            client=self.os.network_client,
+            client=self.os.floating_ips_client,
             **result['floatingip'])
 
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
@@ -227,16 +227,16 @@ class TestNetworkBasicOps(NuageNetworkScenarioTest,
         keypair = self.create_keypair()
         self.keypairs[keypair['name']] = keypair
         security_groups = [{'name': self.security_group['name']}]
-        create_kwargs = {
-            'networks': [
-                {'uuid': network.id},
-            ],
-            'key_name': keypair['name'],
-            'security_groups': security_groups,
-        }
+        network = {'uuid': network.id}
         if port_id is not None:
-            create_kwargs['networks'][0]['port'] = port_id
-        server = self.create_server(name=name, create_kwargs=create_kwargs)
+            network['port'] = port_id
+
+        server = self.create_server(
+            name=name,
+            networks=[network],
+            key_name=keypair['name'],
+            security_groups=security_groups,
+            wait_until='ACTIVE')
         self.servers.append(server)
         return server
 
@@ -244,7 +244,7 @@ class TestNetworkBasicOps(NuageNetworkScenarioTest,
         return self.keypairs[server['key_name']]['private_key']
 
     def _check_tenant_network_connectivity(self):
-        ssh_login = CONF.compute.image_ssh_user
+        ssh_login = CONF.validation.image_ssh_user
         for server in self.servers:
             # call the common method in the parent class
             super(TestNetworkBasicOps, self).\
@@ -266,7 +266,7 @@ class TestNetworkBasicOps(NuageNetworkScenarioTest,
         :param should_check_floating_ip_status: bool. should status of
         floating_ip be checked or not
         """
-        ssh_login = CONF.compute.image_ssh_user
+        ssh_login = CONF.validation.image_ssh_user
         floating_ip, server = self.floating_ip_tuple
         ip_address = floating_ip.floating_ip_address
         private_key = None

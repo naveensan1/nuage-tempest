@@ -202,12 +202,13 @@ class FIPtoUnderlayTestNuage(base_nuage_fip_underlay.NuageFipUnderlayBase):
     def test_update_external_subnet_with_snat_neg(self):
         self._verify_update_external_subnet_with_underlay_neg()
 
-    #
-    #  Scaling tests
-    #
-    #
-    @nuage_test.header()
-    def test_scale_create_external_subnet_with_underlay_gre(self):
-        self._verify_create_external_subnet_with_underlay_scale('GRE', 32)
-        # def test_scale_create_external_subnet_with_underlay_VXLAN(self):
-        #     self._verify_create_external_subnet_with_underlay_scale('VXLAN',400)
+    ## TODO: Hendrik - test needs to run exclusively
+    # #
+    # #  Scaling tests
+    # #
+    # #
+    # @nuage_test.header()
+    # def test_scale_create_external_subnet_with_underlay_gre(self):
+    #     self._verify_create_external_subnet_with_underlay_scale('GRE', 32)
+    #     # def test_scale_create_external_subnet_with_underlay_VXLAN(self):
+    #     #     self._verify_create_external_subnet_with_underlay_scale('VXLAN',400)

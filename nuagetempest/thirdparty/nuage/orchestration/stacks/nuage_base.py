@@ -42,6 +42,7 @@ class NuageBaseOrchestrationTest(base.BaseOrchestrationTest):
 
         cls.admin_network_client = cls.os_adm.network_client
         cls.admin_networks_client = cls.os_adm.networks_client
+        cls.admin_routers_client = cls.os_adm.routers_client
 
     @classmethod
     def resource_setup(cls):
@@ -218,7 +219,7 @@ class NuageBaseOrchestrationTest(base.BaseOrchestrationTest):
         """Verifies created router."""
         resource = self.test_resources.get(resource_name)
         router_id = resource['physical_resource_id']
-        body = self.admin_network_client.show_router(router_id)
+        body = self.admin_routers_client.show_router(router_id)
         router = body['router']
 
         # basic verifications

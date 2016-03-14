@@ -54,14 +54,14 @@ class TestNuageFipRateLimitBaseCreateNegative(base_nuage_fip_rate_limit.NuageFip
     @test.attr(type=['negative'])
     def test_create_fip_with_default_rate_limit_invalid_value(self):
         self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT_FOR_OPERATION,
+                                MSG_INVALID_INPUT,
                                 self._create_fip_with_fip_rate_limit, self.port, 'NaN')
 
     @nuage_test.header()
     @test.attr(type=['negative'])
     def test_create_fip_with_default_rate_limit_no_value(self):
         self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT_FOR_OPERATION,
+                                MSG_INVALID_INPUT,
                                 self._create_fip_with_fip_rate_limit, self.port, '')
 
 
@@ -99,14 +99,14 @@ class TestNuageFipRateLimitBaseUpdateNegative(base_nuage_fip_rate_limit.NuageFip
     @test.attr(type=['negative'])
     def test_update_fip_with_default_rate_limit_invalid_value(self):
         self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT_FOR_OPERATION,
+                                MSG_INVALID_INPUT,
                                 self._update_fip_with_fip_rate_limit, self.port, self.fip, 'NaN')
 
     @nuage_test.header()
     @test.attr(type=['negative'])
     def test_update_fip_with_default_rate_limit_no_value(self):
         self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT_FOR_OPERATION,
+                                MSG_INVALID_INPUT,
                                 self._update_fip_with_fip_rate_limit, self.port, self.fip, '')
 
 

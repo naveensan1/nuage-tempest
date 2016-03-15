@@ -196,7 +196,7 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
 
         for router_interface in cls.router_interfaces:
             try:
-                cls.admin_client.remove_router_interface(router_interface['id'],
+                cls.admin_routers_client.remove_router_interface(router_interface['id'],
                                                          subnet_id=router_interface['subnet_id'])
             except Exception as exc:
                 LOG.exception(exc)

@@ -103,8 +103,8 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
            VSD patEnabled flag must be DISABLED
            """
         name = data_utils.rand_name('router-without-ext-gw-without-snat-' + str(self.nuage_pat_ini))
-        create_body = self.admin_client.create_router(name)
-        self.addCleanup(self.admin_client.delete_router,
+        create_body = self.admin_routers_client.create_router(name)
+        self.addCleanup(self.admin_routers_client.delete_router,
                         create_body['router']['id'])
         # Verify snat attributes after router creation
         self._verify_router_gateway(create_body['router']['id'],
@@ -140,9 +140,9 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
         external_gateway_info = {
             'network_id': ext_network['id']}
         # Create the router
-        create_body = self.admin_client.create_router(
+        create_body = self.admin_routers_client.create_router(
             name, external_gateway_info=external_gateway_info)
-        self.addCleanup(self.admin_client.delete_router,
+        self.addCleanup(self.admin_routers_client.delete_router,
                         create_body['router']['id'])
         # enable_snat should be set to pat_value
         external_gateway_info = {
@@ -151,7 +151,7 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
         self._verify_router_gateway(create_body['router']['id'],
                                     exp_ext_gw_info=external_gateway_info)
         # Do a show of this router, and enable_snat must also be false
-        show_body = self.admin_client.show_router(create_body['router']['id'])
+        show_body = self.admin_routers_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['external_gateway_info']['enable_snat'], pat_value)
         # VSD patEnabled flag should be = ENABLED (True) / DISABLED (False)
         nuage_domain = self.nuage_vsd_client.get_l3domain(
@@ -178,7 +178,7 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
                 'external_gateway_info': external_gateway_info
             }
             self.assertRaises(exceptions.BadRequest,
-                              self.admin_client.create_router,
+                              self.admin_routers_client.create_router,
                               **kvargs)
 
     def _verify_create_router_with_external_gateway_with_snat(self):
@@ -197,15 +197,15 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
             external_gateway_info = {
                 'network_id': ext_network['id'],
                 'enable_snat': enable_snat}
-            create_body = self.admin_client.create_router(
+            create_body = self.admin_routers_client.create_router(
                 name, external_gateway_info=external_gateway_info)
-            self.addCleanup(self.admin_client.delete_router,
+            self.addCleanup(self.admin_routers_client.delete_router,
                             create_body['router']['id'])
             # Verify snat attributes after router creation
             self._verify_router_gateway(create_body['router']['id'],
                                         exp_ext_gw_info=external_gateway_info)
             # Showing this router also return the proper value of snat
-            show_body = self.admin_client.show_router(create_body['router']['id'])
+            show_body = self.admin_routers_client.show_router(create_body['router']['id'])
             self.assertEqual(show_body['router']['external_gateway_info']['enable_snat'], enable_snat)
             # Check patEnabled flag on VSD: should be accordingly
             nuage_domain = self.nuage_vsd_client.get_l3domain(
@@ -267,15 +267,15 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
             external_gateway_info = {
                 'network_id': ext_network['id'],
                 'enable_snat': enable_snat}
-            create_body = self.admin_client.create_router(
+            create_body = self.admin_routers_client.create_router(
                 name, external_gateway_info=external_gateway_info)
-            self.addCleanup(self.admin_client.delete_router,
+            self.addCleanup(self.admin_routers_client.delete_router,
                             create_body['router']['id'])
             # Verify snat attributes after router creation
             self._verify_router_gateway(create_body['router']['id'],
                                         exp_ext_gw_info=external_gateway_info)
             # Showing this router also return the proper value of snat
-            show_body = self.admin_client.show_router(create_body['router']['id'])
+            show_body = self.admin_routers_client.show_router(create_body['router']['id'])
             self.assertEqual(show_body['router']['external_gateway_info']['enable_snat'], enable_snat)
             # Check patEnabled flag on VSD: should be accordingly
             nuage_domain = self.nuage_vsd_client.get_l3domain(
@@ -288,7 +288,7 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
             updated_external_gateway_info = {
                 'network_id': ext_network['id'],
                 'enable_snat': False if enable_snat else True}
-            updated_body = self.admin_client.update_router(create_body['router']['id'],
+            updated_body = self.admin_routers_client.update_router(create_body['router']['id'],
                                                            external_gateway_info=updated_external_gateway_info)
             self._verify_router_gateway(updated_body['router']['id'],
                                         exp_ext_gw_info=updated_external_gateway_info)
@@ -307,15 +307,15 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
         """
         name = data_utils.rand_name('show-router-without-ext-gw-' + str(self.nuage_pat_ini))
         # Create the router
-        create_body = self.admin_client.create_router(name)
-        self.addCleanup(self.admin_client.delete_router,
+        create_body = self.admin_routers_client.create_router(name)
+        self.addCleanup(self.admin_routers_client.delete_router,
                         create_body['router']['id'])
         # Response should include the given value, if not, the show
         # probably will result in a wrong value as well
         self._verify_router_gateway(create_body['router']['id'],
                                     exp_ext_gw_info=None)
         # Do a show of this router
-        show_body = self.admin_client.show_router(create_body['router']['id'])
+        show_body = self.admin_routers_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['external_gateway_info'], None)
 
     def _verify_show_router_with_external_gateway_with_snat(self):
@@ -332,16 +332,16 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
                 'network_id': ext_network['id'],
                 'enable_snat': enable_snat}
             # Create the router
-            create_body = self.admin_client.create_router(
+            create_body = self.admin_routers_client.create_router(
                 name, external_gateway_info=external_gateway_info)
-            self.addCleanup(self.admin_client.delete_router,
+            self.addCleanup(self.admin_routers_client.delete_router,
                             create_body['router']['id'])
             # Response should include the given value, if not, the show
             # probably will result in a wrong value as well
             self._verify_router_gateway(create_body['router']['id'],
                                         exp_ext_gw_info=external_gateway_info)
             # Do a show of this router
-            show_body = self.admin_client.show_router(create_body['router']['id'])
+            show_body = self.admin_routers_client.show_router(create_body['router']['id'])
             self.assertEqual(show_body['router']['external_gateway_info']['enable_snat'], enable_snat)
 
     def _verify_list_router_with_gateway_with_snat(self):
@@ -373,12 +373,12 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
                 external_gateway_info = {
                     'network_id': ext_network['id'],
                     'enable_snat': enable_snat}
-            create_body = self.admin_client.create_router(name, external_gateway_info=external_gateway_info)
-            self.addCleanup(self.admin_client.delete_router, create_body['router']['id'])
+            create_body = self.admin_routers_client.create_router(name, external_gateway_info=external_gateway_info)
+            self.addCleanup(self.admin_routers_client.delete_router, create_body['router']['id'])
             # Add this router to our create router list
             # createdRouterList.append(create_body['router']['id'])
             # list all routers and see if this one is part of it
-            list_body = self.admin_client.list_routers()
+            list_body = self.admin_routers_client.list_routers()
             for router in list_body['routers']:
                 created_id = create_body['router']['id']
                 listed_id = router['id']
@@ -398,7 +398,7 @@ class NuagePatUnderlayBase(base.BaseRouterTest):
                          interface_port['fixed_ips'][0]['subnet_id'])
 
     def _verify_router_gateway(self, router_id, exp_ext_gw_info=None):
-        show_body = self.admin_client.show_router(router_id)
+        show_body = self.admin_routers_client.show_router(router_id)
         actual_ext_gw_info = show_body['router']['external_gateway_info']
         if exp_ext_gw_info is None:
             self.assertIsNone(actual_ext_gw_info)

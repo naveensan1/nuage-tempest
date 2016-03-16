@@ -55,7 +55,7 @@ class TestNuagePatUnderlayConfigNotAvailable(base_nuage_pat_underlay.NuagePatUnd
             'external_gateway_info': external_gateway_info
         }
         self.assertRaises(exceptions.BadRequest,
-                          self.admin_client.create_router,
+                          self.admin_routers_client.create_router,
                           **kvargs)
 
     @nuage_test.header()
@@ -80,7 +80,7 @@ class TestNuagePatUnderlayConfigNotAvailable(base_nuage_pat_underlay.NuagePatUnd
                 'external_gateway_info': external_gateway_info
             }
             self.assertRaises(exceptions.BadRequest,
-                              self.admin_client.create_router,
+                              self.admin_routers_client.create_router,
                               **kvargs)
 
     @nuage_test.header()

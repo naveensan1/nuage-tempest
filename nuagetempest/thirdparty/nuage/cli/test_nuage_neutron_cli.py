@@ -92,12 +92,13 @@ class TestNuageNeutronCli(remote_cli_base_testcase.RemoteCliBaseTestCase):
             wanted_commands.add('nuage-redirect-target-show')
             wanted_commands.add('nuage-redirect-target-vip-create')
 
-        wanted_commands.add('nuage-policy-group-list')
-        wanted_commands.add('nuage-policy-group-show')
-        wanted_commands.add('nuage-available-policy-groups')
-        wanted_commands.add('nuage-available-floatingips')
-        wanted_commands.add('nuage-floatingip-list')
-        wanted_commands.add('nuage-floatingip-show')
+        # TODO: waelj - From 4.0 onwards
+        # wanted_commands.add('nuage-policy-group-list')
+        # wanted_commands.add('nuage-policy-group-show')
+        # wanted_commands.add('nuage-available-policy-groups')
+        # wanted_commands.add('nuage-available-floatingips')
+        # wanted_commands.add('nuage-floatingip-list')
+        # wanted_commands.add('nuage-floatingip-show')
 
         if test.is_extension_enabled('nuage-gateway', 'network'):
             wanted_commands.add('nuage-gateway-list')

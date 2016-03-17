@@ -47,6 +47,7 @@ class OrchestrationNeutronResourcesTest(nuage_base.NuageBaseOrchestrationTest):
     def setup_clients(cls):
         super(OrchestrationNeutronResourcesTest, cls).setup_clients()
         cls.network_client = cls.os.network_client
+        cls.routers_client = cls.os.routers_client
         cls.subnets_client = cls.os.subnets_client
         cls.ports_client = cls.os.ports_client
 
@@ -153,7 +154,7 @@ class OrchestrationNeutronResourcesTest(nuage_base.NuageBaseOrchestrationTest):
     def test_created_router(self):
         """Verifies created router."""
         router_id = self.test_resources.get('Router')['physical_resource_id']
-        body = self.network_client.show_router(router_id)
+        body = self.routers_client.show_router(router_id)
         router = body['router']
         self.assertEqual(self.neutron_basic_template['resources'][
             'Router']['properties']['name'], router['name'])

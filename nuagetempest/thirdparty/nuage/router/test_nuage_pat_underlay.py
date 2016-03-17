@@ -86,7 +86,7 @@ class TestNuagePatUnderlay(base_nuage_pat_underlay.NuagePatUnderlayBase):
                 'external_gateway_info': external_gateway_info
             }
             self.assertRaises(exceptions.BadRequest,
-                              self.admin_client.create_router,
+                              self.admin_routers_client.create_router,
                               **kvargs)
 
     @nuage_test.header()
@@ -108,7 +108,7 @@ class TestNuagePatUnderlay(base_nuage_pat_underlay.NuagePatUnderlayBase):
             }
             # Try to create the router: must fail
             self.assertRaises(exceptions.BadRequest,
-                              self.admin_client.create_router,
+                              self.admin_routers_client.create_router,
                               **kvargs)
 
     @nuage_test.header()
@@ -129,7 +129,7 @@ class TestNuagePatUnderlay(base_nuage_pat_underlay.NuagePatUnderlayBase):
             'external_gateway_info': external_gateway_info
         }
         self.assertRaises(exceptions.NotFound,
-                          self.admin_client.create_router,
+                          self.admin_routers_client.create_router,
                           **kvargs)
 
     @nuage_test.header()
@@ -198,7 +198,7 @@ class TestNuagePatUnderlay(base_nuage_pat_underlay.NuagePatUnderlayBase):
             'external_gateway_info': external_gateway_info
         }
         self.assertRaises(exceptions.BadRequest,
-                          self.admin_client.create_router,
+                          self.admin_routers_client.create_router,
                           **kvargs)
 
     @nuage_test.header()
@@ -226,13 +226,13 @@ class TestNuagePatUnderlay(base_nuage_pat_underlay.NuagePatUnderlayBase):
             #                                     admin_state_up=True,
             #                                     external_network_id=ext_network['id'],
             #                                     enable_snat=enable_snat)
-            create_body = self.admin_client.create_router(
+            create_body = self.admin_routers_client.create_router(
                 router_name, external_gateway_info=external_gateway_info)
             # Verify snat attributes after router creation
             self._verify_router_gateway(create_body['router']['id'],
                                         exp_ext_gw_info=external_gateway_info)
             # Showing this router also return the proper value of snat
-            show_body = self.admin_client.show_router(create_body['router']['id'])
+            show_body = self.admin_routers_client.show_router(create_body['router']['id'])
             self.assertEqual(show_body['router']['external_gateway_info']['enable_snat'], enable_snat)
             # Add a subnet
             subnet_body = self.admin_subnets_client.create_subnet(network_id=ext_network['id'],
@@ -249,5 +249,5 @@ class TestNuagePatUnderlay(base_nuage_pat_underlay.NuagePatUnderlayBase):
             cidr = cidr.next(1)
             # Delete the router and subnet here to prevent the issues with deleting subnets while still having IP
             # ports in use, until the router is deleted
-            self.admin_client.delete_router(create_body['router']['id'])
+            self.admin_routers_client.delete_router(create_body['router']['id'])
             self.admin_subnets_client.delete_subnet(subnet_body['subnet']['id'])

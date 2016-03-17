@@ -316,7 +316,7 @@ class NuageFipUnderlayBase(base.BaseAdminNetworkTest,):
             'underlay': True
         }
         self.assertRaises(exceptions.ServerFault,
-                          self.admin_networks_client.create_subnet,
+                          self.admin_subnets_client.create_subnet,
                           **kvargs)
 
     #

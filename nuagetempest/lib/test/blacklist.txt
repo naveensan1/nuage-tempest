@@ -5,3 +5,13 @@
 
 # no scaling tests
 scale
+
+# VSD-14449, OPENSTACK-1105
+^nuagetempest.thirdparty.nuage.floating_ip.test_nuage_fip_rate_limit.TestNuageFipRateLimit.test_create_floatingip_with_rate_limit_fractional_value
+
+# VSD-14393
+^nuagetempest.thirdparty.nuage.floating_ip.test_nuage_fip_rate_limit_negative.TestNuageFipRateLimitBaseCreateNegative.test_create_fip_with_default_rate_limit_invalid_value
+^nuagetempest.thirdparty.nuage.floating_ip.test_nuage_fip_rate_limit_negative.TestNuageFipRateLimitBaseUpdateNegative.test_update_fip_with_default_rate_limit_invalid_value
+
+# Not implemented testcase
+^nuagetempest.thirdparty.nuage.test_nuage_uplink_fipsubnet_connectivity_model.FloatingIPTestAdminNuage.test_fipsubs_in_shared_domain_with_plugin_file

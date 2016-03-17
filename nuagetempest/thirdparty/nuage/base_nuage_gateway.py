@@ -114,7 +114,7 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
             ext_gw_info['network_id'] = external_network_id
         if enable_snat is not None:
             ext_gw_info['enable_snat'] = enable_snat
-        body = cls.admin_client.create_router(
+        body = cls.admin_routers_client.create_router(
             router_name, external_gateway_info=ext_gw_info,
             admin_state_up=admin_state_up, **kwargs)
         router = body['router']
@@ -124,7 +124,7 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
     @classmethod
     def create_router_interface(cls, router_id, subnet_id):
         """Wrapper utility that returns a router interface."""
-        interface = cls.admin_client.add_router_interface(router_id,
+        interface = cls.admin_routers_client.add_router_interface(router_id,
                                                     subnet_id=subnet_id)
         cls.router_interfaces.append(interface)
         return interface
@@ -196,7 +196,7 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
 
         for router_interface in cls.router_interfaces:
             try:
-                cls.admin_client.remove_router_interface(router_interface['id'],
+                cls.admin_routers_client.remove_router_interface(router_interface['id'],
                                                          subnet_id=router_interface['subnet_id'])
             except Exception as exc:
                 LOG.exception(exc)

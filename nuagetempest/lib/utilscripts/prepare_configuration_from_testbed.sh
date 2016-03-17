@@ -358,6 +358,8 @@ iniset ${TEMPEST_CONF} auth use_dynamic_credentials true
 
 # [validation]
 iniset ${TEMPEST_CONF} validation network_for_ssh public
+iniset ${TEMPEST_CONF} validation image_ssh_user cirros
+iniset ${TEMPEST_CONF} validation image_ssh_password "cubswin:)"
 
 # [Compute]
 iniset ${TEMPEST_CONF} compute image_ref "${IMAGE_UUID}"

@@ -1,3 +1,12 @@
+#
+#
+#    -----------------------WARNING----------------------------
+#     This file is present to support Legacy Test Code only.
+#     DO not use this file for writing the new tests.
+#    ----------------------------------------------------------
+#
+#
+
 import netaddr
 
 from tempest import config

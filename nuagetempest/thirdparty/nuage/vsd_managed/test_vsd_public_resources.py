@@ -15,7 +15,7 @@
 
 from netaddr import *
 
-import base_vsd_managed_networks
+from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from tempest.lib.common.utils import data_utils
 from tempest import config
 from tempest import test
@@ -368,9 +368,11 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         subnet = self._create_subnet(**kwargs)
         # Then I expect a neutron port equal to 'neutron_network_dhcp_nuage_port'
         network_dhcp_port_present = self._check_neutron_network_dhcp_nuage_port(network['id'])
-        self.assertEqual(network_dhcp_port_present,
-                         expect_network_dhcp_nuage_port,
-                         message="Mismatch for neytwork:dhcp:nuage port, expect %s " % expect_network_dhcp_nuage_port)
+
+        if CONF.nuage_sut.nuage_plugin_mode == 'monolytic' :
+            self.assertEqual(network_dhcp_port_present,
+                             expect_network_dhcp_nuage_port,
+                             message="Mismatch for neytwork:dhcp:nuage port, expect %s " % expect_network_dhcp_nuage_port)
 
         # And gateway_ip equals to expected_gateway_ip
         self.assertEqual(str(subnet['gateway_ip']), str(expected_gateway_ip),

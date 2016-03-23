@@ -14,10 +14,10 @@
 #    under the License.
 
 from netaddr import IPNetwork
+from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_network as base_vsdman
 from tempest.lib import exceptions
 
-import base_vsd_managed_network as base_vsdman
-import test_netpartitions
+import nuagetempest.thirdparty.nuage.test_netpartitions as test_netpartitions
 from nuagetempest.lib.utils import constants
 from tempest import config
 from tempest.api.compute import base as serv_base

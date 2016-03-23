@@ -12,15 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from nuagetempest.thirdparty.nuage.vsd_managed import test_vsd_managed_network
 
 import testtools
 from netaddr import IPNetwork
 from tempest.lib import exceptions
 from tempest.lib.common.utils import data_utils
 
-import test_vsd_managed_network
 from nuagetempest.lib.utils import constants as n_constants
-from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from tempest import config
 
 CONF = config.CONF

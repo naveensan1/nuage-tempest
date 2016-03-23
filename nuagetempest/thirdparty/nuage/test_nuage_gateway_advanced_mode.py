@@ -16,8 +16,8 @@
 import uuid
 
 from netaddr import *
+from nuagetempest.thirdparty.nuage.vsd_managed import test_vsd_managed_network
 from tempest import config
-from tempest import clients
 from tempest import exceptions
 from tempest.api.network import base
 # from tempest.common import credentials
@@ -26,7 +26,6 @@ from tempest.lib.common.utils import data_utils
 from tempest.lib.common.utils.data_utils import rand_name
 from tempest.lib import exceptions as lib_exec
 from nuagetempest.lib.utils import constants as n_constants
-from nuagetempest.thirdparty.nuage import test_vsd_managed_network
 from oslo_log import log as logging
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON

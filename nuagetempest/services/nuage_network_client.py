@@ -12,11 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-
+#    -----------------------WARNING----------------------------
+#     This file is present to support Legacy Test Code only.
+#     DO not use this file for writing the new tests.
+#    ----------------------------------------------------------
+#
 import json
 
 from tempest.services.network.json import network_client
-from tempest.common import service_client
+from tempest.lib.common import rest_client as service_client
 import nuagetempest.lib.utils.constants as constants
 
 
@@ -223,6 +227,40 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
     def list_flows(self, app_id):
         uri = '%s/flows?app_id=%s' % (self.uri_prefix, app_id)
         return self._get_request(uri)
+
+    def create_nuage_external_security_group(self, **kwargs):
+        post_body = {'nuage_external_security_group': kwargs}
+        body = json.dumps(post_body)
+        uri = '%s/nuage-external-security-groups' % self.uri_prefix
+        resp, body = self.post(uri, body)
+        self.expected_success(201, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_nuage_external_security_group(self, security_group_id):
+        uri = '/nuage-external-security-groups/%s' % security_group_id
+        return self.delete_resource(uri)
+
+    def show_nuage_external_security_group(self, security_group_id):
+        uri = '/nuage-external-security-groups/%s' % security_group_id
+        return self.show_resource(uri)
+
+    def create_nuage_external_security_group_rule(self, **kwargs):
+        post_body = {'nuage_external_security_group_rule': kwargs}
+        body = json.dumps(post_body)
+        uri = '%s/nuage-external-security-group-rules' % self.uri_prefix
+        resp, body = self.post(uri, body)
+        self.expected_success(201, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_nuage_external_security_group_rule(self, security_group_rule_id):
+        uri = '/nuage-external-security-group-rules/%s' % security_group_rule_id
+        return self.delete_resource(uri)
+
+    def show_nuage_external_security_group_rule(self, security_group_rule_id):
+        uri = '/nuage-external-security-group-rules/%s' % security_group_rule_id
+        return self.show_resource(uri)
 
     def list_nuage_external_security_group(self, router_id):
         uri = '%s/nuage-external-security-groups.json?router=%s' % (self.uri_prefix, router_id)

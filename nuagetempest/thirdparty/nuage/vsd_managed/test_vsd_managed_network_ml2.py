@@ -12,15 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from nuagetempest.thirdparty.nuage.vsd_managed import test_vsd_managed_network
 
 import testtools
 from netaddr import IPNetwork
 from tempest.lib import exceptions
 from tempest.lib.common.utils import data_utils
 
-import test_vsd_managed_network
 from nuagetempest.lib.utils import constants as n_constants
-from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from tempest import config
 
 CONF = config.CONF
@@ -28,6 +27,7 @@ CONF = config.CONF
 
 class VSDManagedNetworksTestJSONML2(
         test_vsd_managed_network.VSDManagedTestNetworks):
+    credentials = ['admin']
 
     def __init__(self, *args, **kwargs):
         super(VSDManagedNetworksTestJSONML2, self).__init__(*args, **kwargs)
@@ -35,20 +35,9 @@ class VSDManagedNetworksTestJSONML2(
 
     @classmethod
     def setup_clients(cls):
+        cls.os = cls.os_adm
+        cls.manager = cls.admin_manager
         super(VSDManagedNetworksTestJSONML2, cls).setup_clients()
-        cls.client = NuageNetworkClientJSON(
-            cls.os.auth_provider,
-            CONF.network.catalog_type,
-            CONF.network.region or CONF.identity.region,
-            endpoint_type=CONF.network.endpoint_type,
-            build_interval=CONF.network.build_interval,
-            build_timeout=CONF.network.build_timeout,
-            **cls.os.default_params)
-        cls.os_adm = cls.get_client_manager(credential_type='admin')
-        # Using admin client because provider:network_type is an admin
-        # attribute
-        cls.subnets_client = cls.os_adm.subnets_client
-        cls.servers_client = cls.os_adm.servers_client
 
     @classmethod
     def create_network(cls, network_name=None):
@@ -93,3 +82,61 @@ class VSDManagedNetworksTestJSONML2(
                                                  filters='externalID',
                                                  filter_value=port['id'])
         self.assertIsNotNone(nuage_vport, "vport should be created.")
+
+    # HP - Unica scenario with DHCP-options defined in VSD
+    def test_link_vsd_sharedsubnet_l3_with_dhcp_option(self):
+        name = data_utils.rand_name('shared-l3-')
+        cidr = IPNetwork('10.20.0.0/16')
+        vsd_shared_l3dom_subnet = self.create_vsd_managed_shared_resource(
+            name=name, netmask=str(cidr.netmask), address=str(cidr.ip),
+            DHCPManaged=True,
+            gateway='10.20.0.1',
+            type='PUBLIC')
+
+        self.nuageclient.create_dhcpoption(vsd_shared_l3dom_subnet['ID'],
+                                           '03',
+                                           ['10.20.0.25'])
+
+        name = data_utils.rand_name('l3dom-with-shared')
+        vsd_l3dom_tmplt = self.create_vsd_l3dom_template(
+            name=name)
+        vsd_l3dom = self.create_vsd_l3domain(name=name,
+                                             tid=vsd_l3dom_tmplt[0]['ID'])
+
+        self.assertEqual(vsd_l3dom[0]['name'], name)
+        zonename = data_utils.rand_name('Public-zone-')
+        extra_params = {'publicZone': True}
+        vsd_zone = self.create_vsd_zone(name=zonename,
+                                        domain_id=vsd_l3dom[0]['ID'],
+                                        extra_params=extra_params)
+
+        name = data_utils.rand_name('l3domain-with-shared')
+        data = {
+            'name': name,
+            'associatedSharedNetworkResourceID': vsd_shared_l3dom_subnet['ID']
+        }
+        resource = '/zones/' + vsd_zone[0]['ID'] + '/subnets'
+        vsd_l3dom_subnet = self.nuageclient.restproxy.rest_call(
+            'POST', resource, data)
+        vsd_l3_dom_public_subnet = vsd_l3dom_subnet.data[0]
+        self.assertEqual(vsd_l3_dom_public_subnet['name'], name)
+        self.assertEqual(
+            vsd_l3_dom_public_subnet['associatedSharedNetworkResourceID'],
+            vsd_shared_l3dom_subnet['ID'])
+
+        # create subnet on OS with nuagenet param set to l3domain UUID
+        net_name = data_utils.rand_name('shared-l3-network-')
+        network = self.create_network(network_name=net_name)
+        subnet = self.create_subnet(
+            network, cidr=cidr,
+            mask_bits=16,
+            nuagenet=vsd_l3_dom_public_subnet['ID'],
+            net_partition=CONF.nuage.nuage_default_netpartition)
+        self.assertEqual(
+            str(IPNetwork(subnet['cidr']).ip),
+            vsd_shared_l3dom_subnet['address'])
+        self.assertEqual(subnet['gateway_ip'], '10.20.0.1')
+        self.assertEqual(
+            subnet['enable_dhcp'],
+            vsd_shared_l3dom_subnet['DHCPManaged'])
+        self.assertTrue(self._verify_vm_ip(network['id'], net_name))

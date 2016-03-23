@@ -1,5 +1,4 @@
 from tempest import config
-from nuagetempest.tests.scenario.test_server_basic_ops import TestServerBasicOps
 from tempest import test
 import re
 import unittest
@@ -7,12 +6,12 @@ import sys
 
 CONF = config.CONF
 
-class TestServerBasicOps(TestServerBasicOps):
+class TestServerBasicOps():
     
     def __init__(self):
         pass
 
-    class _server_basic_ops(TestServerBasicOps):
+    class _server_basic_ops():
 
         def __init__(self):
             self.def_net_partition = CONF.nuage.nuage_default_netpartition

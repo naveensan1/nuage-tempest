@@ -14,9 +14,9 @@
 #
 
 import base_nuage_gateway as base
-import base_vsd_managed_network as base_vsdman
 from netaddr import IPNetwork
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_network as base_vsdman
 from oslo_log import log as logging
 
 from tempest.common.utils import data_utils

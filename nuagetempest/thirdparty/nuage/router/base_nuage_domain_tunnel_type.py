@@ -54,7 +54,7 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
     def _create_router(self, **kwargs):
         # Create a router
         name = data_utils.rand_name('router-')
-        create_body = self.client.create_router(
+        create_body = self.os_adm.routers_client.create_router(
             name, external_gateway_info={
                 "network_id": CONF.network.public_network_id},
             admin_state_up=False,
@@ -123,21 +123,21 @@ class NuageDomainTunnelTypeBase(test.BaseTestCase):
         return router
 
     def _show_router(self, router_id):
-        show_body = self.client.show_router(router_id)
+        show_body = self.os_adm.routers_client.show_router(router_id)
         router = show_body['router']
 
         self.assertEqual(router['id'], router_id)
         return router
 
     def _list_routers(self):
-        body = self.client.list_routers()
+        body = self.os_adm.routers_client.list_routers()
         return body['routers']
 
     def _delete_router(self, router_id):
-        self.client.delete_router(router_id)
+        self.os_adm.routers_client.delete_router(router_id)
         # Asserting that the router is not found in the list
         # after deletion
-        list_body = self.client.list_routers()
+        list_body = self.os_adm.routers_client.list_routers()
         routers_list = list()
         for router in list_body['routers']:
             routers_list.append(router['id'])

@@ -1,3 +1,13 @@
+#
+#
+#    -----------------------WARNING----------------------------
+#     This file is present to support Legacy Test Code only.
+#     DO not use this file for writing the new tests.
+#    ----------------------------------------------------------
+#
+#
+
+
 import testtools
 from tempest import exceptions
 

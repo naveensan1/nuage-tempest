@@ -1,12 +1,11 @@
-from tempest import test
 from nuagetempest.tests import topo
 
-class TestServerBasicOps(test.BaseTestCase):
+class TestServerBasicOps():
     
     def __init__(self):
         pass
 
-    class _server_basic_ops(test.BaseTestCase):
+    class _server_basic_ops():
 
         def __init__(self):
             pass

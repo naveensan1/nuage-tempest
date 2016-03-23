@@ -10,14 +10,12 @@ CONF = config.CONF
 class Topology(object):
 
     def __init__(self):
-        path_to_esrcalls = CONF.nuagext.esr_calls_file
+        path_to_topologyfile = CONF.nuagext.topologyfile
         testbed = CONF.nuagext.exec_server
         testbed_user = CONF.nuagext.exec_server_user
-        if not (path_to_esrcalls or testbed or testbed_user):
-            raise Exception('Testbed topo file or exec server is not provided')
         self.nuage_components = CONF.nuagext.nuage_components
-        self.esrcalls = path_to_esrcalls
-        self.duts_list = self.parse_esrcalls()
+        self.topologyfile = path_to_topologyfile
+        self.duts_list = self.parse_topologyfile()
         self.make_testbed()
 
     def open_ssh_sessions(self):
@@ -47,7 +45,7 @@ class Topology(object):
             if isinstance(dut, linux.VRS):
                 vrs[dutname] = dut
 
-    def parse_esrcalls(self):
+    def parse_topologyfile(self):
 
         def parse_line(line):
             line = line.split()
@@ -64,25 +62,39 @@ class Topology(object):
                 return (None, None, None, None, None, None)
 
         duts_list = []
-        with open(self.esrcalls, 'r') as esrcalls_file:
-            for line in esrcalls_file.readlines():
-                dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
-                if dut_type in ['LINUX', 'ESR']:
-                    duts_list.append({
-                        'name': dut_name,
-                        'type': dut_type,
-                        'ip': dut_ip,
-                        'component': component,
-                        'username': username,
-                        'password': password
-                    })
+        try:
+            topo_file = open(self.topologyfile, 'r')
+        except IOError:
+            if any(comp in CONF.nuagext.nuage_components for comp in ('vsc', 'vrs')):
+                raise Exception('Testbed topo file or exec server is not provided')
+            elif 'vsd' in CONF.nuagext.nuage_components: 
+                vsd_dut = {}
+                vsd_dut['component'] = 'VSD'
+                vsd_dut['name'] = 'vsd-1'
+                vsd_dut['ip'] = 'vsd-1'
+                duts_list.append(vsd_dut)
+            else:
+                raise Exception('Testbed topo file or exec server is not provided')
+        else:
+            with topo_file:
+                for line in topo_file.readlines():
+                    dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
+                    if dut_type in ['LINUX', 'ESR']:
+                        duts_list.append({
+                            'name': dut_name,
+                            'type': dut_type,
+                            'ip': dut_ip,
+                            'component': component,
+                            'username': username,
+                            'password': password
+                        })
         return duts_list
 
-    def get_dut_from_esrcalls(self, name):
+    def get_dut_from_topologyfile(self, name):
         for d in self.duts_list:
             if d['name'] == name:
                 return d
-        raise Exception('{} not found in {}'.format(name, self.path_to_esrcalls))
+        raise Exception('{} not found in {}'.format(name, self.path_to_topologyfile))
 
     @staticmethod
     def _is_sros(component):
@@ -146,7 +158,7 @@ class Topology(object):
 
     def make_dut(self, name):
 
-        dut = self.get_dut_from_esrcalls(name)
+        dut = self.get_dut_from_topologyfile(name)
         ip = dut['ip']
         component = dut['component']
 
@@ -154,8 +166,8 @@ class Topology(object):
             return linux.VRS(ip, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsd(component):
-            vsd_ip = CONF.nuage_vsd_group.nuage_vsd_server.split(':')[0]
-            vsd_port = CONF.nuage_vsd_group.nuage_vsd_server.split(':')[1]
+            vsd_ip = CONF.nuage.nuage_vsd_server.split(':')[0]
+            vsd_port = CONF.nuage.nuage_vsd_server.split(':')[1]
             api = libVSD.client.ApiClient(vsd_ip, port=vsd_port, version="4.0")
             helper = libVSD.helpers.VSDHelpers(api)
             setattr(helper, 'api', api)

@@ -32,8 +32,8 @@ class NetPartitionTestJSON(base.BaseNetworkTest):
         cls.net_partitions = []
 
     @classmethod
-    def tearDownClass(cls):
-        super(NetPartitionTestJSON, cls).tearDownClass()
+    def resource_cleanup(cls):
+        super(NetPartitionTestJSON, cls).resource_cleanup()
         has_exception = False
 
         for netpartition in cls.net_partitions:

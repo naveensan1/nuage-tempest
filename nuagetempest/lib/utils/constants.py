@@ -1,6 +1,11 @@
 # VSD RESOURCE URI, not a complete list.
 # list of resources currently used by nuage plugin
-
+#
+#    -----------------------WARNING----------------------------
+#     This file is present to support Legacy Test Code only.
+#     DO not use this file for writing the new tests.
+#    ----------------------------------------------------------
+#
 # GATEWAY
 GATEWAY = 'gateways'
 

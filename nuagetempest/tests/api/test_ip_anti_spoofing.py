@@ -22,6 +22,10 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                     parent='CMS')
 
     @classmethod
+    def resource_cleanup(cls):
+        cls.os_data.delete_resource(cls.def_net_partition)
+      
+    @classmethod
     def _create_security_disabled_network(cls):
         kwargs = {'name': data_utils.rand_name('network-'),
                   'port_security_enabled': 'False'}

@@ -14,7 +14,7 @@ class openstackData():
     
     def delete_resource(self, tag):
         resp = self.resources.remove_node(tag)
-        if resp != 1:
+        if resp < 1:
             raise Exception("Resource removal failed.")
     
     def get_resource(self, tag):
@@ -35,4 +35,3 @@ class openstackData():
     
     def move_resource(self, tag, new_parent):
         self.resources.move_node(tag, new_parent)
-            

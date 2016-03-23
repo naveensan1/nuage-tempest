@@ -1,6 +1,5 @@
 from nuagetempest.thirdparty.nuage import test_allowed_addr_pair_nuage
 from tempest.common.utils import data_utils
-#from nuagetempest.lib import openstack_data as os_data
 from tempest.api.network import base
 from tempest import test
 from nuagetempest.tests import nuage_ext
@@ -11,6 +10,7 @@ import netaddr
 
 CONF = config.CONF
 
+
 class IpAntiSpoofingTest(base.BaseNetworkTest):
 
     @classmethod
@@ -18,7 +18,8 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         super(IpAntiSpoofingTest, cls).resource_setup()
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data = openstackData()
-        cls.os_data.insert_resource({'name':cls.def_net_partition}, parent='CMS')
+        cls.os_data.insert_resource({'name': cls.def_net_partition},
+                                    parent='CMS')
 
     @classmethod
     def _create_security_disabled_network(cls):
@@ -39,7 +40,6 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                   'cidr': cidr}
         body = cls.subnets_client.create_subnet(**kwargs)
         return body['subnet']
-    
 
     @classmethod
     def _create_security_disabled_port(cls, ntw, name=None):
@@ -50,14 +50,13 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         body = cls.ports_client.create_port(**kwargs)
         return body['port']
 
-
     def _create_network_port_l2resources(self, ntw_security='True',
-                                       port_security='True', 
-                                       port_name='port-1',
-                                       l2domain_name='l2domain-1',
-                                       netpart=None):
+                                         port_security='True',
+                                         port_name='port-1',
+                                         l2domain_name='l2domain-1',
+                                         netpart=None):
         # Method to create ntw, port and l2domain
-        if netpart == None:
+        if netpart is None:
             netpart = self.def_net_partition
         if ntw_security == 'False':
             network = self._create_security_disabled_network()
@@ -65,7 +64,6 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
             body = self.networks_client.create_network(
                    name=data_utils.rand_name('network-'))
             network = body['network']
-            
         self.addCleanup(self.networks_client.delete_network, network['id'])
         l2domain = self._create_subnet(network, name=l2domain_name)
         self.os_data.insert_resource(l2domain, netpart)
@@ -81,13 +79,13 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         return (network, l2domain, port)
 
     def _create_network_port_l3resources(self, ntw_security='True',
-                                       port_security='True', 
-                                       port_name='port-1',
-                                       subnet_name='subnet-1',
-                                       l3dom_name = 'router-1',
-                                       netpart=None):
+                                         port_security='True',
+                                         port_name='port-1',
+                                         subnet_name='subnet-1',
+                                         l3dom_name='router-1',
+                                         netpart=None):
         # Method to create ntw, router, subnet and port
-        if netpart == None:
+        if netpart is None:
             netpart = self.def_net_partition
         if ntw_security == 'False':
             network = self._create_security_disabled_network()
@@ -127,7 +125,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                   ntw_security='False', port_security='False')
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag('verify_security_disabled_ntw_port_l2domain', self.__class__.__name__), self)
-     
+ 
     def test_create_delete_sec_disabled_ntw_l2domain(self):
         ''' L2domain testcase to test network and port creation with
             port-security-enabled set to False at network level only'''
@@ -135,7 +133,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                   ntw_security='False')
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag('verify_security_disabled_ntw_l2domain', self.__class__.__name__), self)
-     
+ 
     def test_create_delete_sec_disabled_port_l2domain(self):
         ''' L2domain testcase to test network and port creation with
             port-security-enabled set to False at port level only'''
@@ -143,13 +141,12 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                   ntw_security='True', port_security='False')
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag('verify_security_disabled_port_l2domain', self.__class__.__name__), self)
-           
+ 
     def test_create_delete_sec_disabled_ntw_port_l3domain(self):
         ''' L3domain testcase to test the network and port creation with
             port-security-enabled set to False explicitly for both'''
         network, router, subnet, port = self._create_network_port_l3resources(
-                                        ntw_security='False', port_security='False')
-        nuage_ext.nuage_extension.nuage_components(\
+                                        ntw_security='False',
+                                        port_security='False')
+        nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag('verify_security_disabled_ntw_port_l3domain', self.__class__.__name__), self)
-
-

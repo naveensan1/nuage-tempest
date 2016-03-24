@@ -19,7 +19,7 @@ class IpAntiSpoofingTest():
         # Method to get the VSD object for l2domain and port
         l2domain_ext_id = base.get_external_id(l2dom['id'])
         vsd_l2domain = TB.vsd_1.get_l2domain(
-                       filter='externalID == "{}"'.format(l2domain_ext_id))
+            filter=base.get_filter_str('externalID', l2domain_ext_id))
         vsd_port = vsd_l2domain.vports.get_first()
         return (vsd_l2domain, vsd_port)
 
@@ -27,13 +27,13 @@ class IpAntiSpoofingTest():
         # Method to get the VSD objects for router, subnet and port
         router_ext_id = base.get_external_id(router['id'])
         vsd_l3dom = TB.vsd_1.get_domain(
-                    filter='externalID == "{}"'.format(router_ext_id))
+            filter=base.get_filter_str('externalID', router_ext_id))
         subnet_ext_id = base.get_external_id(subnet['id'])
         vsd_sub = TB.vsd_1.get_subnet(
-                  filter='externalID == "{}"'.format(subnet_ext_id))
+            filter=base.get_filter_str('externalID', subnet_ext_id))
         port_ext_id = base.get_external_id(port['id'])
         vsd_port = TB.vsd_1.get_vport(subnet=vsd_sub,
-                   filter='externalID == "{}"'.format(port_ext_id))
+            filter=base.get_filter_str('externalID', port_ext_id))
         return (vsd_l3dom, vsd_sub, vsd_port)
 
     def _verify_ingress_egress_rules(self, obj, vsd_pg,

@@ -119,3 +119,6 @@ def add_csproot_to_cms(vsd_api, vspk):
 def get_external_id(id):
     return (id + '@' + CONF.nuage.nuage_cms_id) \
         if CONF.nuage.nuage_cms_id else id
+
+def get_filter_str(key, value):
+    return key + '  == "{}"'.format(value)

@@ -18,7 +18,7 @@ class IpAntiSpoofingTest():
     def _get_vsd_l2dom_port(self, l2dom, port):
         # Method to get the VSD object for l2domain and port
         l2domain_ext_id = base.get_external_id(l2dom['id'])
-        vsd_l2domain = TB.vsd_1.session.user.l2_domains.get_first(
+        vsd_l2domain = TB.vsd_1.get_l2domain(
                        filter='externalID == "{}"'.format(l2domain_ext_id))
         vsd_port = vsd_l2domain.vports.get_first()
         return (vsd_l2domain, vsd_port)

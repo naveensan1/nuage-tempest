@@ -163,7 +163,7 @@ class Topology(object):
         component = dut['component']
 
         if self._is_ovs(component):
-            return linux.VRS(ip, id=name, password=dut['password'], user=dut['username'])
+            return linux.vrs.VRS(ip, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsd(component):
             vsd_ip = CONF.nuage.nuage_vsd_server.split(':')[0]

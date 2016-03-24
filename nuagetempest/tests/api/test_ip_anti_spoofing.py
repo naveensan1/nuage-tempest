@@ -24,7 +24,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
     @classmethod
     def resource_cleanup(cls):
         cls.os_data.delete_resource(cls.def_net_partition)
-      
+
     @classmethod
     def _create_security_disabled_network(cls):
         kwargs = {'name': data_utils.rand_name('network-'),
@@ -80,6 +80,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
             port = body['port']
         self.os_data.insert_resource(port, l2domain_name)
         self.addCleanup(self.ports_client.delete_port, port['id'])
+        self.addCleanup(self.os_data.delete_resource, l2domain_name)
         return (network, l2domain, port)
 
     def _create_network_port_l3resources(self, ntw_security='True',
@@ -120,6 +121,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
             port = body['port']
         self.os_data.insert_resource(port, subnet_name)
         self.addCleanup(self.ports_client.delete_port, port['id'])
+        self.addCleanup(self.os_data.delete_resource, l3dom_name)
         return (network, router, subnet, port)
 
     def test_create_delete_sec_disabled_ntw_port_l2domain(self):
@@ -127,30 +129,34 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
             port-security-enabled set to False explicitly for both'''
         network, l2domain, port = self._create_network_port_l2resources(
                                   ntw_security='False', port_security='False')
+        tag_name = 'verify_security_disabled_ntw_port_l2domain'
         nuage_ext.nuage_extension.nuage_components(
-            nuage_ext._generate_tag('verify_security_disabled_ntw_port_l2domain', self.__class__.__name__), self)
- 
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
     def test_create_delete_sec_disabled_ntw_l2domain(self):
         ''' L2domain testcase to test network and port creation with
             port-security-enabled set to False at network level only'''
         network, l2domain, port = self._create_network_port_l2resources(
                                   ntw_security='False')
+        tag_name = 'verify_security_disabled_ntw_l2domain'
         nuage_ext.nuage_extension.nuage_components(
-            nuage_ext._generate_tag('verify_security_disabled_ntw_l2domain', self.__class__.__name__), self)
- 
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
     def test_create_delete_sec_disabled_port_l2domain(self):
         ''' L2domain testcase to test network and port creation with
             port-security-enabled set to False at port level only'''
         network, l2domain, port = self._create_network_port_l2resources(
                                   ntw_security='True', port_security='False')
+        tag_name = 'verify_security_disabled_port_l2domain'
         nuage_ext.nuage_extension.nuage_components(
-            nuage_ext._generate_tag('verify_security_disabled_port_l2domain', self.__class__.__name__), self)
- 
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
     def test_create_delete_sec_disabled_ntw_port_l3domain(self):
         ''' L3domain testcase to test the network and port creation with
             port-security-enabled set to False explicitly for both'''
         network, router, subnet, port = self._create_network_port_l3resources(
                                         ntw_security='False',
                                         port_security='False')
+        tag_name = 'verify_security_disabled_ntw_port_l3domain'
         nuage_ext.nuage_extension.nuage_components(
-            nuage_ext._generate_tag('verify_security_disabled_ntw_port_l3domain', self.__class__.__name__), self)
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)

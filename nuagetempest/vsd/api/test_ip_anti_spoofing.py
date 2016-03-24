@@ -1,5 +1,6 @@
 from tempest import config
 from nuagetempest.lib import topology
+from nuagetempest.lib import base
 from tempest import test
 import re
 import unittest
@@ -21,7 +22,7 @@ class IpAntiSpoofingTest():
         def verify_security_disabled_ntw_port_l2domain(self, obj):
             # obtin the parent of port
             l2domain = obj.os_data.get_resource('l2domain-1').data
-            l2domain_ext_id = l2domain['id'] + '@' + CONF.nuage.nuage_cms_id
+            l2domain_ext_id = base.get_external_id(l2domain['id'])
             vsd_l2domain = TB.vsd_1.session.user.l2_domains.get_first(
                            filter='externalID == "{}"'.format(l2domain_ext_id))
             port = obj.os_data.get_resource('port-1').data
@@ -41,7 +42,7 @@ class IpAntiSpoofingTest():
         def verify_security_disabled_ntw_l2domain(self, obj):
             # obtain the parent of port
             l2domain = obj.os_data.get_resource('l2domain-1').data
-            l2domain_ext_id = l2domain['id'] + '@' + CONF.nuage.nuage_cms_id
+            l2domain_ext_id = base.get_external_id(l2domain['id'])
             vsd_l2domain = TB.vsd_1.session.user.l2_domains.get_first(
                            filter='externalID == "{}"'.format(l2domain_ext_id))
             port = obj.os_data.get_resource('port-1').data
@@ -61,7 +62,7 @@ class IpAntiSpoofingTest():
         def verify_security_disabled_port_l2domain(self, obj):
             # obtain the parent of port
             l2domain = obj.os_data.get_resource('l2domain-1').data
-            l2domain_ext_id = l2domain['id'] + '@' + CONF.nuage.nuage_cms_id
+            l2domain_ext_id = base.get_external_id(l2domain['id'])
             vsd_l2domain = TB.vsd_1.session.user.l2_domains.get_first(
                            filter='externalID == "{}"'.format(l2domain_ext_id))
             port = obj.os_data.get_resource('port-1').data
@@ -80,15 +81,15 @@ class IpAntiSpoofingTest():
 
         def verify_security_disabled_ntw_port_l3domain(self, obj):
             router = obj.os_data.get_resource('router-1').data
-            router_ext_id = router['id'] + '@' + CONF.nuage.nuage_cms_id
+            router_ext_id = base.get_external_id(router['id'])
             vsd_l3dom = TB.vsd_1.get_domain(
                         filter='externalID == "{}"'.format(router_ext_id))
             subnet = obj.os_data.get_resource('subnet-1').data
-            subnet_ext_id = subnet['id'] + '@' + CONF.nuage.nuage_cms_id
+            subnet_ext_id = base.get_external_id(subnet['id'])
             vsd_sub = TB.vsd_1.get_subnet(
                       filter='externalID == "{}"'.format(subnet_ext_id))
             port = obj.os_data.get_resource('port-1').data
-            port_ext_id = port['id'] + '@' + CONF.nuage.nuage_cms_id
+            port_ext_id = base.get_external_id(port['id'])
             vsd_port = TB.vsd_1.get_vport(subnet=vsd_sub,
                        filter='externalID == "{}"'.format(port_ext_id))
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')

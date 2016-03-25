@@ -67,7 +67,7 @@ class RouterAssociationTest(BgpvpnBase, L3Mixin):
                 self.router() as router,\
                 self.router_assocation(router['id'],
                                        bgpvpn['id']) as rtr_assoc:
-            router = self.network_client.show_router(router['id'])['router']
+            router = self.routers_client.show_router(router['id'])['router']
             self.assertThat(router['rd'],
                             Equals(bgpvpn['route_distinguishers'][0]))
             self.assertThat(router['rt'], Equals(bgpvpn['route_targets'][0]))

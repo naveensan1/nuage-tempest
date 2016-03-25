@@ -166,12 +166,12 @@ class L3Mixin(BaseMixin):
     @classmethod
     def setup_clients(cls):
         super(L3Mixin, cls).setup_clients()
-        cls.network_client = cls.manager.network_client
-        cls.network_client_admin = cls.admin_manager.network_client
+        cls.routers_client = cls.manager.routers_client
+        cls.routers_client_admin = cls.admin_manager.routers_client
 
     @contextlib.contextmanager
     def router(self, do_delete=True, as_admin=False, **kwargs):
-        client = self.network_client_admin if as_admin else self.network_client
+        client = self.routers_client_admin if as_admin else self.routers_client
         router = {'name': data_utils.rand_name('router')}
         router.update(kwargs)
         router = client.create_router(**router)['router']

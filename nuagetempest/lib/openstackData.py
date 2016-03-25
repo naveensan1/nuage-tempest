@@ -35,4 +35,3 @@ class openstackData():
     
     def move_resource(self, tag, new_parent):
         self.resources.move_node(tag, new_parent)
-            

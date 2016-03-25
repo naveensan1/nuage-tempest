@@ -160,3 +160,23 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         tag_name = 'verify_security_disabled_ntw_port_l3domain'
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_update_ntw_from_sec_disabled_to_enabled_l2domain(self):
+        pass
+
+    def test_update_ntw_from_sec_enabled_to_diabled(self):
+        pass
+
+    def test_update_port_from_sec_disabled_to_enabled(self):
+        pass
+
+    def test_update_port_from_sec_enabled_to_disabled(self):
+        pass
+
+    def test_show_sec_disabled_ntw(self):
+        pass
+
+    def test_show_sec_disabled_port(self):
+        pass
+
+

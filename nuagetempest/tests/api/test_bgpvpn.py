@@ -19,7 +19,7 @@ from nuagetempest.services.bgpvpn.mixins import BGPVPNMixin
 from nuagetempest.services.bgpvpn.mixins import L3Mixin
 from nuagetempest.services.bgpvpn.mixins import NetworkMixin
 
-from tempest_lib import exceptions as lib_exc
+from tempest.lib import exceptions as lib_exc
 
 from testtools.matchers import Contains
 from testtools.matchers import Equals

@@ -24,6 +24,9 @@ from tempest.lib import exceptions as lib_exc
 from testtools.matchers import Contains
 from testtools.matchers import Equals
 from testtools.matchers import Not
+from nuagetempest.lib.openstackData import openstackData
+from nuagetempest.tests import nuage_ext
+import uuid
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
@@ -36,18 +39,32 @@ class BgpvpnBase(BGPVPNMixin):
         super(BgpvpnBase, cls).resource_setup()
         cls.tenant_id = cls.bgpvpn_client.tenant_id
         cls.admin_tenant_id = cls.bgpvpn_client_admin.tenant_id
+        cls.def_net_partition = CONF.nuage.nuage_default_netpartition
+        cls.os_data = openstackData()
+        cls.os_data.insert_resource({'name': cls.def_net_partition},
+                                    parent='CMS')
 
+    @classmethod
+    def resource_cleanup(cls):
+        cls.os_data.delete_resource(cls.def_net_partition)
 
 class BgpvpnTest(BgpvpnBase):
 
-    def test_bgpvpn_create(self):
+    def test_bgpvpn_create_list(self):
         bgpvpns = self.bgpvpn_client.list_bgpvpns()
         pre_ids = [bgpvpn['id'] for bgpvpn in bgpvpns]
-        with self.bgpvpn(tenant_id=self.tenant_id) as created_bgpvpn:
+        with self.bgpvpn(tenant_id=self.tenant_id,
+                route_targets=['456:456'],
+                route_distinguishers=['456:456']) as created_bgpvpn:
             bgpvpns = self.bgpvpn_client.list_bgpvpns()
             post_ids = [bgpvpn['id'] for bgpvpn in bgpvpns]
             self.assertThat(pre_ids, Not(Contains(created_bgpvpn['id'])))
             self.assertThat(post_ids, Contains(created_bgpvpn['id']))
+
+    def test_bgpvpn_show_invalid(self):
+        self.assertRaisesRegexp(
+            lib_exc.NotFound, "could not be found",
+            self.bgpvpn_client.show_bgpvpn(uuid.uuid4()))
 
     def test_bgpvpn_create_unsupported_type(self):
         self.assertRaisesRegexp(

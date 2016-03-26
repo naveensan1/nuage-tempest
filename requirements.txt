@@ -3,4 +3,3 @@ tempest>0
 vspk
 configparser
 libVSD
-treelib

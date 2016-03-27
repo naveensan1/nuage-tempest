@@ -41,7 +41,7 @@ class BgpvpnBase(BGPVPNMixin):
         cls.admin_tenant_id = cls.bgpvpn_client_admin.tenant_id
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data = openstackData()
-        cls.os_data.insert_resource({'name': cls.def_net_partition},
+        cls.os_data.insert_resource(cls.def_net_partition,
                                     parent='CMS')
 
     @classmethod
@@ -64,7 +64,7 @@ class BgpvpnTest(BgpvpnBase):
     def test_bgpvpn_show_invalid(self):
         self.assertRaisesRegexp(
             lib_exc.NotFound, "could not be found",
-            self.bgpvpn_client.show_bgpvpn(uuid.uuid4()))
+            self.bgpvpn_client.show_bgpvpn, uuid.uuid4())
 
     def test_bgpvpn_create_unsupported_type(self):
         self.assertRaisesRegexp(
@@ -73,6 +73,48 @@ class BgpvpnTest(BgpvpnBase):
 
     def test_bgpvpn_create_non_admin(self):
         self.assertRaises(lib_exc.Forbidden, self.bgpvpn_client.create)
+        
+    def test_bgpvpn_delete_invalid(self):
+        self.assertRaisesRegexp(
+            lib_exc.NotFound, "could not be found",
+            self.bgpvpn_client.delete_bgpvpn, uuid.uuid4())
+        
+    def test_bgpvpn_create_update(self):
+        with self.bgpvpn(tenant_id=self.tenant_id,
+                route_targets=['656:656'],
+                route_distinguishers=['656:656']) as created_bgpvpn:
+            update_args = {
+                'route_targets': ['444:444'],
+                'route_distinguishers': ['444:444'],
+                'name': 'updated_bgpvpn'
+            }
+            self.bgpvpn_client.update_bgpvpn(created_bgpvpn['id'],
+                                             **update_args)
+            updated_bgpvpn = self.bgpvpn_client.show_bgpvpn(
+                                    created_bgpvpn['id'])
+            self.assertThat(updated_bgpvpn['route_targets'],
+                            Equals(update_args['route_targets']))
+            self.assertThat(updated_bgpvpn['route_distinguishers'],
+                            Equals(update_args['route_distinguishers']))
+            self.assertThat(updated_bgpvpn['name'],
+                            Equals(update_args['name']))
+            
+    def test_cannot_update_bgpvpn_type(self):
+        with self.bgpvpn(tenant_id=self.tenant_id) as created_bgpvpn:
+            update_args = {'type': 'l2'}
+            self.assertRaisesRegexp(
+                lib_exc.BadRequest, "Cannot update read-only attribute type",
+                self.bgpvpn_client.update_bgpvpn,
+                created_bgpvpn['id'], **update_args)
+            
+    def test_cannot_create_bgpvpn_invalid_rt_rd(self):
+        invalid_rt_rd = {
+            'route_targets':'100000000:10000000',
+            'route_distinguishers': '100000000:10000000'
+        }
+        self.assertRaisesRegexp(
+            lib_exc.BadRequest, "Invalid input for",
+            self.bgpvpn_client_admin.create, **invalid_rt_rd)
 
 
 class RouterAssociationTest(BgpvpnBase, L3Mixin):
@@ -91,6 +133,12 @@ class RouterAssociationTest(BgpvpnBase, L3Mixin):
             rtr_assoc_show = self.rtr_assoc_client.show_router_assocation(
                 rtr_assoc['id'], bgpvpn['id'])
             self.assertThat(rtr_assoc_show['router_id'], Equals(router['id']))
+            self.os_data.insert_resource('os-router-ra-1',
+                                        os_data=router,
+                                        parent=self.def_net_partition)
+            tag_name = 'verify_l3domain_rt_rd'
+            nuage_ext.nuage_extension.nuage_components(
+                nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
 
     def test_router_association_missing_rd(self):
         with self.bgpvpn(tenant_id=self.tenant_id,

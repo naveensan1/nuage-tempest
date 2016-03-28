@@ -44,11 +44,24 @@ class RouterAssociationTest():
             pass
         
         def verify_l3domain_rt_rd(self, obj):
-            os_router = obj.os_data.get_resource('os-router-ra-1').os_data
+            os_router = obj.os_data.get_resource('os-router-ra-2').os_data
             l3domain_ext_id = base.get_external_id(os_router['id'])
             vsd_l3dom = TB.vsd_1.get_domain(
                 filter=base.get_filter_str('externalID', l3domain_ext_id))
-            obj.os_data.update_resource('os-router-ra-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('os-router-ra-2', vsd_data=vsd_l3dom)
             self.router_associate_test._verify_rt_rd_on_neutron_vsd(obj,
-                    'os-router-ra-1')           
+                    'os-router-ra-2')           
             
+    class _update_rt_rd_after_router_association():
+        def __init__(self):
+            self.router_associate_test =  RouterAssociationTest()
+            pass
+        
+        def verify_l3domain_rt_rd(self, obj):
+            os_router = obj.os_data.get_resource('os-router-ra-3').os_data
+            l3domain_ext_id = base.get_external_id(os_router['id'])
+            vsd_l3dom = TB.vsd_1.get_domain(
+                filter=base.get_filter_str('externalID', l3domain_ext_id))
+            obj.os_data.update_resource('os-router-ra-3', vsd_data=vsd_l3dom)
+            self.router_associate_test._verify_rt_rd_on_neutron_vsd(obj,
+                    'os-router-ra-3')

@@ -140,6 +140,27 @@ class RouterAssociationTest(BgpvpnBase, L3Mixin):
             nuage_ext.nuage_extension.nuage_components(
                 nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
 
+    def test_router_association_create_list(self):
+        with self.bgpvpn(tenant_id=self.tenant_id,
+                         route_distinguishers=['123:321'],
+                         route_targets=['123:321']) as bgpvpn,\
+                self.router() as router,\
+                self.router_assocation(router['id'],
+                                       bgpvpn['id']) as rtr_assoc:
+            router = self.routers_client.show_router(router['id'])['router']
+            self.assertThat(router['rd'],
+                            Equals(bgpvpn['route_distinguishers'][0]))
+            self.assertThat(router['rt'], Equals(bgpvpn['route_targets'][0]))
+            rtr_assoc_list = self.rtr_assoc_client.list_router_assocations(
+                                bgpvpn['id'])
+            self.assertThat(rtr_assoc_list[0]['router_id'], Equals(router['id']))
+            self.os_data.insert_resource('os-router-ra-1',
+                                        os_data=router,
+                                        parent=self.def_net_partition)
+            tag_name = 'verify_l3domain_rt_rd'
+            nuage_ext.nuage_extension.nuage_components(
+                nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
     def test_router_association_missing_rd(self):
         with self.bgpvpn(tenant_id=self.tenant_id,
                          route_targets=['123:321']) as bgpvpn,\
@@ -157,6 +178,42 @@ class RouterAssociationTest(BgpvpnBase, L3Mixin):
                 lib_exc.BadRequest, "route_target is required",
                 self.rtr_assoc_client.create_router_assocation,
                 bgpvpn['id'], router_id=router['id'])
+            
+    def test_router_association_import_targets(self):
+        with self.bgpvpn(tenant_id=self.tenant_id,
+                         route_distinguishers=['123:321'],
+                         route_targets=['123:321'],
+                         import_targets=['123:321']) as bgpvpn, \
+                self.router() as router:
+            self.assertRaisesRegexp(
+                lib_exc.BadRequest, "This bgpvpn can't have any import_targets",
+                self.rtr_assoc_client.create_router_assocation,
+                bgpvpn['id'], router_id=router['id'])
+
+    def test_router_association_export_targets(self):
+        with self.bgpvpn(tenant_id=self.tenant_id,
+                         route_distinguishers=['123:321'],
+                         route_targets=['123:321'],
+                         export_targets=['123:321']) as bgpvpn, \
+                self.router() as router:
+            self.assertRaisesRegexp(
+                lib_exc.BadRequest, "This bgpvpn can't have any export_targets",
+                self.rtr_assoc_client.create_router_assocation,
+                bgpvpn['id'], router_id=router['id'])
+
+    def test_router_association_invalid_bgpvpn_id(self):
+        with self.router() as router:
+            self.assertRaisesRegexp(lib_exc.NotFound,
+                "could not be found",
+                self.rtr_assoc_client.create_router_assocation,
+                uuid.uuid4(), router_id=router['id'])
+
+    def test_router_association_invalid_router(self):
+        with self.bgpvpn(tenant_id=self.tenant_id) as bgpvpn:
+            self.assertRaisesRegexp(lib_exc.NotFound,
+                "could not be found",
+                self.rtr_assoc_client.create_router_assocation,
+                bgpvpn['id'], router_id=uuid.uuid4())
 
     def test_router_association_multiplerouters_singlebgpvpn(self):
         with self.bgpvpn(tenant_id=self.tenant_id,

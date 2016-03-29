@@ -17,17 +17,14 @@ import collections
 import re
 
 from oslo_log import log as logging
-from tempest.lib.common.utils import data_utils
-from tempest.lib import exceptions as lib_exc
-
-from tempest.api.network import base
 
 from tempest import config
 from tempest import exceptions
-from tempest.scenario import manager
-from tempest.services.network import resources as net_resources
 from tempest import test
-from nuagetempest.lib.test import nuage_test
+from tempest.api.network import base
+from tempest.lib.common.utils import data_utils
+from tempest.services.network import resources as net_resources
+from nuagetempest.thirdparty.nuage.scenario import base_nuage_network_scenario_test
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -39,58 +36,7 @@ EXTRA_DHCP_OPT_MTU_VALUE = '1498'
 EXTRA_DHCP_OPT_DOMAIN_NAME = 'nuagenetworks.com'
 FIP_RATE_LIMIT = '5'
 
-class NuageNetworkScenarioTest(manager.NetworkScenarioTest):
-    def _create_loginable_secgroup_rule(self, security_group_rules_client=None,
-                                        secgroup=None,
-                                        security_groups_client=None):
-        """Create loginable security group rule
-
-        These rules are intended to permit inbound ssh and icmp
-        traffic from all sources, so no group_id is provided.
-        Setting a group_id would only permit traffic from ports
-        belonging to the same security group.
-        """
-
-        if security_group_rules_client is None:
-            security_group_rules_client = self.security_group_rules_client
-        if security_groups_client is None:
-            security_groups_client = self.security_groups_client
-        rules = []
-        rulesets = [
-            dict(
-                # ssh
-                protocol='tcp',
-                port_range_min=22,
-                port_range_max=22,
-                ),
-            dict(
-                # ping
-                protocol='icmp',
-                )
-        ]
-        sec_group_rules_client = security_group_rules_client
-        for ruleset in rulesets:
-            for r_direction in ['ingress', 'egress']:
-                ruleset['direction'] = r_direction
-                try:
-                    sg_rule = self._create_security_group_rule(
-                        sec_group_rules_client=sec_group_rules_client,
-                        secgroup=secgroup,
-                        security_groups_client=security_groups_client,
-                        **ruleset)
-                except lib_exc.Conflict as ex:
-                    # if rule already exist - skip rule and continue
-                    msg = 'Security group rule already exists'
-                    if msg not in ex._error_string:
-                        raise ex
-                else:
-                    self.assertEqual(r_direction, sg_rule.direction)
-                    rules.append(sg_rule)
-
-        return rules
-
-
-class TestNetworkBasicOps(NuageNetworkScenarioTest,
+class TestNetworkBasicOps(base_nuage_network_scenario_test.NuageNetworkScenarioTest,
                           base.BaseNetworkTest):
 
     """

@@ -21,7 +21,6 @@ from tempest import config
 from tempest import test
 from tempest.lib import exceptions
 from nuagetempest.lib.utils import constants
-from nuagetempest.lib.test import nuage_test
 from tempest.lib import exceptions as lib_exc
 
 CONF = config.CONF
@@ -44,7 +43,7 @@ EXPECT_CIDR_IN_RANGE = "Bad request: cidr in subnet must be"
 EXPECT_GATEWAY_IN_CIDR = "Bad request: Gateway IP outside of the subnet CIDR"
 
 
-class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkTest):
+class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork):
 
     def setUp(self):
         super(BaseVSDPublicResourcesTest, self).setUp()
@@ -234,7 +233,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         if not port_found:
             raise exceptions.NotFound("ERROR: this VM (%s) has no port".format(str(vm_id)))
         else:
-            ext_id = cls.nuageclient.get_vsd_external_id(the_port['id'])
+            ext_id = cls.nuage_vsd_client.get_vsd_external_id(the_port['id'])
         return ext_id
 
     def _get_l2dom_vm_interface_ip_address(self, vm, vsd_domain_id):
@@ -563,6 +562,20 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
     #     server = self.create_server(name=name, create_kwargs=create_kwargs)
     #     # self.servers.append(server)
     #     return server
+
+    # ## Test functions library
+    #
+    # The create_[resource] functions only return body and discard the
+    # resp part which is not used in scenario tests
+
+    def create_keypair(self, client=None):
+        if not client:
+            client = self.keypairs_client
+        name = data_utils.rand_name(self.__class__.__name__)
+        # We don't need to create a keypair by pubkey in scenario
+        body = client.create_keypair(name=name)
+        self.addCleanup(client.delete_keypair, name)
+        return body['keypair']
 
     def _create_server(self, name, network_id, port_id=None):
 

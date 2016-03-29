@@ -20,7 +20,12 @@ class IpAntiSpoofingTest():
         l2domain_ext_id = base.get_external_id(l2dom['id'])
         vsd_l2domain = TB.vsd_1.get_l2domain(
             filter=base.get_filter_str('externalID', l2domain_ext_id))
-        vsd_port = vsd_l2domain.vports.get_first()
+        vsd_ports = vsd_l2domain.vports.get()
+        while vsd_ports.__len__() > 0:
+            vsd_port = vsd_ports.pop()
+            if port['id'] == vsd_port.name:
+                break
+        #vsd_port = vsd_l2domain.vports.get_first()
         return (vsd_l2domain, vsd_port)
 
     def _get_vsd_router_subnet_port(self, router, subnet, port):
@@ -57,12 +62,14 @@ class IpAntiSpoofingTest():
             self.ip_anti_spoof = IpAntiSpoofingTest()
             pass
 
-        def verify_security_disabled_ntw_port_l2domain(self, obj):
+        def verify_security_disabled_port_l2domain(self, obj):
             # obtin the parent of port
-            l2domain = obj.os_data.get_resource('l2domain-1').data
-            port = obj.os_data.get_resource('port-1').data
+            l2domain = obj.os_data.get_resource('l2dom1-1').os_data
+            port = obj.os_data.get_resource('port1-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
                                      l2domain, port)
+            obj.os_data.update_resource('l2dom1-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port1-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port.name, port['id'])
             # check policygroup is PG_FOR_LESS_SECURITY_XXXX
@@ -78,12 +85,14 @@ class IpAntiSpoofingTest():
             self.ip_anti_spoof = IpAntiSpoofingTest()
             pass
 
-        def verify_security_disabled_ntw_l2domain(self, obj):
+        def verify_security_disabled_port_l2domain(self, obj):
             # obtain the parent of port
-            l2domain = obj.os_data.get_resource('l2domain-1').data
-            port = obj.os_data.get_resource('port-1').data
+            l2domain = obj.os_data.get_resource('l2dom2-1').os_data
+            port = obj.os_data.get_resource('port2-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
                                      l2domain, port)
+            obj.os_data.update_resource('l2dom2-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port2-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port.name, port['id'])
             # check policygroup is PG_FOR_LESS_SECURITY_XXXX
@@ -101,10 +110,12 @@ class IpAntiSpoofingTest():
 
         def verify_security_disabled_port_l2domain(self, obj):
             # obtain the parent of port
-            l2domain = obj.os_data.get_resource('l2domain-1').data
-            port = obj.os_data.get_resource('port-1').data
+            l2domain = obj.os_data.get_resource('l2dom3-1').os_data
+            port = obj.os_data.get_resource('port3-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
                                      l2domain, port)
+            obj.os_data.update_resource('l2dom3-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port3-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port.name, port['id'])
             # check policygroup is PG_FOR_LESS_SECURITY_XXXX
@@ -120,12 +131,15 @@ class IpAntiSpoofingTest():
             self.ip_anti_spoof = IpAntiSpoofingTest()
             pass
 
-        def verify_security_disabled_ntw_port_l3domain(self, obj):
-            router = obj.os_data.get_resource('router-1').data
-            subnet = obj.os_data.get_resource('subnet-1').data
-            port = obj.os_data.get_resource('port-1').data
+        def verify_security_disabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router4-1').os_data
+            subnet = obj.os_data.get_resource('subnet4-1').os_data
+            port = obj.os_data.get_resource('port4-1').os_data
             (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
                 _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router4-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet4-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port4-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port.name, port['id'])
             # Check the policy group is PG_FOR_LESS_SECURITY_XXX
@@ -135,3 +149,365 @@ class IpAntiSpoofingTest():
             obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
             # Check the two ingress and egress rules
             self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+    class _create_delete_sec_disabled_ntw_l3domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_disabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router5-1').os_data
+            subnet = obj.os_data.get_resource('subnet5-1').os_data
+            port = obj.os_data.get_resource('port5-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router5-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet5-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port5-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # Check the policy group is PG_FOR_LESS_SECURITY_XXX
+            vsd_l3dom_pg = vsd_l3dom.policy_groups.get_first()
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            obj.assertEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
+            # Check the two ingress and egress rules
+            self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+    class _create_delete_sec_disabled_port_l3domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_disabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router6-1').os_data
+            subnet = obj.os_data.get_resource('subnet6-1').os_data
+            port = obj.os_data.get_resource('port6-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router6-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet6-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port6-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # Check the policy group is PG_FOR_LESS_SECURITY_XXX
+            vsd_l3dom_pg = vsd_l3dom.policy_groups.get_first()
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            obj.assertEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
+            # Check the two ingress and egress rules
+            self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+    class _update_ntw_from_sec_disabled_to_enabled_l2domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_disabled_port_l2domain(self, obj):
+            # obtain the parent of port
+            l2domain = obj.os_data.get_resource('l2dom7-1').os_data
+            port = obj.os_data.get_resource('port7-1').os_data
+            vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                     l2domain, port)
+            obj.os_data.update_resource('l2dom7-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port7-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l2dom_pg = vsd_l2domain.policy_groups.get_first()
+            obj.assertEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l2dom_pg.name)
+            # Check the two ingress and egress rules
+            self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+        def verify_security_enabled_port_l2domain(self, obj):
+            l2domain = obj.os_data.get_resource('l2dom7-1').os_data
+            port_1 = obj.os_data.get_resource('port7-1').os_data
+            port_2 = obj.os_data.get_resource('port7-2').os_data
+            vsd_port_1 = obj.os_data.get_resource('port7-1').vsd_data
+            vsd_l2domain, vsd_port_2 = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                       l2domain, port_2)
+            obj.os_data.update_resource('port7-2', vsd_data=vsd_port_2)
+            obj.assertEqual(vsd_port_1.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port_2.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port_1.name, port_1['id'])
+            obj.assertEqual(vsd_port_2.name, port_2['id'])
+
+            port_1_pg = vsd_port_1.policy_groups.get_first()
+            port_2_pg = vsd_port_2.policy_groups.get_first()
+            obj.assertEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertNotEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+
+    class _update_ntw_from_sec_enabled_to_diabled_l2domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_enabled_port_l2domain(self, obj):
+            # obtain the parent of port
+            l2domain = obj.os_data.get_resource('l2dom8-1').os_data
+            port = obj.os_data.get_resource('port8-1').os_data
+            vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                     l2domain, port)
+            obj.os_data.update_resource('l2dom8-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port8-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l2dom_pg = vsd_l2domain.policy_groups.get_first()
+            obj.assertNotEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l2dom_pg.name)
+
+        def verify_security_disabled_port_l2domain(self, obj):
+            l2domain = obj.os_data.get_resource('l2dom8-1').os_data
+            port_1 = obj.os_data.get_resource('port8-1').os_data
+            port_2 = obj.os_data.get_resource('port8-2').os_data
+            vsd_port_1 = obj.os_data.get_resource('port8-1').vsd_data
+            vsd_l2domain, vsd_port_2 = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                       l2domain, port_2)
+            obj.os_data.update_resource('port8-2', vsd_data=vsd_port_2)
+            obj.assertEqual(vsd_port_1.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port_2.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port_1.name, port_1['id'])
+            obj.assertEqual(vsd_port_2.name, port_2['id'])
+
+            port_1_pg = vsd_port_1.policy_groups.get_first()
+            port_2_pg = vsd_port_2.policy_groups.get_first()
+            obj.assertNotEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+    
+    class _update_port_from_sec_disabled_to_enabled_l2domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_disabled_port_l2domain(self, obj):
+            # obtain the parent of port
+            l2domain = obj.os_data.get_resource('l2dom9-1').os_data
+            port = obj.os_data.get_resource('port9-1').os_data
+            vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                     l2domain, port)
+            obj.os_data.update_resource('l2dom9-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port9-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l2dom_pg = vsd_l2domain.policy_groups.get_first()
+            obj.assertEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l2dom_pg.name)
+            # Check the two ingress and egress rules
+            self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+        def verify_security_enabled_port_l2domain(self, obj):
+            l2domain = obj.os_data.get_resource('l2dom9-1').os_data
+            port = obj.os_data.get_resource('port9-1').os_data
+            vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                       l2domain, port)
+            obj.os_data.update_resource('port9-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'DISABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+
+            port_pg = vsd_port.policy_groups.get_first()
+            obj.assertEqual(port_pg, None)
+
+    class _update_port_from_sec_enabled_to_disabled_l2domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_enabled_port_l2domain(self, obj):
+            # obtain the parent of port
+            l2domain = obj.os_data.get_resource('l2dom10-1').os_data
+            port = obj.os_data.get_resource('port10-1').os_data
+            vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                     l2domain, port)
+            obj.os_data.update_resource('l2dom10-1', vsd_data=vsd_l2domain)
+            obj.os_data.update_resource('port10-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l2dom_pg = vsd_l2domain.policy_groups.get_first()
+            obj.assertNotEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l2dom_pg.name)
+
+        def verify_security_disabled_port_l2domain(self, obj):
+            l2domain = obj.os_data.get_resource('l2dom10-1').os_data
+            port = obj.os_data.get_resource('port10-1').os_data
+            vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
+                                       l2domain, port)
+            obj.os_data.update_resource('port10-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+
+            port_pg = vsd_port.policy_groups.get_first()
+            obj.assertEqual(port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+    
+    class _update_ntw_from_sec_disabled_to_enabled_l3domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_disabled_port_l3domain(self, obj):
+            # obtain the parent of port
+            router = obj.os_data.get_resource('router11-1').os_data
+            subnet = obj.os_data.get_resource('subnet11-1').os_data
+            port = obj.os_data.get_resource('port11-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router11-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet11-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port11-1', vsd_data=vsd_port)
+
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l3dom_pg = vsd_l3dom.policy_groups.get_first()
+            obj.assertEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
+            # Check the two ingress and egress rules
+            self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+        def verify_security_enabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router11-1').os_data
+            subnet = obj.os_data.get_resource('subnet11-1').os_data
+            port_1 = obj.os_data.get_resource('port11-1').os_data
+            port_2 = obj.os_data.get_resource('port11-2').os_data
+            vsd_port_1 = obj.os_data.get_resource('port11-1').vsd_data
+            (vsd_l3dom, vsd_sub, vsd_port_2) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port_2)
+            obj.os_data.update_resource('port11-2', vsd_data=vsd_port_2)
+            obj.assertEqual(vsd_port_1.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port_2.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port_1.name, port_1['id'])
+            obj.assertEqual(vsd_port_2.name, port_2['id'])
+
+            port_1_pg = vsd_port_1.policy_groups.get_first()
+            port_2_pg = vsd_port_2.policy_groups.get_first()
+            obj.assertEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertNotEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+
+    class _update_ntw_from_sec_enabled_to_diabled_l3domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_enabled_port_l3domain(self, obj):
+            # obtain the parent of port
+            router = obj.os_data.get_resource('router12-1').os_data
+            subnet = obj.os_data.get_resource('subnet12-1').os_data
+            port = obj.os_data.get_resource('port12-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router12-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet12-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port12-1', vsd_data=vsd_port)
+
+            obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l3dom_pg = vsd_l3dom.policy_groups.get_first()
+            obj.assertNotEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
+
+        def verify_security_disabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router12-1').os_data
+            subnet = obj.os_data.get_resource('subnet12-1').os_data
+            port_1 = obj.os_data.get_resource('port12-1').os_data
+            port_2 = obj.os_data.get_resource('port12-2').os_data
+            vsd_port_1 = obj.os_data.get_resource('port12-1').vsd_data
+            (vsd_l3dom, vsd_sub, vsd_port_2) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port_2)
+            obj.os_data.update_resource('port12-2', vsd_data=vsd_port_2)
+
+            obj.assertEqual(vsd_port_1.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port_2.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port_1.name, port_1['id'])
+            obj.assertEqual(vsd_port_2.name, port_2['id'])
+
+            port_1_pg = vsd_port_1.policy_groups.get_first()
+            port_2_pg = vsd_port_2.policy_groups.get_first()
+            obj.assertNotEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+    
+    class _update_port_from_sec_disabled_to_enabled_l3domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_disabled_port_l3domain(self, obj):
+            # obtain the parent of port
+            router = obj.os_data.get_resource('router13-1').os_data
+            subnet = obj.os_data.get_resource('subnet13-1').os_data
+            port = obj.os_data.get_resource('port13-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router13-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet13-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port13-1', vsd_data=vsd_port)
+
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l3dom_pg = vsd_l3dom.policy_groups.get_first()
+            obj.assertEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
+            # Check the two ingress and egress rules
+            self.ip_anti_spoof._verify_ingress_egress_rules(obj, vsd_port_pg)
+
+        def verify_security_enabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router13-1').os_data
+            subnet = obj.os_data.get_resource('subnet13-1').os_data
+            port = obj.os_data.get_resource('port13-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('port13-1', vsd_data=vsd_port) 
+            obj.assertEqual(vsd_port.address_spoofing, 'DISABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+
+            port_pg = vsd_port.policy_groups.get_first()
+            obj.assertEqual(port_pg, None)
+
+    class _update_port_from_sec_enabled_to_disabled_l3domain():
+        def __init__(self):
+            self.ip_anti_spoof = IpAntiSpoofingTest()
+            pass
+
+        def verify_security_enabled_port_l3domain(self, obj):
+            # obtain the parent of port
+            router = obj.os_data.get_resource('router14-1').os_data
+            subnet = obj.os_data.get_resource('subnet14-1').os_data
+            port = obj.os_data.get_resource('port14-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('router14-1', vsd_data=vsd_l3dom)
+            obj.os_data.update_resource('subnet14-1', vsd_data=vsd_sub)
+            obj.os_data.update_resource('port14-1', vsd_data=vsd_port)
+
+            obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
+            obj.assertEqual(vsd_port.name, port['id'])
+            # check policygroup is PG_FOR_LESS_SECURITY_XXXX
+            vsd_port_pg = vsd_port.policy_groups.get_first()
+            vsd_l3dom_pg = vsd_l3dom.policy_groups.get_first()
+            obj.assertNotEqual(vsd_port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+            obj.assertEqual(vsd_port_pg.name, vsd_l3dom_pg.name)
+
+        def verify_security_disabled_port_l3domain(self, obj):
+            router = obj.os_data.get_resource('router14-1').os_data
+            subnet = obj.os_data.get_resource('subnet14-1').os_data
+            port = obj.os_data.get_resource('port14-1').os_data
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+                _get_vsd_router_subnet_port(router, subnet, port)
+            obj.os_data.update_resource('port14-1', vsd_data=vsd_port)
+            obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
+            obj.assertEqual(vsd_port.name, port['id'])
+
+            port_pg = vsd_port.policy_groups.get_first()
+            obj.assertEqual(port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
+ 

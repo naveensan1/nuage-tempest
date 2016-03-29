@@ -139,7 +139,7 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
         return service_client.ResponseBody(resp, body)
 
     def list_redirection_targets(self, id):
-        uri = '%s/nuage-redirect-targets/%s' % (self.uri_prefix)
+        uri = '%s/nuage-redirect-targets?subnet=%s' % (self.uri_prefix, id)
         return self._get_request(uri)
 
     def show_redirection_target(self, id):
@@ -273,6 +273,27 @@ class NuageNetworkClientJSON(network_client.NetworkClient):
 
     def list_nuage_external_security_group_l2domain(self, subnet_id):
         uri = '%s/nuage-external-security-groups.json?subnet=%s' % (self.uri_prefix, subnet_id)
+        return self._get_request(uri)
+
+    def show_nuage_policy_group(self, pg_id):
+        uri = '%s/nuage-policy-groups/%s' % (self.uri_prefix, pg_id)
+        return self._get_request(uri)
+
+    def list_nuage_policy_group_all(self):
+        uri = '%s/nuage-policy-groups.json' % (self.uri_prefix)
+        return self._get_request(uri)
+
+    def list_nuage_policy_group_for_subnet(self, subnet_id):
+        uri = '%s/nuage-policy-groups.json?for_subnet=%s' % (self.uri_prefix, subnet_id)
+        return self._get_request(uri)
+
+    def list_nuage_policy_group_for_port(self, port_id):
+        uri = '%s/nuage-policy-groups.json?for_port=%s' % (self.uri_prefix, port_id)
+        return self._get_request(uri)
+
+    def list_nuage_floatingip_by_subnet(self, subnet_id):
+        uri = '%s/nuage-floatingips.json?for_subnet=%s' % (self.uri_prefix, subnet_id)
+        # uri = '%s/nuage-floatingips' % (self.uri_prefix)
         return self._get_request(uri)
 
     # FloatingIp

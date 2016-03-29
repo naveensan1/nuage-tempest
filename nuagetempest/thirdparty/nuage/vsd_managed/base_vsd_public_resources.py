@@ -124,11 +124,11 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
                 'gateway': VSD_L2_SHARED_MGD_OPT3_GW
             }
             self.vsd_l2_shared_managed_opt3 = self.create_vsd_shared_l2domain_managed(**kwargs)
-            self.nuageclient.create_dhcpoption(self.vsd_l2_shared_managed_opt3[0]['ID'], 3, [dhcp_option_3])
+            self.nuage_vsd_client.create_dhcpoption(self.vsd_l2_shared_managed_opt3[0]['ID'], 3, [dhcp_option_3])
             self.current_l2_dhcp_option_3 = dhcp_option_3
         elif dhcp_option_3 != self.current_l2_dhcp_option_3:
             # we want tot est with another dhcp+option_3 value, set it
-            self.nuageclient.create_dhcpoption(self.vsd_l2_shared_managed_opt3[0]['ID'], 3, [dhcp_option_3])
+            self.nuage_vsd_client.create_dhcpoption(self.vsd_l2_shared_managed_opt3[0]['ID'], 3, [dhcp_option_3])
             self.current_l2_dhcp_option_3 = dhcp_option_3
         vsd_l2_dom_unmgd_l2_shared_mgd_opt3 = self.create_vsd_l2domain(tid=self.vsd_l2_unmgd_template[0]['ID'])
         self.link_l2domain_to_shared_domain(vsd_l2_dom_unmgd_l2_shared_mgd_opt3[0]['ID'],
@@ -148,14 +148,14 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
                                            domain_id=vsd_l3_domain[0]['ID'],
                                            extra_params=extra_params)
         # Add an unmanaged subnet to it
-        extra_params = {'associatedSharedNetworkResourceID': self.vsd_l3_shared_mgd[0]['ID']}
+        kwargs = {
+            'extra_params': {'associatedSharedNetworkResourceID': self.vsd_l3_shared_mgd[0]['ID']}
+        }
         vsd_l3_subnet_publiczone_unmgd_l3_shared_mngd = \
-            self.create_vsd_l3domain_unmanaged_subnet(zone_id=public_zone[0]['ID'],
-                                                      name=data_utils.rand_name('vsd-l3-domain-subnet-unmgd'),
-                                                      extra_params=extra_params)
+            self.create_vsd_l3domain_unmanaged_subnet(zone_id=public_zone[0]['ID'], **kwargs)
         return vsd_l3_subnet_publiczone_unmgd_l3_shared_mngd
 
-    def _given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(self, dhcp_option_3):
+    def _given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(self, dhcp_option_3):
         if not self.vsd_l3_shared_mgd_opt3:
             kwargs = {
                 'cidr': VSD_L3_SHARED_MGD_OPT3_CIDR,
@@ -163,11 +163,11 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
             }
             self.vsd_l3_shared_mgd_opt3 = \
                 self.create_vsd_shared_l3domain_managed(**kwargs)
-            self.nuageclient.create_dhcpoption(self.vsd_l3_shared_mgd_opt3[0]['ID'], 3, [dhcp_option_3])
+            self.nuage_vsd_client.create_dhcpoption(self.vsd_l3_shared_mgd_opt3[0]['ID'], 3, [dhcp_option_3])
             self.current_l3_dhcp_option_3 = dhcp_option_3
         elif dhcp_option_3 != self.current_l3_dhcp_option_3:
             # we want to test with another dhcp_option_3 value: set it
-            self.nuageclient.create_dhcpoption(self.vsd_l3_shared_mgd_opt3[0]['ID'], 3, [dhcp_option_3])
+            self.nuage_vsd_client.create_dhcpoption(self.vsd_l3_shared_mgd_opt3[0]['ID'], 3, [dhcp_option_3])
             self.current_l3_dhcp_option_3 = dhcp_option_3
         vsd_l3_domain = self.create_vsd_l3domain(tid=self.vsd_l3_dom_template[0]['ID'])
         # create a public zone in this domain
@@ -183,7 +183,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
                                                       extra_params=extra_params)
         return vsd_l3_subnet_publiczone_unmgd_l3_shared_mngd_opt3
 
-    def _given_vsdl3sharedmgdopt3_0000_linkedto_vsdl2subnetunmgd(self):
+    def _given_vsdl3sharedmgdopt3_0000_linkedto_vsdl3subnetunmgd(self):
         if not self.vsd_l3_shared_mgd_opt3:
             kwargs = {
                 'cidr': VSD_L3_SHARED_MGD_OPT3_CIDR,
@@ -191,7 +191,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
             }
             self.vsd_l3_shared_mgd_opt3 = \
                 self.create_vsd_shared_l3domain_managed(**kwargs)
-            self.nuageclient.create_dhcpoption(self.vsd_l3_shared_mgd_opt3[0]['ID'], 3, ['0.0.0.0'])
+            self.nuage_vsd_client.create_dhcpoption(self.vsd_l3_shared_mgd_opt3[0]['ID'], 3, ['0.0.0.0'])
         vsd_l3_domain = self.create_vsd_l3domain(tid=self.vsd_l3_dom_template[0]['ID'])
         # create a public zone in this domain
         extra_params = {'publicZone': True}
@@ -200,6 +200,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
                                            extra_params=extra_params)
         # Add an unmanaged subnet to it
         extra_params = {'associatedSharedNetworkResourceID': self.vsd_l3_shared_mgd_opt3[0]['ID']}
+        vsd_l3_mgd_subnet = self.create_vsd_shared_l3domain_managed()
         vsd_l3_subnet_publiczone_unmgd_l3_shared_mngd_opt3 = \
             self.create_vsd_l3domain_unmanaged_subnet(zone_id=public_zone[0]['ID'],
                                                       name=data_utils.rand_name('vsd-l3-domain-subnet-unmgd'),
@@ -239,7 +240,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
     def _get_l2dom_vm_interface_ip_address(self, vm, vsd_domain_id):
         # returns first VM-interfce IP address of the given 'vm' in the VSD domain with id = vsd_domain_id
         ext_id = self._get_external_port_id_from_vm(vm['id'])
-        vm_interface = self.nuageclient.get_vm_iface(constants.L2_DOMAIN,
+        vm_interface = self.nuage_vsd_client.get_vm_iface(constants.L2_DOMAIN,
                                                      vsd_domain_id,
                                                      filters='externalID', filter_value=ext_id)
         return vm_interface[0]['IPAddress']
@@ -247,7 +248,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
     def _get_l3_subnet_vm_interface_ip_address(self, vm, vsd_subnet_id):
         # returns first VM-interfce IP address of the given 'vm' in the VSD domain with id = vsd_domain_id
         ext_id = self._get_external_port_id_from_vm(vm['id'])
-        vm_interface = self.nuageclient.get_vm_iface(constants.SUBNETWORK,
+        vm_interface = self.nuage_vsd_client.get_vm_iface(constants.SUBNETWORK,
                                                      vsd_subnet_id,
                                                      filters='externalID', filter_value=ext_id)
         return vm_interface[0]['IPAddress']
@@ -340,12 +341,6 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         else:
             return False
 
-    def workaround_openstack_1202(self):
-        # create a dummy subnet to get this tenant known in the default enterprise
-        # See OPENSTACK-1202
-        network = self.create_network()
-        subnet = self.create_subnet(network=network)
-
     def _check_vsd_l2_shared_l2_unmgd(self, vsd_l2dom_unmgd, os_shared_network, enable_dhcp, gateway_ip, cidr,
                                       **kwargs_expect):
         network = self._create_shared_network(shared=os_shared_network)
@@ -359,10 +354,10 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         }
         if gateway_ip is not '':
             kwargs['gateway'] = gateway_ip
-        # Todo: remove workaround when OPENSTACK-1202 is solved
+
         if os_shared_network:
             kwargs['client'] = self.admin_subnets_client
-            self.workaround_openstack_1202()
+
         subnet = self._create_subnet(**kwargs)
         # Then I expect a neutron port equal to 'neutron_network_dhcp_nuage_port'
         network_dhcp_port_present = self._check_neutron_network_dhcp_nuage_port(network['id'])
@@ -421,10 +416,10 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDMangedNetworkT
         }
         if gateway_ip is not '':
             kwargs['gateway'] = gateway_ip
-        # Todo: remove workaround when OPENSTACK-1202 is solved
+
         if os_shared_network:
             kwargs['client'] = self.admin_subnets_client
-            self.workaround_openstack_1202()
+
         subnet = self._create_subnet(**kwargs)
         # Then I expect a neutron port equalt to 'neutron_network_dhcp_nuage_port'
         network_dhcp_port_present = self._check_neutron_network_dhcp_nuage_port(network['id'])

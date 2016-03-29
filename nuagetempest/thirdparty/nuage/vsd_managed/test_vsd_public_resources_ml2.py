@@ -472,11 +472,11 @@ class VSDPublicResourcesML2Test(base_vsd_public_resources.BaseVSDPublicResources
         pass
 
     @nuage_test.header()
-    def test_vsd_l3_shared_mgd_opt3_l2_unmgd_no_gateway(self):
+    def test_vsd_l3_shared_mgd_opt3_l3_unmgd_no_gateway(self):
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP-options-3
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self._check_vsd_l3_shared_l2_unmgd(
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,

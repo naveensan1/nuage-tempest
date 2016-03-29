@@ -188,6 +188,7 @@ class TestNetworkBasicOps(NuageNetworkScenarioTest,
             floating_network_id=CONF.network.public_network_id,
             port_id=self.port_id,
             nuage_fip_rate=FIP_RATE_LIMIT)
+        self.floating_ips.append(result['floatingip'])
         # convert to format used throughout this file
         floating_ip = net_resources.DeletableFloatingIp(
             client=self.os.floating_ips_client,
@@ -453,9 +454,8 @@ class TestNetworkBasicOps(NuageNetworkScenarioTest,
                          'Extra DHCP option <domain-name> not set correcty on the VM')
         LOG.info("EXTRA DHCP OPTIONS validated OK")
 
-    # @test.attr(type='smoke')
-    # @test.idempotent_id('f323b3ba-82f8-4db7-8ea6-6a895869ec49')
-    # @test.services('compute', 'network')
+    @test.attr(type='smoke')
+    @test.services('compute', 'network')
     def test_nuage_fip_network_basic_ops(self):
         """
         Spin a VM with a security group on an internal network, with

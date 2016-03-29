@@ -45,6 +45,7 @@ INGRESS_ACL_TEMPLATE = 'ingressacltemplates'
 INGRESS_ACL_ENTRY_TEMPLATE = 'ingressaclentrytemplates'
 INGRESS_ADV_FWD_ENTRY_TEMPLATE = 'ingressadvfwdentrytemplates'
 INGRESS_ADV_FWD_TEMPLATE = 'ingressadvfwdtemplates'
+APPLY_JOBS = 'jobs'
 
 # USER MANAGEMENT
 NET_PARTITION = 'enterprises'

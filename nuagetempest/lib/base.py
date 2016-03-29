@@ -1,9 +1,10 @@
 import time
 import re
 import logging
+from tempest import config 
 
 LOG = logging.getLogger(__name__)
-
+CONF = config.CONF
 
 def setup_tempest_public_network(osc):
 
@@ -114,3 +115,10 @@ def add_csproot_to_cms(vsd_api, vspk):
     grp_filter = 'name IS "CMS Group"'
     usr_filter = 'userName IS "csproot"'
     vsd.add_user_to_group(global_ent, usr_filter=usr_filter, grp_filter=grp_filter)
+
+def get_external_id(id):
+    return (id + '@' + CONF.nuage.nuage_cms_id) \
+        if CONF.nuage.nuage_cms_id else id
+
+def get_filter_str(key, value):
+    return key + '  == "{}"'.format(value)

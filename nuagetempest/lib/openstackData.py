@@ -1,20 +1,24 @@
-from treelib import Tree, Node
+from tree import Tree
+from node import Node
 
 class openstackData():
     def __init__(self):
         self.resources = Tree()
         self.resources.create_node('CMS','CMS')
         
-    def insert_resource(self, data_dict, parent):
-        tag = data_dict['name'] 
-        self.resources.create_node(tag, tag, parent=parent, data=data_dict)
-    
+    def insert_resource(self, tag, parent, os_data=None,
+                        vsd_data=None, vsc_data=None,
+                        vrs_data=None):
+        self.resources.create_node(tag, tag, parent=parent,
+                                   os_data=os_data, vrs_data=vrs_data,
+                                   vsd_data=vsd_data, vsc_data=vsc_data)
+
     def print_openstackData(self):
         self.resources.show(line_type="ascii-em")
     
     def delete_resource(self, tag):
         resp = self.resources.remove_node(tag)
-        if resp != 1:
+        if resp < 1:
             raise Exception("Resource removal failed.")
     
     def get_resource(self, tag):
@@ -35,4 +39,10 @@ class openstackData():
     
     def move_resource(self, tag, new_parent):
         self.resources.move_node(tag, new_parent)
-            
+        
+    def update_resource(self, tag, os_data=None,
+                        vsd_data=None, vsc_data=None,
+                        vrs_data=None):
+        self.resources.update_node(tag, os_data=os_data,
+                        vsd_data=vsd_data, vsc_data=vsc_data,
+                        vrs_data=vrs_data)

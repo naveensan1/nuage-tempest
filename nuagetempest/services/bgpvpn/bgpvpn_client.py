@@ -17,17 +17,15 @@ import six
 import urllib
 
 from tempest import config
-from tempest.common import service_client
-
-from tempest_lib.common.rest_client import RestClient
-from tempest_lib import exceptions as lib_exc
+from tempest.lib.common import rest_client
+from tempest.lib import exceptions as lib_exc
 
 
 CONF = config.CONF
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseNeutronResourceClient(RestClient):
+class BaseNeutronResourceClient(rest_client.RestClient):
     URI_PREFIX = "v2.0"
 
     def __init__(self, auth_provider, resource, parent=None, path_prefix=None):
@@ -64,7 +62,7 @@ class BaseNeutronResourceClient(RestClient):
         resp, body = self.post(uri, req_post_data)
         body = json.loads(body)
         self.expected_success(201, resp.status)
-        return service_client.ResponseBody(resp, body)[self.resource]
+        return rest_client.ResponseBody(resp, body)[self.resource]
 
     def list(self, parent=None, **filters):
         if parent:
@@ -76,7 +74,7 @@ class BaseNeutronResourceClient(RestClient):
         resp, body = self.get(uri)
         body = json.loads(body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, body)['%ss' % self.resource]
+        return rest_client.ResponseBody(resp, body)['%ss' % self.resource]
 
     def show(self, id, parent=None, fields=None):
         if parent:
@@ -88,7 +86,7 @@ class BaseNeutronResourceClient(RestClient):
         resp, body = self.get(uri)
         body = json.loads(body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, body)[self.resource]
+        return rest_client.ResponseBody(resp, body)[self.resource]
 
     def update(self, id, parent=None, **kwargs):
         if parent:
@@ -100,7 +98,7 @@ class BaseNeutronResourceClient(RestClient):
         resp, body = self.put(uri, req_data)
         body = json.loads(body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, body)[self.resource]
+        return rest_client.ResponseBody(resp, body)[self.resource]
 
     def delete(self, id, parent=None):
         if parent:
@@ -109,7 +107,7 @@ class BaseNeutronResourceClient(RestClient):
             uri = self.single_resource_url % id
         resp, body = super(BaseNeutronResourceClient, self).delete(uri)
         self.expected_success(204, resp.status)
-        service_client.ResponseBody(resp, body)
+        rest_client.ResponseBody(resp, body)
 
 class BGPVPNClient(BaseNeutronResourceClient):
     def __init__(self, auth_provider):

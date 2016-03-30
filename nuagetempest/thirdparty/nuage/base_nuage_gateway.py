@@ -202,6 +202,13 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
                 LOG.exception(exc)
                 has_exception = True
 
+        for router in cls.routers:
+            try:
+                cls.admin_routers_client.delete_router(router['id'])
+            except Exception as exc:
+                LOG.exception(exc)
+                has_exception = True
+
         super(BaseNuageGatewayTest, cls).resource_cleanup()
         if has_exception:
             raise exceptions.TearDownException()

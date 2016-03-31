@@ -284,7 +284,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
 
-    def test_update_ntw_from_sec_enabled_to_diabled_l2domain(self):
+    def test_update_ntw_from_sec_enabled_to_disabled_l2domain(self):
         ''' L2domain testcase for updating the port-security-enabled flag
             from True to False. Ports are created at both the states to check
             if the network level security is correctly propogated.'''
@@ -381,7 +381,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
 
-    def test_update_ntw_from_sec_enabled_to_diabled_l3domain(self):
+    def test_update_ntw_from_sec_enabled_to_disabled_l3domain(self):
         ''' L3domain testcase for updating the port-security-enabled flag
             from True to False. Ports are created at both the states to check
             if the network level security is correctly propogated.'''

@@ -258,7 +258,7 @@ class IpAntiSpoofingTest():
             obj.assertEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
             obj.assertNotEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
 
-    class _update_ntw_from_sec_enabled_to_diabled_l2domain():
+    class _update_ntw_from_sec_enabled_to_disabled_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
             pass
@@ -410,7 +410,7 @@ class IpAntiSpoofingTest():
             obj.assertEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
             obj.assertNotEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
 
-    class _update_ntw_from_sec_enabled_to_diabled_l3domain():
+    class _update_ntw_from_sec_enabled_to_disabled_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
             pass

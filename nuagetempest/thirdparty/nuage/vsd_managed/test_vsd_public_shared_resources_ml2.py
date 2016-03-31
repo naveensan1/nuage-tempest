@@ -197,16 +197,26 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # And these are linked
         vsd_l2dom_unmgd = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
-        self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-            self._check_vsd_l2_shared_l2_unmgd,
+        if CONF.nuage_sut.openstack_version == 'kilo':
+            self.assertRaisesRegex(
+                exceptions.ServerFault,
+                "Details: create_subnet_postcommit failed.",
+                self._check_vsd_l2_shared_l2_unmgd,
+                vsd_l2dom_unmgd=vsd_l2dom_unmgd,
+                os_shared_network=True,
+                enable_dhcp=True,
+                cidr=base_vsd_managed_networks.VSD_L2_SHARED_MGD_CIDR,
+                gateway_ip=base_vsd_managed_networks.VSD_L2_SHARED_MGD_GW
+            )
+        else:
+            # TODO: See OPENSTACK_1347 - ML2 liberty catches all exceptions
+            # Only a failure is logged in neutron.log
+            self._check_vsd_l2_shared_l2_unmgd(
             vsd_l2dom_unmgd=vsd_l2dom_unmgd,
             os_shared_network=True,
             enable_dhcp=True,
             cidr=base_vsd_managed_networks.VSD_L2_SHARED_MGD_CIDR,
-            gateway_ip=base_vsd_managed_networks.VSD_L2_SHARED_MGD_GW
-        )
+            gateway_ip=base_vsd_managed_networks.VSD_L2_SHARED_MGD_GW)
 
     @nuage_test.header()
     def test_vsd_l2_shared_mgd_l2_unmgd_no_gateway(self):
@@ -418,7 +428,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # Given  I have a VSD -L3-domain in a public zone (i.e. without IPAM (/ UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP option 3
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
         self._check_vsd_l3_shared_l2_unmgd(
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -447,7 +457,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP-options-3
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
         self._check_vsd_l3_shared_l2_unmgd(
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -477,7 +487,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP-options-3
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self._check_vsd_l3_shared_l2_unmgd(
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
@@ -1039,7 +1049,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with dhcp options 3
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
             exceptions.ServerFault,
@@ -1066,7 +1076,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed)
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
             exceptions.ServerFault,
@@ -1093,7 +1103,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed)
         # And  these are linked
-        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl2subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
+        vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
             exceptions.ServerFault,

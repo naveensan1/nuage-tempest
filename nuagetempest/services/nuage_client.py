@@ -283,6 +283,12 @@ class NuageRestClient(object):
         return self.get_resource(constants.ENTERPRISE_NET_MACRO,
                                  filters, filter_value, netpart_name)
 
+    def list_enterprises(self):
+        res_path = self.build_resource_path(constants.NET_PARTITION, None, None)
+        extra_headers ={}
+        result =  self.get(res_path, extra_headers)
+        return result
+
     # Public Network Macro
     def get_public_net_macro(self, filters=None, filter_value=None,
                              netpart_name=None):
@@ -490,6 +496,28 @@ class NuageRestClient(object):
         return self.get_child_resource(
             parent, parent_id, constants.FLOATINGIP, None, None)
 
+    def create_floatingip_pool(self, name, address, gateway, netmask, extra_params=None):
+        data = {
+            "type":"FLOATING",
+            "netmask": netmask,
+            "name": name,
+            "gateway": gateway,
+            "address": address
+        }
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            constants.SHARED_NET_RES, None, None)
+        return self.post(res_path, data)
+
+    def claim_floatingip(self, l3domain_id, vsd_fip_pool_id):
+        data = {
+            "associatedSharedNetworkResourceID": vsd_fip_pool_id
+        }
+        res_path = self.build_resource_path(
+            constants.DOMAIN, l3domain_id, constants.FLOATINGIP)
+        return self.post(res_path, data)
+
     # Static Route
     def create_staticroute(self, parent, parent_id, netaddr, nexthop,
                            externalId=None, extra_params=None):
@@ -535,6 +563,13 @@ class NuageRestClient(object):
 
     def delete_l2domaintemplate(self, l2dom_tid):
         return self.delete_resource(constants.L2_DOMAIN_TEMPLATE, l2dom_tid)
+
+    def apply_l2domaintemplate_policies(self, l2dom_tid):
+        data ={"command":"APPLY_POLICY_CHANGES"}
+        res_path = self.build_resource_path(
+            constants.L2_DOMAIN_TEMPLATE, l2dom_tid,
+            constants.APPLY_JOBS)
+        return self.post(res_path, data)
 
     # L2Domain
     def create_l2domain(self, name, templateId=None, externalId=None,
@@ -585,6 +620,24 @@ class NuageRestClient(object):
         return self.get_resource(constants.L2_DOMAIN,
                                  filters, filter_value, netpart_name)
 
+    def create_vsd_shared_resource(self, name, externalId=None, extra_params=None, type=None):
+        if type is None:
+            type='L2DOMAIN'
+        data = {
+            "name": name,
+            "type": type
+        }
+        if externalId:
+            data['externalID'] = self.get_vsd_external_id(externalId)
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            constants.SHARED_NET_RES, None, None)
+        return self.post(res_path, data)
+
+    def delete_vsd_shared_resource(self, shared_resource_id):
+        self.delete_resource(constants.SHARED_NET_RES, shared_resource_id)
+
     # Policy
     # Policygroup
     def create_policygroup(self, parent, parent_id, name, type,
@@ -598,16 +651,51 @@ class NuageRestClient(object):
             data['name'] = externalId
         else:
             data['name'] = name
-        if self.extra_params:
-            data.update(self.extra_params)
+        if extra_params:
+            data.update(extra_params)
         res_path = self.build_resource_path(
             parent, parent_id, constants.POLICYGROUP)
         return self.post(res_path, data)
+
+    def delete_policygroup(self, id):
+        return self.delete_resource(constants.POLICYGROUP, id)
 
     def get_policygroup(self, parent, parent_id, filters=None,
                         filter_value=None):
         return self.get_child_resource(
             parent, parent_id, constants.POLICYGROUP, filters, filter_value)
+
+    def begin_l2_policy_changes(self, l2domain_id):
+        data = {"command":"BEGIN_POLICY_CHANGES"}
+        res_path = self.build_resource_path(
+            resource=constants.L2_DOMAIN,
+            resource_id=l2domain_id,
+            child_resource=constants.APPLY_JOBS)
+        return self.post(res_path, data)
+
+    def apply_l2_policy_changes(self, l2domain_id):
+        data = {"command":"APPLY_POLICY_CHANGES"}
+        res_path = self.build_resource_path(
+            resource=constants.L2_DOMAIN,
+            resource_id=l2domain_id,
+            child_resource=constants.APPLY_JOBS)
+        return self.post(res_path, data)
+
+    def begin_l3_policy_changes(self, l3domain_id):
+        data = {"command":"BEGIN_POLICY_CHANGES"}
+        res_path = self.build_resource_path(
+            resource=constants.DOMAIN,
+            resource_id=l3domain_id,
+            child_resource=constants.APPLY_JOBS)
+        return self.post(res_path, data)
+
+    def apply_l3_policy_changes(self, l3domain_id):
+        data = {"command":"APPLY_POLICY_CHANGES"}
+        res_path = self.build_resource_path(
+            resource=constants.DOMAIN,
+            resource_id=l3domain_id,
+            child_resource=constants.APPLY_JOBS)
+        return self.post(res_path, data)
 
     # Redirection Target
     def get_redirection_target(self, parent, parent_id,
@@ -615,6 +703,48 @@ class NuageRestClient(object):
         return self.get_child_resource(
             parent, parent_id, constants.REDIRECTIONTARGETS,
             filters, filter_value)
+
+    def create_l2_redirect_target(self, domain_id, name, extra_params=None):
+        data = {
+        "endPointType": "VIRTUAL_WIRE",
+                        "name": name,
+        }
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.L2_DOMAIN,
+            resource_id=domain_id,
+            child_resource=constants.REDIRECTIONTARGETS)
+        return self.post(res_path, data)
+
+    def update_redirect_target(self, rt_id, update_params=None):
+        data = {}
+        if update_params:
+            data.update(update_params)
+        res_path = self.build_resource_path(
+            resource=constants.REDIRECTIONTARGETS,
+            resource_id=rt_id,
+            child_resource=None)
+        return self.put(res_path, data)
+
+    def create_l3_redirect_target(self, domain_id, name, extra_params=None):
+        data = {
+            "endPointType": "L3",
+            "name": name,
+            }
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.DOMAIN,
+            resource_id=domain_id,
+            child_resource=constants.REDIRECTIONTARGETS)
+        return self.post(res_path, data)
+
+    def delete_redirect_target(self, id):
+        res_path = self.build_resource_path(
+            resource=constants.REDIRECTIONTARGETS,
+            resource_id=id)
+        return self.delete(res_path)
 
     def get_redirection_target_vports(self, parent, parent_id,
                                       filters=None, filter_value=None):
@@ -627,6 +757,27 @@ class NuageRestClient(object):
             parent, parent_id, constants.VIRTUAL_IP, filters, filter_value)
 
     # ADVFWDTemplate
+    def create_advfwd_entrytemplate(self, parent, parent_id,
+                                    filters=None, filter_value=None):
+        data = {
+            'name': "nameke",
+            'active': True,
+            "priorityType":"NONE",
+            "defaultAllowIP": False,
+            "priorityType": "NONE",
+            "priority": None,
+            "statsLoggingEnabled": False,
+            "policyState": None,
+            "flowLoggingEnabled": False,
+            "defaultAllowNonIP": False,
+            "defaultAllowIP": False}
+
+        res_path = self.build_resource_path(
+            resource=parent,
+            resource_id=parent_id,
+            child_resource=constants.INGRESS_ADV_FWD_TEMPLATE)
+        return self.post(res_path, data)
+
     def get_advfwd_entrytemplate(self, parent, parent_id,
                                  filters=None, filter_value=None):
         return self.get_child_resource(
@@ -640,6 +791,30 @@ class NuageRestClient(object):
             filters, filter_value)
 
     # ACLTemplate
+    def create_ingress_acl_template(self, name, parent, parent_id, extra_params=None):
+        data = {"name":name}
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=parent,
+            resource_id=parent_id,
+            child_resource=constants.INGRESS_ACL_TEMPLATE)
+        result = self.post(res_path, data)
+        return result
+
+    def create_l2domain_ingress_acl_template(self, name, domain_id, extra_params=None):
+        data = {
+            "name":name
+        }
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.L2_DOMAIN,
+            resource_id=domain_id,
+            child_resource=constants.INGRESS_ACL_TEMPLATE)
+        result = self.post(res_path, data)
+        return result
+
     def get_ingressacl_template(self, parent, parent_id):
         return self.get_child_resource(parent, parent_id,
                                        constants.INGRESS_ACL_TEMPLATE, None,
@@ -650,6 +825,64 @@ class NuageRestClient(object):
                                        constants.EGRESS_ACL_TEMPLATE, None,
                                        None)
 
+    def update_egress_acl_template(self, eacl_template_id, extra_params=None):
+        data = {}
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.EGRESS_ACL_TEMPLATE,
+            resource_id=eacl_template_id,
+            child_resource=None)
+        result = self.put(res_path, data)
+
+    def update_ingress_acl_template(self, eacl_template_id, extra_params=None):
+        data = {}
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.INGRESS_ACL_TEMPLATE,
+            resource_id=eacl_template_id,
+            child_resource=None)
+        result = self.put(res_path, data)
+
+    def create_egress_acl_template(self, name, parent, parent_id, extra_params=None):
+        data = {"name": name}
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=parent,
+            resource_id=parent_id,
+            child_resource=constants.EGRESS_ACL_TEMPLATE)
+        result = self.post(res_path, data)
+        return result
+
+    def create_l2domain_egress_acl_template(self, name, domain_template_id, extra_params=None):
+        data = {
+            "name": name
+        }
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.L2_DOMAIN,
+            resource_id=domain_template_id,
+            child_resource=constants.EGRESS_ACL_TEMPLATE)
+        result = self.post(res_path, data)
+        return result
+
+    def create_ingress_security_group_entry(self, name_description, iacl_template_id, extra_params=None):
+        data = {
+            "description": name_description
+        }
+
+        if extra_params:
+            data.update(extra_params)
+        res_path = self.build_resource_path(
+            resource=constants.INGRESS_ACL_TEMPLATE,
+            resource_id=iacl_template_id,
+            child_resource=constants.INGRESS_ACL_ENTRY_TEMPLATE)
+        result = self.post(res_path, data)
+        return result
+
     # ACLRule
     def create_ingress_acl(self):
         pass
@@ -659,9 +892,6 @@ class NuageRestClient(object):
         return self.get_child_resource(parent, parent_id,
                                        constants.INGRESS_ACL_ENTRY_TEMPLATE,
                                        filters, filter_value)
-
-    def create_egress_acl(self):
-        pass
 
     def get_egressacl_entytemplate(self, parent, parent_id,
                                    filters=None, filter_value=None):
@@ -856,7 +1086,7 @@ class NuageRestClient(object):
         }
 
         if extra_params:
-            data.update(self.extra_params)
+            data.update(extra_params)
         res_path = self.build_resource_path(
             resource=constants.REDUNDANCY_GROUPS,
             resource_id=grp_id, child_resource=constants.GATEWAY_PORT)

@@ -125,8 +125,9 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
                         filters='ID',
                         filter_value=ext_sg_rule['id'])
             else:
-                nuage_entrytemplate = self.nuageclient.\
-                    get_egressacl_entytemplate(
+                # TODO: Check with Spurthi
+                nuage_entrytemplate = self.nuageclient. \
+                    get_ingressacl_entytemplate(
                         constants.INGRESS_ACL_TEMPLATE,
                         nuage_iacl_template[0]['ID'])
         return nuage_entrytemplate

@@ -197,16 +197,26 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # And these are linked
         vsd_l2dom_unmgd = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
-        self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-            self._check_vsd_l2_shared_l2_unmgd,
+        if CONF.nuage_sut.openstack_version == 'kilo':
+            self.assertRaisesRegex(
+                exceptions.ServerFault,
+                "Details: create_subnet_postcommit failed.",
+                self._check_vsd_l2_shared_l2_unmgd,
+                vsd_l2dom_unmgd=vsd_l2dom_unmgd,
+                os_shared_network=True,
+                enable_dhcp=True,
+                cidr=base_vsd_managed_networks.VSD_L2_SHARED_MGD_CIDR,
+                gateway_ip=base_vsd_managed_networks.VSD_L2_SHARED_MGD_GW
+            )
+        else:
+            # TODO: See OPENSTACK_1347 - ML2 liberty catches all exceptions
+            # Only a failure is logged in neutron.log
+            self._check_vsd_l2_shared_l2_unmgd(
             vsd_l2dom_unmgd=vsd_l2dom_unmgd,
             os_shared_network=True,
             enable_dhcp=True,
             cidr=base_vsd_managed_networks.VSD_L2_SHARED_MGD_CIDR,
-            gateway_ip=base_vsd_managed_networks.VSD_L2_SHARED_MGD_GW
-        )
+            gateway_ip=base_vsd_managed_networks.VSD_L2_SHARED_MGD_GW)
 
     @nuage_test.header()
     def test_vsd_l2_shared_mgd_l2_unmgd_no_gateway(self):

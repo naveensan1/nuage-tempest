@@ -1438,13 +1438,19 @@ class VSDManagedPortAttributestTest(base_vsd_managed_port_attributes.BaseVSDMana
         rtport_2 = self.create_port(network)
 
         if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
-            msg = "update_port_postcommit failed"
-            self.assertRaisesRegexp(
-                exceptions.ServerFault,
-                msg,
-                self._associate_rt_port,
-                rtport_2,
-                os_redirect_target)
+            if CONF.nuage_sut.openstack_version == 'kilo':
+                msg = "update_port_postcommit failed"
+                self.assertRaisesRegexp(
+                    exceptions.ServerFault,
+                    msg,
+                    self._associate_rt_port,
+                    rtport_2,
+                    os_redirect_target)
+            else:
+                # TODO: See OPENSTACK_1346 - ML2 liberty catches all exceptions
+                # Only a failure is logged in neutron.log
+                self._associate_rt_port(rtport_2,
+                                        os_redirect_target)
         else:
             msg = "Cannot have more than 1 vPort under a redirectiontarget with redundancy disabled"
             self.assertRaisesRegexp(
@@ -1603,13 +1609,19 @@ class VSDManagedPortAttributestTest(base_vsd_managed_port_attributes.BaseVSDMana
 
 
         if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
-            msg = "Got server fault"
-            self.assertRaisesRegexp(
-                exceptions.ServerFault,
-                msg,
-                self._associate_multiple_rt_port,
-                rtport,
-                vsd_redirect_targets)
+            if CONF.nuage_sut.openstack_version == 'kilo':
+                msg = "Got server fault"
+                self.assertRaisesRegexp(
+                    exceptions.ServerFault,
+                    msg,
+                    self._associate_multiple_rt_port,
+                    rtport,
+                    vsd_redirect_targets)
+            else:
+                # TODO: See OPENSTACK_1347 - ML2 liberty catches all exceptions
+                # Only a failure is logged in neutron.log
+                self._associate_multiple_rt_port(rtport,
+                                                 vsd_redirect_targets)
         else:
             self.assertRaisesRegexp(
                 exceptions.BadRequest,
@@ -1858,129 +1870,6 @@ class VSDManagedPortAttributestTest(base_vsd_managed_port_attributes.BaseVSDMana
                          (policy_group_x[0]['ID'],  subnet_x['id'], subnet_y['id']))
         pass
 
-    # # @nuage_test.nuage_skip_because(message="Speedup")
-    # def test_e2e_l2_vm_connectivity_port_to_policygroup(self):
-    #     # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
-    #     vsd_l2_subnet, l2_template = self._create_vsd_l2_managed_subnet()
-    #     network, subnet = self._create_os_l2_vsd_managed_subnet(vsd_l2_subnet)
-    #     policy_group = self.nuage_vsd_client.create_policygroup(constants.L2_DOMAIN,
-    #                                                             vsd_l2_subnet[0]['ID'],
-    #                                                             name='myVSD-l2-pg',
-    #                                                             type='SOFTWARE',
-    #                                                             extra_params=None)
-    #     # And the policy group has and ingress/egress policy with rules allowing PING
-    #     self._prepare_l2_security_group_entries(policy_group[0]['ID'], vsd_l2_subnet[0]['ID'])
-    #     # When I retrieve the VSD-L2-Managed-Subnet
-    #     policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
-    #     # I expect the policyGroup in my list
-    #     pg_present = self._check_policy_group_in_list(policy_group[0]['ID'], policy_group_list)
-    #     self.assertTrue(pg_present,"Did not find vsd policy group in policy group list")
-    #     # And it has no external ID
-    #     self.assertIsNone(policy_group[0]['externalID'],
-    #                       "Policy Group has an external ID, while it should not")
-    #
-    #     show_pg = self.nuage_network_client.show_nuage_policy_group(policy_group[0]['ID'])
-    #
-    #     # When I create 2 ports in the subnet
-    #     port1 = self.create_port(network)
-    #     port2 = self.create_port(network)
-    #     # And I associate all ports with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-pg'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then I expect all ports in the show policy group response
-    #     port_present = self._check_port_in_policy_group(port1['id'], policy_group[0]['ID'])
-    #     self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
-    #                     (port1['id'], policy_group[0]['ID']))
-    #     port_present = self._check_port_in_policy_group(port2['id'], policy_group[0]['ID'])
-    #     self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
-    #                     (port2['id'], policy_group[0]['ID']))
-    #     # create connectivity VM
-    #     vm_conn = self._create_connectivity_VM(public_network_id=CONF.network.public_network_id,
-    #                                            vsd_l2_subnet=vsd_l2_subnet,
-    #                                            vsd_l2_port=port2)
-    #     floating_ip, the_server = self.floating_ip_tuple
-    #
-    #     rslt = self._configure_eth1_server(vm_conn, floating_ip.floating_ip_address)
-    #
-    #     # When I spin a VM with this port
-    #     vm1 = self._create_server(name='vm1', network_id=network['id'], port_id=port1['id'])
-    #     vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
-    #     # These Vm's have connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
-    #     # When I disassociate all ports from the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [],
-    #         'name': 'port-without-vsd-pg-1st'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have no more connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
-    #     self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (1)")
-    #     # When I re-associate all ports with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-pg-2nd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have again connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (2)")
-    #     # When I disassociate 1 port from the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [],
-    #         'name': 'port-without-vsd-pg-2nd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     # self.update_port(port2, **kwargs)
-    #     # Then these VM's have no more connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
-    #     self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (2)")
-    #     # When I re-associate that port with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-3rd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     # self.update_port(port2, **kwargs)
-    #     # Then these VM's have again connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
-    #     # When I disassociate the other port from the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [],
-    #         'name': 'port-without-vsd-pg-2nd'
-    #     }
-    #     # self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have no more connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
-    #     self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
-    #     # When I re-associate that port with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-3rd'
-    #     }
-    #     # self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have again connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
-    #     #
-    #     the_floating_ip = self.floating_ips.pop()
-    #     self.floating_ips_client.delete_floatingip(the_floating_ip['id'])
-    #
-    #     # self.servers_client.delete_server(vm_conn['id'])
-    #     # self.servers_client.delete_server(vm1['id'])
-    #     self._clear_connectivity_vm_interfaces(self.conn_router_id, self.conn_subnet_id, self.conn_port_id)
-    #     # pass
-
     @nuage_test.header()
     def test_l3_associate_port_to_policygroup(self):
         # Given I have a VSD-L3-Managed-Subnet in openstack with a VSD creeated policy group
@@ -2124,127 +2013,6 @@ class VSDManagedPortAttributestTest(base_vsd_managed_port_attributes.BaseVSDMana
                 port_present = self._check_port_in_policy_group(ports[i]['id'], policy_groups[j][0]['ID'])
                 self.assertFalse(port_present, 'disassociated port (%s) still present in policy group(%s)' %
                                  (ports[i]['id'], policy_groups[j][0]['ID']))
-        pass
-
-    # # @nuage_test.nuage_skip_because(message="Speedup")
-    # def test_e2e_l3_vm_connectivity_port_to_policygroup(self):
-    #     # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
-    #     vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()
-    #     network, subnet = self._create_os_l3_vsd_managed_subnet(vsd_l3_subnet)
-    #     policy_group = self.nuage_vsd_client.create_policygroup(constants.DOMAIN,
-    #                                                             vsd_l3_domain[0]['ID'],
-    #                                                             name='myVSD-l3-policygrp',
-    #                                                             type='SOFTWARE',
-    #                                                             extra_params=None)
-    #     # And the policy group has and ingress/egress policy with rules allowing PING
-    #     self._prepare_l3_security_group_entries(policy_group[0]['ID'], vsd_l3_domain[0]['ID'])
-    #     # When I retrieve the VSD-L2-Managed-Subnet
-    #     policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
-    #     # I expect the policyGroup in my list
-    #     pg_present = self._check_policy_group_in_list(policy_group[0]['ID'], policy_group_list)
-    #     self.assertTrue(pg_present,"Did not find vsd policy group in policy group list")
-    #     # And it has no external ID
-    #     self.assertIsNone(policy_group[0]['externalID'],
-    #                       "Policy Group has an external ID, while it should not")
-    #
-    #     show_pg = self.nuage_network_client.show_nuage_policy_group(policy_group[0]['ID'])
-    #
-    #     # When I create 2 ports in the subnet
-    #     port1 = self.create_port(network)
-    #     port2 = self.create_port(network)
-    #     # port3 = self.create_port(network)
-    #     # public_network = self.admin_client.show_network(CONF.network.public_network_id)
-    #     # port4 = self.create_port(public_network['network'])
-    #     # And I associate the port with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-pg'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then I expect the port in the show policy group response
-    #
-    #     if CONF.nuage_sut.nuage_plugin_mode != 'ml2' :
-    #
-    #         port_present = self._check_port_in_policy_group(port1['id'], policy_group[0]['ID'])
-    #         self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
-    #                         (port1['id'], policy_group[0]['ID']))
-    #         port_present = self._check_port_in_policy_group(port2['id'], policy_group[0]['ID'])
-    #         self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
-    #                         (port2['id'], policy_group[0]['ID']))
-    #
-    #     # create connectivity VM
-    #     vm_conn = self._create_connectivity_VM(public_network_id=CONF.network.public_network_id,
-    #                                            vsd_l2_subnet=vsd_l3_subnet,
-    #                                            vsd_l2_port=port2)
-    #     floating_ip, the_server = self.floating_ip_tuple
-    #
-    #     rslt = self._configure_eth1_server(vm_conn, floating_ip.floating_ip_address)
-    #
-    #     # When I spin a VM with this port
-    #     vm1 = self._create_server(name='vm1', network_id=network['id'], port_id=port1['id'])
-    #     # vm2 = self._create_server(name='vm2', network_id=network['id'], port_id=port2['id'])
-    #     # These Vm's have connectivity
-    #     vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
-    #     # When I disassociate the port from the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [],
-    #         'name': 'port-without-vsd-pg-1st'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have no more connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
-    #     self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (1)")
-    #     # When I re-associate the port with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-pg-2nd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have again connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (2)")
-    #     # When I disassociate the port from the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [],
-    #         'name': 'port-without-vsd-pg-2nd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have no more connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
-    #     self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (2)")
-    #     # When I re-associate the port with the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [policy_group[0]['ID']],
-    #         'name': 'port-with-vsd-3rd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have again connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-    #     self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
-    #     # When I disassociate the port from the policy group
-    #     kwargs = {
-    #         'nuage_policy_groups': [],
-    #         'name': 'port-without-vsd-pg-2nd'
-    #     }
-    #     self.update_port(port1, **kwargs)
-    #     self.update_port(port2, **kwargs)
-    #     # Then these VM's have no more connectivity
-    #     connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
-    #     self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
-    #     the_floating_ip = self.floating_ips.pop()
-    #     self.floating_ips_client.delete_floatingip(the_floating_ip['id'])
-    #     # the_server = self.servers.pop()
-    #     self.servers_client.delete_server(vm_conn['id'])
-    #     self.servers_client.delete_server(vm1['id'])
-    #     self._clear_connectivity_vm_interfaces(self.conn_router_id, self.conn_subnet_id, self.conn_port_id)
-    #     pass
 
     @nuage_test.header()
     def test_l2_list_policy_group_no_security_group_neg(self):
@@ -2712,6 +2480,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
     ######################################################################################################################
     # Negative associate FIP
     ######################################################################################################################
+    @test.attr(type=['negative'])
     @nuage_test.header()
     def test_create_associate_vsd_floatingip_twice_neg(self):
         # Given I have a VSD-FloatingIP-pool
@@ -2746,13 +2515,20 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
         # I expect a failure
 
         if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
-            msg = "update_port_postcommit failed"
-            self.assertRaisesRegexp(
-                exceptions.ServerFault,
-                msg,
-                self._associate_fip_to_port,
-                port_2,
-                claimed_fip[0]['ID'])
+            if CONF.nuage_sut.openstack_version == 'kilo':
+                msg = "update_port_postcommit failed"
+                self.assertRaisesRegexp(
+                    exceptions.ServerFault,
+                    msg,
+                    self._associate_fip_to_port,
+                    port_2,
+                    claimed_fip[0]['ID'])
+            else:
+                # TODO: See OPENSTACK_1345 - ML2 liberty catches all exceptions
+                # Only a failure is logged in neutron.log
+                self._associate_fip_to_port(port_2,
+                                            claimed_fip[0]['ID'])
+
         else:
             msg = 'Bad request: Floating IP %s is already in use' % claimed_fip[0]['address']
             # self.update_port(port_2, **kwargs)

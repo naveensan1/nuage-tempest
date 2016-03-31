@@ -152,13 +152,19 @@ class TestNuageDomainTunnelTypeCli(remote_cli_base_testcase.RemoteCliBaseTestCas
 class TestNuageDomainTunnelTypeAsTenantCli(remote_cli_base_testcase.RemoteCliBaseTestCase):
     """DomainTunnelType tests using Neutron CLI client.
 
+
     """
-    # CREATE_POLICY_ERROR = "Policy doesn't allow \(rule:create_router and rule:create_router:tunnel_type\)" \
-    #                       " to be performed"
-    # UPDATE_POLICY_ERROR = "Policy doesn't allow \(rule:update_router and rule:update_router:tunnel_type\)" \
-    #                        " to be performed"
-    CREATE_POLICY_ERROR = "disallowed by policy"
-    UPDATE_POLICY_ERROR = "disallowed by policy"
+
+    def setUp(self):
+        super(TestNuageDomainTunnelTypeAsTenantCli, self).setUp()
+        if CONF.nuage_sut.openstack_version >= 'liberty':
+            self.CREATE_POLICY_ERROR = "disallowed by policy"
+            self.UPDATE_POLICY_ERROR = "disallowed by policy"
+        else:
+            self.CREATE_POLICY_ERROR = \
+                "Policy doesn't allow \(rule:create_router and rule:create_router:tunnel_type\) to be performed"
+            self.UPDATE_POLICY_ERROR = \
+                "Policy doesn't allow \(rule:update_router and rule:update_router:tunnel_type\) to be performed"
 
     @classmethod
     def setup_clients(cls):
@@ -197,7 +203,7 @@ class TestNuageDomainTunnelTypeAsTenantCli(remote_cli_base_testcase.RemoteCliBas
         # tenant can not update a router with domain tunnel type
         self._as_tenant()
         new_domain_tunnel_type = constants.DOMAIN_TUNNEL_TYPE_GRE
-        self.assertRaisesRegexp(exceptions.SSHExecCommandFailed,
+        self.assertRaisesRegex(exceptions.SSHExecCommandFailed,
                                 self.UPDATE_POLICY_ERROR,
                                 self.update_router_with_args, created_router['id'], "--tunnel-type",
                                 new_domain_tunnel_type)
@@ -209,9 +215,9 @@ class TestNuageDomainTunnelTypeAsTenantCli(remote_cli_base_testcase.RemoteCliBas
 
         # tenant can not create a router with domain tunnel type
         self._as_tenant()
-        self.assertRaisesRegexp(exceptions.SSHExecCommandFailed,
-                                self.CREATE_POLICY_ERROR,
-                                self.create_router_with_args, router_name, "--tunnel-type", domain_tunnel_type)
+        self.assertRaisesRegex(exceptions.SSHExecCommandFailed,
+                               self.CREATE_POLICY_ERROR,
+                               self.create_router_with_args, router_name, "--tunnel-type", domain_tunnel_type)
 
         # admin can create a router with domain tunnel type
         self._as_admin()

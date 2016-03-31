@@ -6,10 +6,18 @@ from nuagetempest.tests import nuage_ext
 from tempest import config
 from nuagetempest.lib.openstackData import openstackData
 
+from collections import namedtuple
+from enum import Enum
 import netaddr
 
 CONF = config.CONF
 
+# Enum for the IP MAC anti spoofing or VIP creation actions
+class Action(Enum):
+    spoofing = 1
+    vip      = 2
+    no_vip   = 3
+      
 
 class IpAntiSpoofingTest(base.BaseNetworkTest):
 
@@ -20,6 +28,13 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         cls.os_data = openstackData()
         cls.os_data.insert_resource(cls.def_net_partition, parent='CMS',
                                     os_data={'name': cls.def_net_partition})
+
+        cls.vip_action = Action
+        cls.vip_param = namedtuple("VIP_Params",
+            ["full_cidr", "diff_mac", "same_ip", "same_subn"])
+        cls.vip_action_map = {}
+        cls._populate_vip_action_map()
+        cls.cur_vip_param = None
 
     @classmethod
     def resource_cleanup(cls):
@@ -46,19 +61,45 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         return body['subnet']
 
     @classmethod
-    def _create_security_disabled_port(cls, ntw, name=None):
-        if name is None:
-            data_utils.rand_name('port-')
-        kwargs = {'name': name, 'network_id': ntw['id'],
-                  'port_security_enabled': 'False'}
+    def _create_security_disabled_port(cls, **kwargs):
+        kwargs.update({'port_security_enabled': 'False'})
         body = cls.ports_client.create_port(**kwargs)
         return body['port']
+
+    @classmethod
+    def _populate_vip_action_map(cls):
+        cls.vip_action_map.update({cls.vip_param('0', '0', '0', '0'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('0', '0', '0', '1'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('0', '0', '1', '1'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('0', '1', '0', '0'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('0', '1', '0', '1'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('0', '1', '1', '1'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('1', '0', '0', '0'):
+                              cls.vip_action.no_vip,
+                              cls.vip_param('1', '0', '0', '1'):
+                              cls.vip_action.vip,
+                              cls.vip_param('1', '0', '1', '1'):
+                              cls.vip_action.no_vip,
+                              cls.vip_param('1', '1', '0', '0'):
+                              cls.vip_action.spoofing,
+                              cls.vip_param('1', '1', '0', '1'):
+                              cls.vip_action.vip,
+                              cls.vip_param('1', '1', '1', '1'):
+                              cls.vip_action.spoofing})
+
 
     def _create_network_port_l2resources(self, ntw_security='True',
                                          port_security='True',
                                          port_name='port-1',
                                          l2domain_name='l2domain-1',
-                                         netpart=None):
+                                         netpart=None,
+                                         allowed_address_pairs=None):
         # Method to create ntw, port and l2domain
         if netpart is None:
             netpart = self.def_net_partition
@@ -72,11 +113,14 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         l2domain = self._create_subnet(network, name=l2domain_name)
         self.os_data.insert_resource(l2domain_name, netpart, os_data=l2domain)
         self.addCleanup(self.subnets_client.delete_subnet, l2domain['id'])
+        # Populate the data dict required for port creation
+        kwargs = {'name': port_name, 'network_id': network['id']}
+        if allowed_address_pairs:
+            kwargs.update({'allowed_address_pairs': allowed_address_pairs})
         if port_security == 'False':
-            port = self._create_security_disabled_port(network, name=port_name)
+            port = self._create_security_disabled_port(**kwargs)
         else:
-            body = self.ports_client.create_port(name=port_name,
-                                                 network_id=network['id'])
+            body = self.ports_client.create_port(**kwargs)
             port = body['port']
         self.os_data.insert_resource(port_name, l2domain_name, os_data=port)
         self.addCleanup(self.ports_client.delete_port, port['id'])
@@ -88,7 +132,8 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                          router_name='router-1',
                                          subnet_name='subnet-1',
                                          port_name='port-1',
-                                         netpart=None):
+                                         netpart=None,
+                                         allowed_address_pairs=None):
         # Method to create ntw, router, subnet and port
         if netpart is None:
             netpart = self.def_net_partition
@@ -113,16 +158,22 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                                  subnet_id=subnet['id'])
         self.addCleanup(self.routers_client.remove_router_interface,
                         router['id'], subnet_id=subnet['id'])
+        kwargs = {'name': port_name, 'network_id': network['id']}
+        if allowed_address_pairs:
+            kwargs.update({'allowed_address_pairs': allowed_address_pairs})
         if port_security == 'False':
-            port = self._create_security_disabled_port(network, name=port_name)
+            port = self._create_security_disabled_port(**kwargs)
         else:
-            body = self.ports_client.create_port(name=port_name,
-                                                 network_id=network['id'])
+            body = self.ports_client.create_port(**kwargs)
             port = body['port']
+
         self.os_data.insert_resource(port_name, subnet_name, os_data=port)
         self.addCleanup(self.ports_client.delete_port, port['id'])
         self.addCleanup(self.os_data.delete_resource, router_name)
         return (network, router, subnet, port)
+
+    def get_vip_action(self, key):
+         return self.vip_action_map.get(key)
 
     def test_create_delete_sec_disabled_ntw_port_l2domain(self):
         ''' L2domain testcase to test network and port creation with
@@ -412,4 +463,523 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
     def test_show_sec_disabled_port(self):
         pass
 
+    def test_anti_spoofing_for_params_0_0_0_0_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.0.0/24'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom21-1',
+                                  port_name='port21-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+        pass
 
+    def test_anti_spoofing_for_params_0_0_0_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, different ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom22-1',
+                                  port_name='port22-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_0_1_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom23-1',
+                                  port_name='port23-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_1_0_0_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           different mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.0.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom24-1',
+                                  port_name='port24-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_0_1_0_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           different mac, different ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom25-1',
+                                  port_name='port25-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_1_1_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           different mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom26-1',
+                                  port_name='port26-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_0_0_0_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.20.100'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom27-1',
+                                  port_name='port27-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_0_0_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           same mac, same ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.100'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom28-1',
+                                  port_name='port28-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+
+    def test_anti_spoofing_for_params_1_0_1_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom29-1',
+                                  port_name='port29-1')
+        ip_address = port['fixed_ips'][0]['ip_address']
+        mac_address = port['mac_address']
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self.ports_client.update_port(port['id'],
+            allowed_address_pairs=allowed_address_pairs)
+        port = body['port']
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_1_1_0_0_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.20.100'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom30-1',
+                                  port_name='port30-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_1_1_0_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           different ip, different ip,  different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.100'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom31-1',
+                                  port_name='port31-1',
+                                  netpart=self.def_net_partition,
+                                  allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_1_1_1_1_l2domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           different mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        network, l2domain, port = self._create_network_port_l2resources(
+                                  ntw_security='True', port_security='True',
+                                  l2domain_name='l2dom32-1',
+                                  port_name='port32-1')
+        ip_address = port['fixed_ips'][0]['ip_address']
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self.ports_client.update_port(port['id'],
+            allowed_address_pairs=allowed_address_pairs)
+        port = body['port']
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_0_0_0_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.0.0/24'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router41-1',
+            subnet_name='subnet41-1',
+            port_name='port41-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+        pass
+
+    def test_anti_spoofing_for_params_0_0_0_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, different ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router42-1',
+            subnet_name='subnet42-1',
+            port_name='port42-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_0_1_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router43-1',
+            subnet_name='subnet43-1',
+            port_name='port43-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_1_0_0_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           different mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.0.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router44-1',
+            subnet_name='subnet44-1',
+            port_name='port44-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_0_1_0_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           different mac, different ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router45-1',
+            subnet_name='subnet45-1',
+            port_name='port45-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_0_1_1_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           different mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router46-1',
+            subnet_name='subnet46-1',
+            port_name='port46-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_0_0_0_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.20.100'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router47-1',
+            subnet_name='subnet47-1',
+            port_name='port47-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_0_0_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           same mac, same ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.100'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router48-1',
+            subnet_name='subnet48-1',
+            port_name='port48-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+
+    def test_anti_spoofing_for_params_1_0_1_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having cidr(not /32 IP),
+           same mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router49-1',
+            subnet_name='subnet49-1',
+            port_name='port49-1')
+        ip_address = port['fixed_ips'][0]['ip_address']
+        mac_address = port['mac_address']
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self.ports_client.update_port(port['id'],
+            allowed_address_pairs=allowed_address_pairs)
+        port = body['port']
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_1_1_0_0_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.20.100'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router50-1',
+            subnet_name='subnet50-1',
+            port_name='port50-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_1_1_0_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           different ip, different ip,  different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '30.30.30.100'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router51-1',
+            subnet_name='subnet51-1',
+            port_name='port51-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 
+    def test_anti_spoofing_for_params_1_1_1_1_l3domain(self):
+        '''IP Anti Spoofing tests for vip parameters having full cidr(/32 IP),
+           different mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        network, router, subnet, port = self._create_network_port_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router52-1',
+            subnet_name='subnet52-1',
+            port_name='port52-1')
+        ip_address = port['fixed_ips'][0]['ip_address']
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self.ports_client.update_port(port['id'],
+            allowed_address_pairs=allowed_address_pairs)
+        port = body['port']
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+ 

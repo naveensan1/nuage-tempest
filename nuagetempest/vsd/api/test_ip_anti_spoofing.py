@@ -7,8 +7,7 @@ import sys
 
 TB = topology.testbed
 
-
-class IpAntiSpoofingTest():
+class IpAntiSpoofingVSDBase():
 
     def __init__(self):
         pass
@@ -73,7 +72,12 @@ class IpAntiSpoofingTest():
         # Case where no action occurs on VSD for given AAP
         if obj.get_vip_action(vip_params) == obj.vip_action.no_vip:
             obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
-   
+  
+class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
+
+    def __init__(self):
+        pass 
+
     class _create_delete_sec_disabled_ntw_port_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()

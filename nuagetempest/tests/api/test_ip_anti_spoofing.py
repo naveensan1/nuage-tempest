@@ -18,11 +18,11 @@ class Action(Enum):
     vip      = 2
     no_vip   = 3
 
-class IpAntiSpoofingTest(base.BaseNetworkTest):
+class IpAntiSpoofingTestBase(base.BaseNetworkTest):
 
     @classmethod
     def resource_setup(cls):
-        super(IpAntiSpoofingTest, cls).resource_setup()
+        super(IpAntiSpoofingTestBase, cls).resource_setup()
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data = openstackData()
         cls.os_data.insert_resource(cls.def_net_partition, parent='CMS',
@@ -172,6 +172,9 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
 
     def get_vip_action(self, key):
          return self.vip_action_map.get(key)
+
+
+class IpAntiSpoofingTest(IpAntiSpoofingTestBase):
 
     def test_create_delete_sec_disabled_ntw_port_l2domain(self):
         ''' L2domain testcase to test network and port creation with

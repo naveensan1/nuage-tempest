@@ -17,7 +17,6 @@ class Action(Enum):
     spoofing = 1
     vip      = 2
     no_vip   = 3
-      
 
 class IpAntiSpoofingTest(base.BaseNetworkTest):
 
@@ -166,7 +165,6 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
         else:
             body = self.ports_client.create_port(**kwargs)
             port = body['port']
-
         self.os_data.insert_resource(port_name, subnet_name, os_data=port)
         self.addCleanup(self.ports_client.delete_port, port['id'])
         self.addCleanup(self.os_data.delete_resource, router_name)

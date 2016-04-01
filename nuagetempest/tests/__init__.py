@@ -1,12 +1,12 @@
-from oslo_log import log as logging
+#from oslo_log import log as logging
 from nuagetempest.lib import nuage_ext
 from nuagetempest.lib import topology
 import re
 import traceback
 from tempest import config
 
-CONF = config.CONF
-LOG = logging.getLogger(__name__)
+conf = config.CONF
+#LOG = logging.getLogger(__name__)
 
 class NuageExtensionInit():
     
@@ -25,7 +25,7 @@ class NuageExtensionInit():
                 return t_part1 + '.' + t_part2 + '.' + class_name + '.' + t_part4 + '.' + tag
 
 for dut in dir(topology.testbed):
-    if dut.split('_')[0] in CONF.nuagext.nuage_components + ['osc']:
+    if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
         if dut.split('_')[0] == 'vsd':
             obj = getattr(topology.testbed, dut)
             obj.api.new_session()

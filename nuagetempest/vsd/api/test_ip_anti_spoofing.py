@@ -1,4 +1,3 @@
-from tempest import config
 from nuagetempest.lib import topology
 from nuagetempest.lib import base
 from tempest import test
@@ -6,7 +5,6 @@ import re
 import unittest
 import sys
 
-CONF = config.CONF
 TB = topology.testbed
 
 

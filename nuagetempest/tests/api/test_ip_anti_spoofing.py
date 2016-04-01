@@ -251,7 +251,7 @@ class IpAntiSpoofingTest(base.BaseNetworkTest):
                                         router_name='router6-1',
                                         subnet_name='subnet6-1',
                                         port_name='port6-1')
-        self.assertEqual(network['port_security_enabled'], False)
+        self.assertEqual(network['port_security_enabled'], True)
         self.assertEqual(port['port_security_enabled'], False)
         tag_name = 'verify_security_disabled_port_l3domain'
         nuage_ext.nuage_extension.nuage_components(

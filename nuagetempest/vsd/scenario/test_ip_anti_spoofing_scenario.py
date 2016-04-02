@@ -18,9 +18,9 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
             self.ip_anti_spoof = IpAntiSpoofingTestScenario()
             pass
         def verify_vm_in_sec_disabled_port_l2domain(self, obj):
-            l2domain = obj.os_data.get_resource('l2dom3-1').os_data                          
-            port = obj.os_data.get_resource('port3-1').os_data
-            vm   = obj.os_data.get_resource('vm').os_data 
+            l2domain = obj.os_data.get_resource('scn-l2dom1-1').os_data                          
+            port = obj.os_data.get_resource('scn-port1-1').os_data
+            vm   = obj.os_data.get_resource('scn-vm1-1').os_data 
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(                 
                                      l2domain, port)
             vsd_vm = vsd_l2domain.vms.get_first()

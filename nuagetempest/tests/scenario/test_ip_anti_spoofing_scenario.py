@@ -24,14 +24,14 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingTestBase,
             port-security-enabled set to False at port level only'''
         network, l2domain, port = self._create_network_port_l2resources(
                                   ntw_security='True', port_security='False',
-                                  l2domain_name='l2dom3-1',
-                                  port_name='port3-1')
+                                  l2domain_name='scn-l2dom1-1',
+                                  port_name='scn-port1-1')
         self.assertEqual(network['port_security_enabled'], True)
         self.assertEqual(port['port_security_enabled'], False)
         ntw = {'uuid': network['id'], 'port': port['id']}
-        vm = self.create_server(name='vm', networks=[ntw], 
+        vm = self.create_server(name='scn-vm1-1', networks=[ntw], 
                                 wait_until='ACTIVE')
-        self.os_data.insert_resource(vm['name'], 'port3-1', os_data=vm) 
+        self.os_data.insert_resource(vm['name'], 'scn-port1-1', os_data=vm) 
         self.assertEqual(port['fixed_ips'][0]['ip_address'],
                          vm['addresses'][network['name']][0]['addr'])
         self.assertEqual(port['mac_address'],

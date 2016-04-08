@@ -69,6 +69,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range
             #   gateway_ip equal to None
             expected_gateway_ip=None,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the valid CIDR range
@@ -97,6 +99,9 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range
             #   gateway_ip equal to None
             expected_gateway_ip=None,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
+
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the valid CIDR range
             # And the VMinterface-IPaddress in the VSD-L2-domain is empty
@@ -104,32 +109,48 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         )
 
     @nuage_test.header()
-    def test_vsd_l2_shared_unmgd_l2_unmgd_with_gateway_ip(self):
+    def test_vsd_l2_shared_unmgd_l2_unmgd_with_gateway_ip_neg(self):
+        # Pass on Liberty, fail on kilo
         # Given  I have a VSD -L2-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L2-Shared-domain without IPAM (i.e. UnManaged)
         # And  these are linked
         vsd_l2dom_unmgd = self._given_vsdl2sharedunmgd_linkedto_vsdl2domunmgd()
-        self._check_vsd_l2_shared_l2_unmgd(
-            vsd_l2dom_unmgd=vsd_l2dom_unmgd,
-            # When I create an OS subnet with
-            #   enable_dhcp == False
-            #   a valid CIDR
-            #   nuagenet == UUID of VSD-L2-domain
-            os_shared_network=True,
-            enable_dhcp=False,
-            gateway_ip=VALID_CIDR_GW,
-            cidr=VALID_CIDR,
 
-            # Then the OS subnet has
-            #   an OS allocation pool covering the full CIDR range
-            #   gateway_ip equal to None
-            expected_gateway_ip=None,
+        if CONF.nuage_sut.openstack_version == 'kilo':
+            self.assertRaisesRegex(
+                exceptions.ServerFault,
+                "Details: create_subnet_postcommit failed.",
+                self._check_vsd_l2_shared_l2_unmgd,
+                vsd_l2dom_unmgd=vsd_l2dom_unmgd,
+                os_shared_network=True,
+                enable_dhcp=False,
+                cidr=VALID_CIDR,
+                gateway_ip=VALID_CIDR_GW
+            )
+        else:
+            self._check_vsd_l2_shared_l2_unmgd(
+                vsd_l2dom_unmgd=vsd_l2dom_unmgd,
+                # When I create an OS subnet with
+                #   enable_dhcp == False
+                #   a valid CIDR
+                #   nuagenet == UUID of VSD-L2-domain
+                os_shared_network=True,
+                enable_dhcp=False,
+                gateway_ip=VALID_CIDR_GW,
+                cidr=VALID_CIDR,
 
-            # When I spin a VM in this network
-            # Then the OS  VM-IPaddress is in the valid CIDR range
-            # And the VMinterface-IPaddress in the VSD-L2-domain is empty
-            expect_vm_ip_addresses_equal=''
-        )
+                # Then the OS subnet has
+                #   an OS allocation pool covering the full CIDR range
+                #   gateway_ip equal to None
+                expected_gateway_ip=None,
+                #   and no network:dhcp:nuage port
+                expect_network_dhcp_nuage_port=False,
+
+                # When I spin a VM in this network
+                # Then the OS  VM-IPaddress is in the valid CIDR range
+                # And the VMinterface-IPaddress in the VSD-L2-domain is empty
+                expect_vm_ip_addresses_equal=''
+            )
 
     @nuage_test.header()
     def test_vsd_l2_shared_unmgd_l2_unmgd_no_gateway(self):
@@ -153,6 +174,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             # an OS allocation pool covering the full CIDR range
             # gateway_ip equal to None
             expected_gateway_ip=None,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the valid CIDR range
@@ -182,6 +205,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range
             #   gateway_ip equal to None
             expected_gateway_ip=None,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the valid CIDR range
@@ -195,6 +220,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         # "Given  I have a VSD -L2-domain without IPAM (i.e. unmanaged)
         # And I have a VSD-L2-Shared-domain with IPAM (i.e. managed)
         # And these are linked
+        # if the gateway_ip does not equal DHCP options 3, an error is thrown
         vsd_l2dom_unmgd = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         if CONF.nuage_sut.openstack_version == 'kilo':
@@ -240,6 +266,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range
             #   gateway_ip equal to None
             expected_gateway_ip=None,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -268,6 +296,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             # an OS allocation pool covering the full CIDR range except th gateway_ip
             # gateway_ip equal DHCP-options-3 of VSD-L2-Shared-domain
             expected_gateway_ip=VSD_L2_SHARED_MGD_OPT3,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -298,6 +328,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range
             #   gateway_ip equal to DHCP-options-3 of VSD-L2-Shared-domain
             expected_gateway_ip=VSD_L2_SHARED_MGD_OPT3,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -350,6 +382,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range, except the VSD-L3-Shared gateway
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the  CIDR range
@@ -382,6 +416,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range (except the GW-ip)
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -415,6 +451,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range (except the GW-ip)
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -444,6 +482,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range, except the VSD-L3-Shared gateway
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=VSD_L3_SHARED_MGD_OPT3_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the  CIDR range
@@ -475,6 +515,9 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range (except the GW-ip)
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=VSD_L3_SHARED_MGD_OPT3_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
+
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
             # And the VM_interface-IPaddress in the VSD-L3-domain equals the OS VM-IPaddress
@@ -506,6 +549,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range (except the GW-ip)
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=VSD_L3_SHARED_MGD_OPT3_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -951,6 +996,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   an OS allocation pool covering the full CIDR range (except the GW-ip)
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
+            #   and no network:dhcp:nuage port
+            expect_network_dhcp_nuage_port=False,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range

@@ -17,7 +17,7 @@ class Node(object):
     (ADD, DELETE, INSERT) = list(range(3))
 
     def __init__(self, tag=None, identifier=None, expanded=True, os_data=None,
-                 vsd_data=None, vsc_data=None, vrs_data=None):
+                 vsd_data=None, vsc_data=None, vrs_data=None, user_data=None):
         """Create a new Node object to be placed inside a Tree object"""
 
         #: if given as a parameter, must be unique
@@ -44,6 +44,7 @@ class Node(object):
         self.vsd_data = vsd_data
         self.vsc_data = vsc_data
         self.vrs_data = vrs_data
+        self.user_data = user_data
         
     def __lt__(self, other):
         return self.tag < other.tag

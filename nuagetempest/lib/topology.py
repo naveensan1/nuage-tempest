@@ -3,16 +3,9 @@ import libVSD
 import threading
 from tempest import config
 from libduts import sros, linux
-from nuagetempest.lib.remote_cli import ssh_cli, output_parser
 import re
 
 CONF = config.CONF
-
-class OSC(object):
-
-    def __init__(self):
-        self.cli = None
-        self.parser = None
 
 class Topology(object):
 
@@ -190,16 +183,7 @@ class Topology(object):
             return sros.VSC(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_osc(component):
-            osc = OSC()
-            osc.cli = ssh_cli.CLIClient(
-                username=CONF.auth.admin_username,
-                tenant_name=CONF.auth.admin_tenant_name,
-                password=CONF.auth.admin_password,
-                uri=CONF.identity.uri)
-            setattr(osc, 'parser', output_parser)
-            return osc
-            #Keeping this code just to remember what was done originally.
-            #return linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
+            return linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
 
         err = 'Cannot find a class corresponding to {}'.format(name)
         raise Exception(err)

@@ -271,16 +271,15 @@ class Tree(object):
         return True if nid in self._nodes else False
 
     def create_node(self, tag=None, identifier=None, parent=None, os_data=None,
-                    vsd_data=None, vsc_data=None, vrs_data=None, user_data=None):
+                    vsd_data=None, vsc_data=None, vrs_data=None):
         """Create a child node for given @parent node."""
         node = Node(tag=tag, identifier=identifier, os_data=os_data,
-                    vsd_data=vsd_data, vsc_data=vsc_data, vrs_data=vrs_data,
-                    user_data=user_data)
+                    vsd_data=vsd_data, vsc_data=vsc_data, vrs_data=vrs_data)
         self.add_node(node, parent)
         return node
     
     def update_node(self, nid, os_data=None, vsd_data=None,
-                    vsc_data=None, vrs_data=None, user_data=None):
+                    vsc_data=None, vrs_data=None):
         """Update data  for a given @parent node."""
         node = self.get_node(nid)
         if node:
@@ -292,8 +291,6 @@ class Tree(object):
                 node.vsc_data = vsc_data
             if vrs_data:
                 node.vrs_data = vrs_data
-            if user_data:
-                node.user_data = user_data
         else:
             raise NodeIDAbsentError("Node with id '%s'"
                                     "is not in the tree" % nid)

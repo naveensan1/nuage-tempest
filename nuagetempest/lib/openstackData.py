@@ -8,10 +8,11 @@ class openstackData():
         
     def insert_resource(self, tag, parent, os_data=None,
                         vsd_data=None, vsc_data=None,
-                        vrs_data=None):
+                        vrs_data=None, user_data=None):
         self.resources.create_node(tag, tag, parent=parent,
                                    os_data=os_data, vrs_data=vrs_data,
-                                   vsd_data=vsd_data, vsc_data=vsc_data)
+                                   vsd_data=vsd_data, vsc_data=vsc_data,
+                                   user_data=user_data)
 
     def print_openstackData(self):
         self.resources.show(line_type="ascii-em")
@@ -42,7 +43,7 @@ class openstackData():
         
     def update_resource(self, tag, os_data=None,
                         vsd_data=None, vsc_data=None,
-                        vrs_data=None):
+                        vrs_data=None, user_data=None):
         self.resources.update_node(tag, os_data=os_data,
                         vsd_data=vsd_data, vsc_data=vsc_data,
-                        vrs_data=vrs_data)
+                        vrs_data=vrs_data, user_data=user_data)

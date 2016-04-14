@@ -93,9 +93,9 @@ def setup_cmsid(osc):
     cmd = 'cd {} ; {}'.format(path, audit_cmd)
     osc.cmd(cmd, timeout=30, strict=False)
 
-    osc.cmd('service neutron-server restart', strict=False)
+    osc.cmd('service neutron-server restart', strict=False, timeout=20)
     time.sleep(5)
-    osc.cmd('service neutron-server status', strict=False)
+    osc.cmd('service neutron-server status', strict=False, timeout=20)
 
     cmd = "cat {} | grep cms_id".format(plugin_file)
     out = osc.cmd(cmd, timeout=30, strict=False)

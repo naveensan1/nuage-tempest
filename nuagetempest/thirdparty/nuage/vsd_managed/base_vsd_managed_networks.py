@@ -207,6 +207,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
                                                                str(address),
                                                                str(netmask),
                                                                gateway,
+                                                               None,
                                                                extra_params)
         cls.vsd_subnet.append(vsd_subnet)
         return vsd_subnet

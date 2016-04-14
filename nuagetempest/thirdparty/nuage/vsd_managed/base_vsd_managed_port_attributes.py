@@ -460,7 +460,7 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
         pass
 
-    def _prepare_l3_security_group_entries(self, policy_group_id, l3domain_id):
+    def _prepare_l3_security_group_entries(self, policy_group_id, l3domain_id, defaultAllowIP=False):
         # For the given VSD L3 managed subnet:
         # Create ingress policy that default does NOT allow IP traffic
         # Create egress policy that allows all
@@ -471,7 +471,9 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # start policy group changes
         self.nuage_vsd_client.begin_l3_policy_changes(l3domain_id)
         # create ingress policy
-        self.iacl_template = self._create_l3_ingress_acl_template(data_utils.rand_name("iacl_policy"), l3domain_id)
+        self.iacl_template = self._create_l3_ingress_acl_template(data_utils.rand_name("iacl_policy"),
+                                                                  l3domain_id,
+                                                                  defaultAllowIP=defaultAllowIP)
         self._create_ping_security_group_entries(policy_group_id, self.iacl_template[0]['ID'])
         self.eacl_templace = self._create_l3_egress_acl_template(data_utils.rand_name("eacl_policy"), l3domain_id)
         # Apply the policy changes
@@ -491,14 +493,14 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         return iacl_template
         pass
 
-    def _create_l3_ingress_acl_template(self, name, domain_id):
+    def _create_l3_ingress_acl_template(self, name, domain_id, defaultAllowIP=False):
         # do not allow deafault IP: will do this via security policy entries
         extra_params = {"allowAddressSpoof":True,
                         "priorityType":"NONE",
                         "statsLoggingEnabled": False,
                         "flowLoggingEnabled": False,
                         "defaultAllowNonIP": True,
-                        "defaultAllowIP": False,
+                        "defaultAllowIP": defaultAllowIP,
                         "active":True}
         iacl_template =  self.nuage_vsd_client.create_ingress_acl_template(name, constants.DOMAIN, domain_id, extra_params=extra_params)
         return iacl_template
@@ -571,7 +573,7 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                         "statsLoggingEnabled": False,
                         "flowLoggingEnabled": False,
                         "defaultAllowNonIP": True,
-                        "defaultAllowIP": False,
+                        "defaultAllowIP": True,
                         "active":True}
         eacl_template =  self.nuage_vsd_client.create_egress_acl_template(name, constants.DOMAIN, domain_id, extra_params=extra_params)
         return eacl_template
@@ -659,27 +661,37 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
 
         return server
 
-    def _create_2nic_server(self, name, network_id_1, port_1, network_id_2, port_2):
+    def _create_2nic_server(self, name, network_id_1, port_1, network_id_2, port_2, policy_group=False):
 
         keypair = self.create_keypair()
         self.keypairs[keypair['name']] = keypair
-        self.security_group = \
-            self._create_security_group(tenant_id=self.tenant_id)
-        security_groups = [{'name': self.security_group['name']}]
-        # pass this security group to port_id_1, to make ssh work
-        port_kwargs = {
-            'security_groups': [self.security_group['id']]
-        }
-        self.update_port(port_1, **port_kwargs)
+        # create an OS securtiy group in case that no policy_group was created (for VSD managed networks)
+        if not policy_group:
+            self.security_group = \
+                self._create_security_group(tenant_id=self.tenant_id)
+            security_groups = [{'name': self.security_group['name']}]
+            # pass this security group to port_id_1, to make ssh work
+            port_kwargs = {
+                'security_groups': [self.security_group['id']]
+            }
+            self.update_port(port_1, **port_kwargs)
+            create_kwargs = {
+                'networks': [
+                    {'uuid': network_id_1},
+                    {'uuid': network_id_2}
+                ],
+                'key_name': keypair['name'],
+                'security_groups': security_groups,
+            }
+        else:
+            create_kwargs = {
+                'networks': [
+                    {'uuid': network_id_1},
+                    {'uuid': network_id_2}
+                ],
+                'key_name': keypair['name'],
+            }
 
-        create_kwargs = {
-            'networks': [
-                {'uuid': network_id_1},
-                {'uuid': network_id_2}
-            ],
-            'key_name': keypair['name'],
-            'security_groups': security_groups,
-        }
         create_kwargs['networks'][0]['port'] = port_1['id']
         create_kwargs['networks'][1]['port'] = port_2['id']
 
@@ -762,51 +774,78 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # Create an intermediate VM with FIP and a second nic in the VSD network,
         # So that we can ssh into this VM and check ping on the second NIC, which
         # is a port that we associated/disassociate to the policy group
-        network = self._create_network(client=None, tenant_id=None)
-        router = self._get_router(client=None, tenant_id=None)
+        #
+        # Create L3 VSD managed network
+        # create template
         kwargs = {
-            'network': network,
-            'cidr': OS_CONNECTING_NW_CIDR,
-            'mask_bits': OS_CONNECTING_NW_CIDR.prefixlen,
-            'gateway': OS_CONNECTING_NW_GW
+            'name': data_utils.rand_name("l3dom_template"),
         }
-        subnet = self._create_subnet(**kwargs)
-        # subnet_kwargs = dict(network=network, client=None)
-        # # use explicit check because empty list is a valid option
-        # subnet = self._create_subnet(**subnet_kwargs)
-        self.routers_client.add_router_interface(router_id=router['id'], subnet_id=subnet['id'])
-        # subnet.add_to_router(router.id)
-        # Set the router gateway to the public FIP network
-        self.admin_client.update_router_with_snat_gw_info(
-            router['id'],
-            external_gateway_info={
-                'network_id': CONF.network.public_network_id,
-                'enable_snat': True})
+        l3dom_template = self.create_vsd_l3dom_template(**kwargs)
+        # create domain
+        vsd_l3_domain = self.create_vsd_l3domain(tid=l3dom_template[0]['ID'])
+        # create zone om domain
+        zone = self.create_vsd_zone(name='l3-zone',
+                                    domain_id=vsd_l3_domain[0]['ID'])
+        # create subnet in zone, with FIP underlay True
+        extra_params = {
+            'underlayEnabled': 'ENABLED'
+        }
+        kwargs = {
+            'name': data_utils.rand_name("vsd-l3-mgd-subnet"),
+            'zone_id': zone[0]['ID'],
+            'cidr': OS_CONNECTING_NW_CIDR,
+            'gateway': OS_CONNECTING_NW_GW,
+            'extra_params': extra_params
+        }
+        vsd_l3_subnet = self.create_vsd_l3domain_managed_subnet(**kwargs)
+        # vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()
+        network, subnet = self._create_os_l3_vsd_managed_subnet(vsd_l3_subnet,OS_CONNECTING_NW_CIDR)
+        policy_group = self.nuage_vsd_client.create_policygroup(constants.DOMAIN,
+                                                                vsd_l3_domain[0]['ID'],
+                                                                name='myVSD-l3-policygrp',
+                                                                type='SOFTWARE',
+                                                                extra_params=None)
+        # create security group entries that allow all traffic
+        self._prepare_l3_security_group_entries(policy_group_id=policy_group[0]['ID'],
+                                                l3domain_id=vsd_l3_domain[0]['ID'],
+                                                defaultAllowIP=True)
+        # network, subnet = self._create_os_l3_vsd_managed_subnet(vsd_l3_subnet)
         kwargs= {'name': data_utils.rand_name('osport')}
         # port = self.create_port(network=network,
         #                          namestart='osport-1')
         port = self.create_port(network=network, **kwargs)
 
+        # Fetch the floating ip pool corresponding to the "public" network/subnet
+        public_network = self.networks_client.show_network(CONF.network.public_network_id)
+        public_subnet = self.subnets_client.show_subnet(public_network['network']['subnets'][0])
+        public_subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(public_subnet['subnet']['id'])
+        floating_ip_pool = self.nuage_vsd_client.get_sharedresource(filters='externalID',
+                                                                    filter_value=public_subnet_ext_id)
+        floating_ip = self._claim_vsd_floating_ip(vsd_l3_domain[0]['ID'],
+                                                  floating_ip_pool[0]['ID'])
+        # associate this floating ip to the port
+        self._associate_fip_to_port(port,floating_ip[0]['ID'])
         # Create floating IP with FIP rate limiting
-        result = self.floating_ips_client.create_floatingip(
-            floating_network_id=CONF.network.public_network_id,
-            port_id=port['id'],
-            nuage_fip_rate='5')
+        # result = self.floating_ips_client.create_floatingip(
+        #     floating_network_id=CONF.network.public_network_id,
+        #     port_id=port['id'],
+        #     nuage_fip_rate='5')
         # Add it to the list so it gets deleted afterwards
-        self.floating_ips.append(result['floatingip'])
+        # self.floating_ips.append(result['floatingip'])
         # convert to format used throughout this file
-        floating_ip = net_resources.DeletableFloatingIp(
-            client=self.floating_ips_client,
-            **result['floatingip'])
+        # floating_ip = net_resources.DeletableFloatingIp(
+        #     client=self.floating_ips_client,
+        #     **result['floatingip'])
 
         # noew create the VM with 2 vnics
         server = self._create_2nic_server(name=data_utils.rand_name('IC-VM'),
                                           network_id_1=network['id'], port_1=port,
-                                          network_id_2=vsd_l2_subnet[0]['ID'], port_2=vsd_l2_port)
+                                          network_id_2=vsd_l2_subnet[0]['ID'], port_2=vsd_l2_port,
+                                          policy_group=True)
 
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
         # store router, subnet and port id clear gateway and interface before cleanup start
-        self.conn_router_id = router['id']
+        # self.conn_router_id = router['id']
         self.conn_subnet_id = subnet['id']
         self.conn_port_id = port['id']
         return server

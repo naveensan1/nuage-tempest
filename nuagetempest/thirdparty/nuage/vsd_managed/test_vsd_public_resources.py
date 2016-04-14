@@ -405,7 +405,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
 
     #
     @nuage_test.header()
-    def test_vsd_l3_shared_mgd_opt3_l2_unmgd_without_gateway(self):
+    def test_vsd_l3_shared_mgd_opt3_l3_unmgd_without_gateway(self):
         # Given  I have a VSD -L3-domain in a public zone (i.e. without IPAM (/ UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP option 3
         # And  these are linked
@@ -435,7 +435,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         pass
 
     @nuage_test.header()
-    def test_vsd_l3_shared_mgd_opt3_l2_unmgd_with_gateway(self):
+    def test_vsd_l3_shared_mgd_opt3_l3_unmgd_with_gateway(self):
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP-options-3
         # And  these are linked
@@ -1613,7 +1613,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
 
     #
     @nuage_test.header()
-    def test_vsd_l3_shared_mgd_opt3_l2_unmgd_without_gateway(self):
+    def test_vsd_l3_shared_mgd_opt3_l3_unmgd_without_gateway(self):
         # Given  I have a VSD -L3-domain in a public zone (i.e. without IPAM (/ UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP option 3
         # And  these are linked
@@ -1643,7 +1643,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         pass
 
     @nuage_test.header()
-    def test_vsd_l3_shared_mgd_opt3_l2_unmgd_with_gateway(self):
+    def test_vsd_l3_shared_mgd_opt3_l3_unmgd_with_gateway(self):
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP-options-3
         # And  these are linked
@@ -1675,7 +1675,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
 
     @test.attr(type=['negative'])
     @nuage_test.header()
-    def test_vsd_l3_shared_mgd_opt3_l2_unmgd_no_gateway_neg(self):
+    def test_vsd_l3_shared_mgd_opt3_l3_unmgd_no_gateway_neg(self):
         # Given  I have a VSD -L3-domain without IPAM (i.e. UnManaged)
         # And I have a VSD-L3-Shared-domain with IPAM (i.e. Managed) with DHCP-options-3
         # And  these are linked

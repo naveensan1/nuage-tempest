@@ -18,6 +18,7 @@ from nuagetempest.lib.utils import constants as n_constants
 from oslo_log import log as logging
 from tempest import config
 from tempest.lib import exceptions as lib_exec
+from tempest import test
 import uuid
 
 CONF = config.CONF
@@ -36,6 +37,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
     def resource_cleanup(cls):
         super(NuageGatewayTestJSON, cls).resource_cleanup()
 
+    @test.attr(type='smoke')
     def test_list_gateway(self):
         body = self.admin_client.list_gateways()
         gateways = body['nuage_gateways']
@@ -50,12 +52,14 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             if not found_gateway:
                 assert False, "Gateway not found"
 
+    @test.attr(type='smoke')
     def test_show_gateway(self):
         for gw in self.gateways:
             body = self.admin_client.show_gateway(gw[0]['ID'])
             gateway = body['nuage_gateway']
             self.verify_gateway_properties(gw[0], gateway)
 
+    @test.attr(type='smoke')
     def test_list_gateway_port(self):
         for gw in self.gateways:
             body = self.admin_client.list_gateway_ports(gw[0]['ID'])
@@ -71,6 +75,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
                 if not found_port:
                     assert False, "Gateway Port not found"
 
+    @test.attr(type='smoke')
     def test_list_gateway_port_by_gateway_name(self):
         for gw in self.gateways:
             body = self.admin_client.list_gateway_ports_by_gateway_name(
@@ -93,6 +98,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             gateway_port = body['nuage_gateway_port']
             self.verify_gateway_port_properties(gw_port[0], gateway_port)
 
+    @test.attr(type='smoke')
     def test_show_gateway_port_by_gateway_name(self):
         for gw_port in self.gatewayports:
             gateway = self.nuage_vsd_client.get_global_gateways(
@@ -102,6 +108,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             gateway_port = body['nuage_gateway_port']
             self.verify_gateway_port_properties(gw_port[0], gateway_port)
 
+    @test.attr(type='smoke')
     def test_create_vlan(self):
         gw_port = self.gatewayports[0]
         kwargs = {
@@ -120,6 +127,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         vlan = body['nuage_gateway_vlan']
         self.verify_vlan_properties(gw_vlan[0], vlan)
 
+    @test.attr(type='smoke')
     def test_delete_vlan(self):
         gw_port = self.gatewayports[0]
         kwargs = {
@@ -158,6 +166,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             if vlan_id == vlan['id']:
                 self.gatewayvlans.remove(gw_vlan)
 
+    @test.attr(type='smoke')
     def test_show_vlan_by_admin_tenant(self):
         gw_vlan = self.gatewayvlans[0]
         # Get the vlan
@@ -166,6 +175,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         vlan = body['nuage_gateway_vlan']
         self.verify_vlan_properties(gw_vlan[0], vlan)
 
+    @test.attr(type='smoke')
     def test_show_vlan_by_admin_tenant_by_name(self):
         gw_vlan = self.gatewayvlans[0]
         gateway = self.nuage_vsd_client.get_global_gateways(
@@ -180,6 +190,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         vlan = body['nuage_gateway_vlan']
         self.verify_vlan_properties(gw_vlan[0], vlan)
 
+    @test.attr(type='smoke')
     def test_list_vlan_by_admin_tenant(self):
         gw_port = self.gatewayports[0]
         body = self.admin_client.list_gateway_vlans(gw_port[0]['ID'])
@@ -194,6 +205,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             if not found_vlan:
                 assert False, "Vlan not found"
 
+    @test.attr(type='smoke')
     def test_list_vlan_by_admin_tenant_by_name(self):
         gw_port = self.gatewayports[0]
         gateway = self.nuage_vsd_client.get_global_gateways(
@@ -212,6 +224,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             if not found_vlan:
                 assert False, "Vlan not found"
 
+    @test.attr(type='smoke')
     def test_create_invalid_vlan(self):
         gw_port = self.gatewayports[0]
         kwargs = {
@@ -223,16 +236,19 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
                           self.admin_client.create_gateway_vlan,
                           **kwargs)
 
+    @test.attr(type='smoke')
     def test_delete_invalid_vlan(self):
         self.assertRaises(lib_exec.NotFound,
                           self.admin_client.delete_gateway_vlan,
                           '11111111111111111111111111111111')
 
+    @test.attr(type='smoke')
     def test_show_invalid_vlan(self):
         self.assertRaises(lib_exec.NotFound,
                           self.admin_client.show_gateway_vlan,
                           '11111111111111111111111111111111')
 
+    @test.attr(type='smoke')
     def test_assign_unassign_vlan(self):
         gw_port = self.gatewayports[0]
         kwargs = {
@@ -281,6 +297,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             n_constants.VLAN, vlan['id'], n_constants.PERMIT_ACTION)
         self.assertEmpty(vlan_permission)
 
+    @test.attr(type='smoke')
     def test_port_fip_assoc(self):
         # Verify port creation
         post_body = {"network_id": self.network['id'],
@@ -301,6 +318,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         self.assertEqual(created_floating_ip['fixed_ip_address'],
                          port['fixed_ips'][0]['ip_address'])
 
+    @test.attr(type='smoke')
     def test_host_port_fip_assoc(self):
         # Verify port creation
         post_body = {"network_id": self.network['id'],
@@ -355,6 +373,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         self.verify_vport_properties(gw_vport[0], vport)
         self.assertIsNotNone(gw_vport[0]['associatedFloatingIPID'])
 
+    @test.attr(type='smoke')
     def test_list_nuage_vport(self):
         # Create a host vport
         # Create a neutron port
@@ -412,6 +431,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         if not found_vport:
             assert False, "Bridge Vport not found"
 
+    @test.attr(type='smoke')
     def test_show_nuage_vport(self):
         post_body = {"network_id": self.network['id'],
                      "device_owner": 'compute:ironic'}
@@ -437,6 +457,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             assert False, "Host Vport not found"
         self.verify_vport_properties(gw_vport[0], vport)
 
+    @test.attr(type='smoke')
     def test_default_security_group_host_port(self):
         post_body = {"network_id": self.network['id'],
                      "device_owner": 'nuage:vip'}
@@ -492,6 +513,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         if vport_tp_pg_mapping is False:
             assert False, "Host Vport not found in default PG"
 
+    @test.attr(type='smoke')
     def test_default_security_group_bridge_port(self):
         kwargs = {
             'gatewayvlan': self.gatewayvlans[4][0]['ID'],

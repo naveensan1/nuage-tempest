@@ -69,7 +69,7 @@ class OrchestrationRouterTest(nuage_base.NuageBaseOrchestrationTest):
         #     nuage_domain['PATEnabled'],
         #     nuage_constants.NUAGE_PAT_VSD_ENABLED if enable_snat else nuage_constants.NUAGE_PAT_VSD_DISABLED)
 
-    @test.attr(type='slow')
+    @test.attr(type=['slow', 'smoke'])
     @nuage_test.header()
     def test_router_extended_attributes(self):
         default_tunnel_type = self.system_configuration['domainTunnelType']

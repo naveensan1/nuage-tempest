@@ -101,6 +101,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         pass
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_create_delete_vsd_redirection_target_l2_mgd_subnet(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack
         vsd_l2_subnet, l2dom_template = self._create_vsd_l2_managed_subnet()
@@ -206,6 +207,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         pass
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_create_delete_os_redirection_target_l3_mgd_subnet(self):
         # Given I have a VSD-L3-Managed-Subnet in openstack        #
         vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()
@@ -615,6 +617,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         pass
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_l2_associate_port_to_policygroup(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -1174,6 +1177,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
                          "Removed allowed-address-pair stil present in port (%s)" % addrpair_port['id'])
         pass
 
+    @test.attr(type='smoke')
     def test_create_address_pair_l3domain_with_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l3_subnet, l3_domain = self._create_vsd_l3_managed_subnet()
@@ -1271,6 +1275,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
                                  (claimed_fip[0]['ID'], port['id']))
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_create_list_associate_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
         vsd_fip_pool = self.vsd_fip_pool

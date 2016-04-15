@@ -102,6 +102,7 @@ class OrchestrationNeutronResourcesTest(nuage_base.NuageBaseOrchestrationTest):
             cls.test_resources[resource['logical_resource_id']] = resource
 
     @test.idempotent_id('f9e2664c-bc44-4eef-98b6-495e4f9d74b3')
+    @test.attr(type='smoke')
     def test_created_resources(self):
         """Verifies created neutron resources."""
         resources = [('Network', self.neutron_basic_template['resources'][

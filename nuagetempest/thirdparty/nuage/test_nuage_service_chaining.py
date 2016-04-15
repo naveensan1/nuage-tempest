@@ -18,6 +18,7 @@ from oslo_log import log as logging
 from tempest.api.network import base
 from tempest import config
 from tempest.lib.common.utils import data_utils
+from tempest import test
 
 import netaddr
 
@@ -136,6 +137,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
         self.assertEqual(
             redirect_vip[0]['virtualIP'], vipinfo['virtual_ip_address'])
 
+    @test.attr(type='smoke')
     def test_create_delete_redirection_target_l2domain(self):
         # parameters for nuage redirection target
         post_body = {'insertion_mode': 'VIRTUAL_WIRE',
@@ -192,6 +194,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
             filter_value=rt['nuage_redirect_target']['id'])
         self.assertEqual(redirect_target, '')
 
+    @test.attr(type='smoke')
     def test_create_virtualwire_redirection_target_l3domain(self):
         # parameters for nuage redirection target
         post_body = {'insertion_mode': 'VIRTUAL_WIRE',
@@ -259,6 +262,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
             filter_value=rt['nuage_redirect_target']['id'])
         self.assertEqual(redirect_target, '')
 
+    @test.attr(type='smoke')
     def test_create_l3_redirection_target_l3domain(self):
         # parameters for nuage redirection target
         post_body = {'insertion_mode': 'L3',
@@ -325,6 +329,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
             filter_value=rt['nuage_redirect_target']['id'])
         self.assertEqual(redirect_target, '')
 
+    @test.attr(type='smoke')
     def test_create_l3_redirection_target_l3domain_redundancyvip(self):
         # parameters for nuage redirection target
         post_body = {'insertion_mode': 'L3', 'redundancy_enabled': 'True',

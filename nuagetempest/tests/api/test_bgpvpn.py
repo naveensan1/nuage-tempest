@@ -18,9 +18,11 @@ from tempest import config
 from nuagetempest.services.bgpvpn.mixins import BGPVPNMixin
 from nuagetempest.services.bgpvpn.mixins import L3Mixin
 from nuagetempest.services.bgpvpn.mixins import NetworkMixin
-
+from nuagetempest.lib import topology
+from tempest import test
+from tempest.common.utils import data_utils
 from tempest.lib import exceptions as lib_exc
-
+from nuagetempest.lib.test import nuage_test
 from testtools.matchers import Contains
 from testtools.matchers import Equals
 from testtools.matchers import Not
@@ -30,6 +32,7 @@ import uuid
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
+TB = topology.testbed
 
 
 class BgpvpnBase(BGPVPNMixin):
@@ -348,3 +351,82 @@ class NetworkAssociationTest(BgpvpnBase, NetworkMixin):
             lib_exc.BadRequest, "not support network association",
             self.net_assoc_client.update_network_association,
             'dummy', 'dummy')
+
+class BgpvpnCliTests(test.BaseTestCase):
+
+    def setUp(self):
+        super(BgpvpnCliTests, self).setUp()
+        self.def_net_partition = CONF.nuage.nuage_default_netpartition
+        self.os_cli = TB.osc_1.cli 
+        self.os_data = openstackData()
+        self.os_data.insert_resource(self.def_net_partition,
+                                    parent='CMS')
+
+    def _create_verifybgpvpn(self, name, rt, rd):
+        params = {}
+        params['name'] = name
+        params['route_distinguishers'] = rd
+        params['route_targets'] = rt
+        bgpvpn = self.os_cli.create_bgpvpn(**params)
+        LOG.debug("Verifying BGPVPN")
+        self.assertEqual(bgpvpn['name'], params['name'])
+        self.assertEqual(bgpvpn['route_distinguishers'], params['route_distinguishers'])
+        self.assertEqual(bgpvpn['route_targets'], params['route_targets'])
+        LOG.debug("List with %d items", bgpvpn.__len__())
+        return bgpvpn
+        
+    @test.attr(type='smoke')
+    @nuage_test.header()
+    def test_create_delete_bgpvpn(self):
+        name = data_utils.rand_name('bgpvpn')
+        bgpvpn = self._create_verifybgpvpn(name, '343:343', '343:343')
+
+    @test.attr(type='smoke')
+    @nuage_test.header()
+    def test_create_list_show_delete_multiple_bgpvpn(self):
+        name1 = data_utils.rand_name('bgpvpn')
+        bgpvpn1 = self._create_verifybgpvpn(name1, '345:345', '345:345')
+        name2 = data_utils.rand_name('bgpvpn')
+        bgpvpn2 = self._create_verifybgpvpn(name2, '344:344', '344:344')
+        self.os_data.insert_resource(name1,
+                                     os_data=bgpvpn1,
+                                     parent=self.def_net_partition)
+        self.os_data.insert_resource(name2,
+                                     os_data=bgpvpn2,
+                                     parent=self.def_net_partition)      
+        bgpvpns = self.os_cli.bgpvpn_client.list_bgpvpn()
+        for bgpvpn in bgpvpns:
+            get_bgpvpn = self.os_data.get_resource(bgpvpn['name']).os_data
+            if not get_bgpvpn:
+                raise Exception('Cannot find bgpvpn in list command')
+            show_bgpvpn = self.os_cli.bgpvpn_client.show_bgpvpn(bgpvpn['id'])
+            if not show_bgpvpn:
+                raise Exception('Cannot find bgpvpn in show command')
+
+    def test_cannot_create_network_assoc(self):
+        netname = data_utils.rand_name('network')
+        network = self.os_cli.create_network(network_name=netname)
+        name1 = data_utils.rand_name('bgpvpn')
+        bgpvpn1 = self._create_verifybgpvpn(name1, '350:350', '350:350')
+        kwargs = {}
+        kwargs['network'] = network['id']
+        response = self.os_cli.bgpvpn_client.bgpvpn_net_assoc_create(bgpvpn1['id'], **kwargs)       
+
+    def test_create_list_router_assoication(self):
+        name1 = data_utils.rand_name('bgpvpn')
+        bgpvpn1 = self._create_verifybgpvpn(name1, '349:349', '349:349')
+        routname = data_utils.rand_name('router')
+        router = self.os_cli.create_router(router_name=routname)
+        self.os_data.insert_resource(name1,
+                                     os_data=bgpvpn1,
+                                     parent=self.def_net_partition)
+        kwargs = {}
+        kwargs['router'] = router['id']
+        response = self.os_cli.bgpvpn_client.bgpvpn_router_assoc_create(bgpvpn1['id'], **kwargs)
+        listing = self.os_cli.bgpvpn_client.bgpvpn_router_assoc_list(bgpvpn1['id'])
+        for list in listing:
+            self.assertEqual(list['router_id'], router['id'])
+        
+    def tearDown(self):      
+        self.os_cli.__del__()
+        super(BgpvpnCliTests, self).tearDown()

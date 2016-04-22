@@ -36,6 +36,7 @@ class OpenstackAPIClient(base_security_groups.BaseSecGroupTest,
 
     def __del__(cls):
         super(OpenstackAPIClient, cls).resource_cleanup()
+        super(OpenstackAPIClient, cls).clear_credentials()
         
     def delete_network(self, network_id):
         self._try_delete_resource(self.networks_client.delete_network,

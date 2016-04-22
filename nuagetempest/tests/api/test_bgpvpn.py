@@ -354,14 +354,19 @@ class NetworkAssociationTest(BgpvpnBase, NetworkMixin):
 
 class BgpvpnCliTests(test.BaseTestCase):
 
-    def setUp(self):
-        super(BgpvpnCliTests, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(BgpvpnCliTests, self).setUpClass()
         self.def_net_partition = CONF.nuage.nuage_default_netpartition
         self.os_cli = TB.osc_1.cli 
         self.os_data = openstackData()
+        import pdb;pdb.set_trace()
         self.os_data.insert_resource(self.def_net_partition,
                                     parent='CMS')
 
+    def setUp(self):
+        super(BgpvpnCliTests, self).setUp()
+        
     def _create_verifybgpvpn(self, name, rt, rd):
         params = {}
         params['name'] = name
@@ -427,6 +432,11 @@ class BgpvpnCliTests(test.BaseTestCase):
         for list in listing:
             self.assertEqual(list['router_id'], router['id'])
         
-    def tearDown(self):      
-        self.os_cli.__del__()
+    def tearDown(self):
         super(BgpvpnCliTests, self).tearDown()
+
+    @classmethod
+    def tearDownClass(self):   
+        super(BgpvpnCliTests, self).tearDownClass()   
+        self.os_cli.__del__()
+

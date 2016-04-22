@@ -179,7 +179,6 @@ class TestNuageFipUnderlayCli(remote_cli_base_testcase.RemoteCliBaseTestCase,
         Must fails, as an external network is required
         """
         self._as_admin()
-        self.needs_ini_nuage_fip_underlay(True)
         underlay_states = [False, True]
         for underlay in underlay_states:
             network_name = data_utils.rand_name('internal-pat-network-neg-')

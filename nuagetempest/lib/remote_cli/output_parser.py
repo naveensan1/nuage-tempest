@@ -35,13 +35,19 @@ def details_multiple(output_lines, with_label=False):
     """
     items = []
     tables_ = tables(output_lines)
+    prev_value = ''
     for table_ in tables_:
         if ('Property' not in table_['headers'] and 'Field' not in table_['headers']) \
            or 'Value' not in table_['headers']:
             raise exceptions.InvalidStructure()
         item = {}
         for value in table_['values']:
-            item[value[0]] = value[1]
+            if value[0] == '':
+                item[prev_value] += ',' + value[1]
+            else:
+                item[value[0]] = value[1]
+                # Remember previous value
+                prev_value = value[0]
         if with_label:
             item['__label'] = table_['label']
         items.append(item)

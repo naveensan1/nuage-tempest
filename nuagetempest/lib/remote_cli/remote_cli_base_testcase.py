@@ -6,8 +6,6 @@ import re
 import netaddr
 from enum import Enum
 
-#import tempest.test
-#from tempest.common import accounts
 from tempest import config
 from oslo_log import log as logging
 from tempest.lib.common.utils import data_utils
@@ -96,7 +94,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         # the IP adress of osc-2 is always osc-1 + 1
         # work with these 2 uri's
         cls.uri_1 = CONF.identity.uri
-        ip_osc_1 = netaddr.IPAddress(re.findall( r'[0-9]+(?:\.[0-9]+){3}', str(CONF.identity.uri))[0])
+        ip_osc_1 = netaddr.IPAddress(re.findall(r'[0-9]+(?:\.[0-9]+){3}', str(CONF.identity.uri))[0])
         ip_osc_2 = ip_osc_1 + 1
         cls.uri_2 = re.sub(str(ip_osc_1), str(ip_osc_2), cls.uri_1)
         # make the uri point to the one of osc-1
@@ -131,13 +129,12 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
             self.cli = self.nonadmin_cli
         return self.cli
 
-    def _use_osc(self,controller):
-        if controller == 1 :
+    def _use_osc(self, controller):
+        if controller == 1:
             self.cli.uri = self.uri_1
         else:
             self.cli.uri = self.uri_2
         self._get_clients()
-
 
     def _as_admin(self):
         self.me = Role.admin
@@ -196,19 +193,22 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
             # Clean up ports
             for port in cls.ports:
                 cls._delete_port(port['id'])
+            cls.ports = []
 
             # Clean up routers
             for router in cls.routers:
                 cls.delete_router(router)
+            cls.routers = []
 
             # Clean up subnets
             for subnet in cls.subnets:
                 cls._delete_subnet(subnet['id'])
-                cls.subnets.remove(subnet)
+            cls.subnets = []
 
             # Clean up networks
             for network in cls.networks:
                 cls._delete_network(network['id'])
+            cls.networks = []
 
             cls.clear_credentials()
 
@@ -363,10 +363,25 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         self.ports.append(port)
         return port
 
-    def create_port(self, port_name=None):
+    def create_port(self, network, port_name=None):
         """Wrapper utility that returns a test port."""
-        port_name = port_name or data_utils.rand_name('test-port-')
-        return self.create_port_with_args(port_name)
+        port_name = port_name or data_utils.rand_name('cli-test-port-')
+        response = self.create_port_with_args("--name ", port_name, network['id'])
+        return response
+
+    def update_port_with_args(self, port_id, *args):
+        the_params = ''
+        for arg in args:
+            the_params += ' '
+            the_params += arg
+        response = self.cli.neutron('port-update ', params=the_params + ' ' + port_id)
+        self.assertFirstLineStartsWith(response.split('\n'), 'Updated port:')
+
+    def show_port(self, port_id):
+        response = self.cli.neutron('port-show', params=port_id)
+        port = self.parser.details(response)
+        self.assertEqual(port['id'], port_id)
+        return port
 
     def create_floating_ip_with_args(self, *args):
         """Wrapper utility that returns a test floating_ip."""
@@ -399,6 +414,26 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         return self.create_floating_ip_with_args(floating_ip_name)
 
     def show_floating_ip(self, floating_ip_id):
+        response = self.cli.neutron('floatingip-show', params=floating_ip_id)
+        floating_ip = self.parser.details(response)
+        return floating_ip
+
+    def list_nuage_floating_ip_all(self):
+        response = self.cli.neutron('nuage-floatingip-list')
+        nuage_floating_ip_list = self.parser.details(response)
+        return nuage_floating_ip_list
+
+    def list_nuage_floating_ip_for_subnet(self, subnet_id):
+        response = self.cli.neutron('nuage-floatingip-show --subnet ', params=subnet_id)
+        nuage_floating_ip_list = self.parser.details(response)
+        return nuage_floating_ip_list
+
+    def list_nuage_floating_ip_for_port(self, port_id):
+        response = self.cli.neutron('nuage-floatingip-show --subnet ', params=port_id)
+        nuage_floating_ip_list = self.parser.details(response)
+        return nuage_floating_ip_list
+
+    def show_nuage_floating_ip(self, floating_ip_id):
         response = self.cli.neutron('floatingip-show', params=floating_ip_id)
         floating_ip = self.parser.details(response)
         return floating_ip
@@ -464,7 +499,6 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         self.vms.append(vm)
         return vm
 
-
     @classmethod
     def delete_router(cls, router):
 
@@ -525,6 +559,99 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
     def _remove_router_interface_with_subnet_id(cls, router_id, subnet_id):
         response = cls.cli.neutron('router-interface-delete', params=router_id + ' ' + subnet_id)
         return response
+
+    @classmethod
+    def _remove_router_interface_with_subnet_id(cls, router_id, subnet_id):
+        response = cls.cli.neutron('router-interface-delete', params=router_id + ' ' + subnet_id)
+        return response
+
+    # @classmethod
+    def _cli_create_redirect_target_with_args(self, *args):
+        the_params = ''
+        for arg in args:
+            the_params += ' '
+            the_params += arg
+
+        response = self.cli.neutron('nuage-redirect-target-create', params=the_params)
+        self.assertFirstLineStartsWith(response.split('\n'), 'Created a new nuage_redirect_target:')
+        redirect_target = self.parser.details(response)
+        # self.nuage_redirect_targets.append(redirect_target)
+        return redirect_target
+
+    def _cli_create_nuage_redirect_target_in_l2_subnet(self, l2subnet, name=None):
+        if name is None:
+            name = data_utils.rand_name('cli-os-l2-rt')
+        # parameters for nuage redirection target
+        response = self.cli.neutron(
+            'nuage-redirect-target-create --insertion-mode VIRTUAL_WIRE  --redundancy-enabled false --subnet',
+            params=l2subnet['name'] + ' ' + name)
+        self.assertFirstLineStartsWith(response.split('\n'), 'Created a new nuage_redirect_target:')
+        redirect_target = self.parser.details(response)
+        # self.nuage_redirect_targets.append(redirect_target)
+        return redirect_target
+
+    def _cli_create_nuage_redirect_target_in_l3_subnet(self, l3subnet, name=None):
+        if name is None:
+            name = data_utils.rand_name('cli-os-l3-rt')
+        response = self.cli.neutron(
+            'nuage-redirect-target-create --insertion-mode L3  --redundancy-enabled false --subnet',
+            params=l3subnet['name'] + ' ' + name)
+        self.assertFirstLineStartsWith(response.split('\n'), 'Created a new nuage_redirect_target:')
+        redirect_target = self.parser.details(response)
+        # self.nuage_redirect_targets.append(redirect_target)
+        return redirect_target
+
+    def delete_redirect_target(self, redirect_target_id):
+        self.cli.neutron('nuage-redirect-target-delete', params=redirect_target_id)
+
+    def list_nuage_redirect_target_for_l2_subnet(self, l2subnet):
+        response = self.cli.neutron('nuage-redirect-target-list --subnet ', params=l2subnet['id'])
+        rt_list = self.parser.listing(response)
+        return rt_list
+
+    def list_nuage_redirect_target_for_port(self, port):
+        response = self.cli.neutron('nuage-redirect-target-list --for-port ', params=port['id'])
+        rt_list = self.parser.listing(response)
+        return rt_list
+
+    def show_nuage_redirect_target(self, redirect_target_id):
+        response = self.cli.neutron('nuage-redirect-target-show', params=redirect_target_id)
+        rt_show = self.parser.details(response)
+        return rt_show
+
+    def cli_create_nuage_redirect_target_rule_with_args(self, *args):
+        the_params = ''
+        for arg in args:
+            the_params += ' '
+            the_params += arg
+        response = self.cli.neutron('nuage-redirect-target-rule-create ', params=the_params)
+        rt_rule = self.parser.details(response)
+        return rt_rule
+
+    def list_nuage_policy_group_for_subnet(self, subnet_id):
+        response = self.cli.neutron('nuage-policy-group-list --for-subnet ', params=subnet_id)
+        rt_list = self.parser.listing(response)
+        return rt_list
+
+    def show_nuage_policy_group(self, policy_group_id):
+        response = self.cli.neutron("nuage-policy-group-show", params=policy_group_id)
+        show_pg = self.parser.details(response)
+        return show_pg
+
+    def list_nuage_floatingip_by_subnet(self, subnet_id):
+        response = self.cli.neutron('nuage-floatingip-list --for-subnet ', params=subnet_id)
+        fp_list = self.parser.listing(response)
+        return fp_list
+
+    def list_nuage_floatingip_by_port(self, port_id):
+        response = self.cli.neutron('nuage-floatingip-list --for-port ', params=port_id)
+        fp_list = self.parser.listing(response)
+        return fp_list
+
+    def show_nuage_floatingip(self, fp_id):
+        response = self.cli.neutron('nuage-floatingip-show ', params=fp_id)
+        show_fp = self.parser.details(response)
+        return show_fp
 
 
 class RemoteCliAdminBaseTestCase(RemoteCliBaseTestCase):

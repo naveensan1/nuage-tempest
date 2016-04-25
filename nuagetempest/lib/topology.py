@@ -3,6 +3,8 @@ import libVSD
 import threading
 from tempest import config
 from libduts import sros, linux
+from nuagetempest.lib.openstackcli import openstackcli_base
+from nuagetempest.lib.openstackapi import openstackapi_base
 import re
 
 CONF = config.CONF
@@ -183,7 +185,10 @@ class Topology(object):
             return sros.VSC(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_osc(component):
-            return linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
+            osc = linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
+            setattr(osc, 'cli', openstackcli_base.OpenstackCliClient(osc))
+            setattr(osc, 'api', openstackapi_base.OpenstackAPIClient())
+            return osc
 
         err = 'Cannot find a class corresponding to {}'.format(name)
         raise Exception(err)

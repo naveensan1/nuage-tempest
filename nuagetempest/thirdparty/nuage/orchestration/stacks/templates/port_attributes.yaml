@@ -1,0 +1,79 @@
+heat_template_version: 2013-05-23
+description: Simple template to create network from VSD managed network
+parameters:
+  vsd_L2_subnet_id:
+    type: string
+    label: VSD Subnet Id
+    description: ID of VSD subnet
+  netpartition_name:
+    type: string
+    label: NetPartition Name
+    description: Name of netpartition
+  l2_net_name:
+    type: string
+    description: Name of private network to be created
+  l2_subnet_name:
+    type: string
+    description: Name of private network to be created
+  l2_net_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+  private_net_dhcp:
+    type: boolean
+    default: True
+    description: Private network DHCP option
+  private_net_pool_start:
+    type: string
+    default: "10.1.1.100"
+    description: Start of private network IP address allocation pool
+  private_net_pool_end:
+    type: string
+    default: "10.1.1.110"
+    description: End of private network IP address allocation pool
+  policy_group_id:
+    type: string
+    label: List of VSD Policy Group Id's
+    description: List VSD policy group ids for port attributes on vsd managed networks
+  fixed_ip_address:
+    type: string
+    description: Port fixed IP address for Allowed Address Pair IPAddress port attributes on vsd managed networks
+  aap_ip_address:
+    type: string
+    description: ALlowed Address Pair IPAddress port attributes on vsd managed networks
+  aap_mac_address:
+    type: string
+    description: ALlowed Address Pair Mac Address port attributes on vsd managed networks
+
+resources:
+  l2_net:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: l2_net_name }
+
+  l2_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: l2_net }
+      cidr: { get_param: l2_net_cidr }
+      name: { get_param: l2_subnet_name }
+      value_specs: { net_partition: { get_param: netpartition_name }, nuagenet: {get_param: vsd_L2_subnet_id} }
+
+  rt_l2:
+    type: Nuage::Neutron::RedirectTarget
+    properties:
+      name: 'rt_l2'
+      description: 'rt_l2 description'
+      insertion_mode: VIRTUAL_WIRE
+      redundancy_enabled: False
+      subnet_id: {get_resource: l2_subnet}
+
+  l2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: l2_net }
+      allowed_address_pairs: [ { ip_address: { get_param: aap_ip_address }, mac_address: { get_param: aap_mac_address } } ]
+      name: 'heat-port'
+      fixed_ips: [ { ip_address: { get_param: fixed_ip_address }, subnet: { get_resource: l2_subnet } } ]
+#      value_specs: { nuage_redirect_targets: { get_resource: rt_l2 }, nuage_policy_groups: [get_param: policy_group_id] }
+      value_specs: { nuage_redirect_targets: { get_resource: rt_l2 } }
+

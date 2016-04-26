@@ -1,7 +1,6 @@
 import time
 import re
 import logging
-from nuagetempest.tests import conf
 
 LOG = logging.getLogger(__name__)
 
@@ -114,10 +113,3 @@ def add_csproot_to_cms(vsd_api, vspk):
     grp_filter = 'name IS "CMS Group"'
     usr_filter = 'userName IS "csproot"'
     vsd.add_user_to_group(global_ent, usr_filter=usr_filter, grp_filter=grp_filter)
-
-def get_external_id(id):
-    return (id + '@' + conf.nuage.nuage_cms_id) \
-        if conf.nuage.nuage_cms_id else id
-
-def get_filter_str(key, value):
-    return key + '  == "{}"'.format(value)

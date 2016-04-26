@@ -1,14 +1,14 @@
-from nuagetempest.thirdparty.nuage import test_allowed_addr_pair_nuage
 from tempest.common.utils import data_utils
 from tempest.api.network import base
 from tempest import test
 from nuagetempest.tests import nuage_ext
 from tempest import config
 from nuagetempest.lib.openstackData import openstackData
+from nuagetempest.services.nuage_client import NuageRestClient
 
 from collections import namedtuple
 from enum import Enum
-import netaddr
+from netaddr import IPNetwork
 
 CONF = config.CONF
 
@@ -38,6 +38,11 @@ class IpAntiSpoofingTestBase(base.BaseNetworkTest):
     @classmethod
     def resource_cleanup(cls):
         cls.os_data.delete_resource(cls.def_net_partition)
+
+    @classmethod
+    def setup_clients(cls):
+        super(IpAntiSpoofingTestBase, cls).setup_clients()
+        cls.nuageclient = NuageRestClient()
 
     @classmethod
     def _create_security_disabled_network(cls):
@@ -126,6 +131,7 @@ class IpAntiSpoofingTestBase(base.BaseNetworkTest):
         self.addCleanup(self.os_data.delete_resource, l2domain_name)
         return (network, l2domain, port)
 
+
     def _create_network_port_l3resources(self, ntw_security='True',
                                          port_security='True',
                                          router_name='router-1',
@@ -169,6 +175,132 @@ class IpAntiSpoofingTestBase(base.BaseNetworkTest):
         self.addCleanup(self.ports_client.delete_port, port['id'])
         self.addCleanup(self.os_data.delete_resource, router_name)
         return (network, router, subnet, port)
+
+    def _create_vsd_managed_l2resources(self, ntw_security='True',
+                                        port_security='True',
+                                        port_name='port-1',
+                                        l2domain_name='l2domain-1',
+                                        netpart=None,
+                                        allowed_address_pairs=None):
+        # Method to create VSD managed l3domain subnet. The ntw and port
+        # are also created.
+        if netpart is None:
+            netpart = self.def_net_partition
+        if ntw_security == 'False':
+            network = self._create_security_disabled_network()
+        else:
+            body = self.networks_client.create_network(
+                   name=data_utils.rand_name('network-'))
+            network = body['network']
+        self.addCleanup(self.networks_client.delete_network, network['id'])
+        # Create VSD Mananged l2domain subnet
+        cidr = IPNetwork('40.40.40.0/24')
+        cidr_ip = '40.40.40.0'
+        cidr_mask = '255.255.255.0'
+        gateway = '40.40.40.1'
+        params = {
+            'DHCPManaged': True,
+            'address': cidr_ip,
+            'netmask': cidr_mask,
+            'gateway': gateway
+        }
+        l2dom_temp_name = data_utils.rand_name('l2dom-template-')
+        vsd_l2dom_tmplt = self.nuageclient.create_l2domaintemplate(
+            name=l2dom_temp_name, extra_params=params)
+        self.addCleanup(self.nuageclient.delete_l2domaintemplate,
+            vsd_l2dom_tmplt[0]['ID'])
+        vsd_l2dom = self.nuageclient.create_l2domain(name=l2domain_name,
+            templateId=vsd_l2dom_tmplt[0]['ID'])
+        self.addCleanup(self.nuageclient.delete_l2domain, vsd_l2dom[0]['ID'])
+        l2domain = self.create_subnet(
+            network, cidr=cidr,
+            mask_bits=24, gateway=None,
+            nuagenet=vsd_l2dom[0]['ID'],
+            net_partition=netpart)
+        self.os_data.insert_resource(l2domain_name, netpart,
+                                     os_data=l2domain, vsd_data=vsd_l2dom[0])
+        self.addCleanup(self.subnets_client.delete_subnet, l2domain['id'])
+
+        kwargs = {'name': port_name, 'network_id': network['id']}
+        if allowed_address_pairs:
+            kwargs.update({'allowed_address_pairs': allowed_address_pairs})
+        if port_security == 'False':
+            port = self._create_security_disabled_port(**kwargs)
+        else:
+            body = self.ports_client.create_port(**kwargs)
+            port = body['port']
+        self.os_data.insert_resource(port_name, l2domain_name, os_data=port)
+        self.addCleanup(self.ports_client.delete_port, port['id'])
+        self.addCleanup(self.os_data.delete_resource, l2domain_name)
+        return (network, l2domain, port)
+
+    def _create_vsd_managed_l3resources(self, ntw_security='True',
+                                         port_security='True',
+                                         router_name='router-1',
+                                         subnet_name='subnet-1',
+                                         port_name='port-1',
+                                         netpart=None,
+                                         allowed_address_pairs=None):
+        # Method to create VSD managed l3domain subnet. The ntw and port
+        # are also created.
+        if netpart is None:
+            netpart = self.def_net_partition
+        if ntw_security == 'False':
+            network = self._create_security_disabled_network()
+        else:
+            body = self.networks_client.create_network(
+                   name=data_utils.rand_name('network-'))
+            network = body['network']
+        self.addCleanup(self.networks_client.delete_network, network['id'])
+
+        # Create VSD Mananged l3domain subnet
+        router_temp_name = data_utils.rand_name('l3dom-template-')
+        vsd_l3dom_tmplt = self.nuageclient.create_l3domaintemplate(
+            router_temp_name)
+        self.addCleanup(self.nuageclient.delete_l3domaintemplate,
+            vsd_l3dom_tmplt[0]['ID'])
+        vsd_l3dom = self.nuageclient.create_domain(name=router_name,
+            templateId=vsd_l3dom_tmplt[0]['ID'])
+        # create dummy place holder for VSD l3domain in os_data
+        router = {}
+        self.os_data.insert_resource(router_name, netpart, vsd_data=vsd_l3dom)
+        self.addCleanup(self.nuageclient.delete_domain, vsd_l3dom[0]['ID'])
+        zonename = data_utils.rand_name('l3dom-zone-')
+        vsd_zone = self.nuageclient.create_zone(name=zonename,
+                                    parent_id=vsd_l3dom[0]['ID'])
+        cidr = IPNetwork('40.40.40.0/24')
+        cidr_ip = '40.40.40.0'
+        cidr_mask = '255.255.255.0'
+        extra_params = {}
+        vsd_subnet = self.nuageclient.create_domain_subnet(
+            parent_id=vsd_zone[0]['ID'],
+            name=subnet_name,
+            net_address = cidr_ip,
+            netmask = cidr_mask,
+            gateway='40.40.40.1')
+        self.addCleanup(self.nuageclient.delete_domain_subnet,
+            vsd_subnet[0]['ID'])
+        subnet = self.create_subnet(network,
+                                    cidr=cidr,
+                                    mask_bits=24,
+                                    nuagenet=vsd_subnet[0]['ID'],
+                                    net_partition=netpart)
+        self.os_data.insert_resource(subnet_name, router_name,
+                                     os_data=subnet, vsd_data=vsd_subnet[0])
+        self.addCleanup(self.subnets_client.delete_subnet, subnet['id'])
+
+        kwargs = {'name': port_name, 'network_id': network['id']}
+        if allowed_address_pairs:
+            kwargs.update({'allowed_address_pairs': allowed_address_pairs})
+        if port_security == 'False':
+            port = self._create_security_disabled_port(**kwargs)
+        else:
+            body = self.ports_client.create_port(**kwargs)
+            port = body['port']
+        self.os_data.insert_resource(port_name, subnet_name, os_data=port)
+        self.addCleanup(self.ports_client.delete_port, port['id'])
+        self.addCleanup(self.os_data.delete_resource, router_name)
+        return (network, subnet, port)
 
     def get_vip_action(self, key):
          return self.vip_action_map.get(key)
@@ -983,4 +1115,94 @@ class IpAntiSpoofingTest(IpAntiSpoofingTestBase):
         tag_name = 'verify_vip_and_anti_spoofing'
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
- 
+
+
+    def test_anti_spoofing_for_params_1_1_1_1_vsd_managed_l2domain(self):
+        '''IP Anti Spoofing tests for vsd managed port having vip parameters:
+           full cidr(/32 IP), different mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        network, subnet, port =self._create_vsd_managed_l2resources(ntw_security='True',
+            port_security='True',
+            l2domain_name='subnet64-1',
+            port_name='port64-1')
+        ip_address = port['fixed_ips'][0]['ip_address']
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self.ports_client.update_port(port['id'],
+            allowed_address_pairs=allowed_address_pairs)
+        port = body['port']
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_1_1_1_vsd_managed_l3domain(self):
+        '''IP Anti Spoofing tests for vsd managed port having vip parameters:
+           full cidr(/32 IP), different mac, same ip, same subnet in 
+           comparsion with the corresponding port parameters'''
+        network, subnet, port =self._create_vsd_managed_l3resources(ntw_security='True',
+            port_security='True',
+            router_name='router61-1',
+            subnet_name='subnet61-1',
+            port_name='port61-1')
+        ip_address = port['fixed_ips'][0]['ip_address']
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self.ports_client.update_port(port['id'],
+            allowed_address_pairs=allowed_address_pairs)
+        port = body['port']
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        self.assertEqual(port['allowed_address_pairs'][0]['mac_address'],
+                         allowed_address_pairs[0]['mac_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_0_0_1_vsd_managed_l3domain(self):
+        '''IP Anti Spoofing tests for vsd managed subnet port with 
+           vip parameters having full cidr(/32 IP), same mac, same ip, 
+           different subnet in comparsion with the corresponding 
+           port parameters'''
+        ip_address = '40.40.40.100'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, subnet, port = self._create_vsd_managed_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router62-1',
+            subnet_name='subnet62-1',
+            port_name='port62-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+
+    def test_anti_spoofing_for_params_1_0_0_0_vsd_managed_l3domain(self):
+        '''IP Anti Spoofing tests for vsd managed subnet port with 
+           vip parameters having full cidr(/32 IP),
+           same mac, different ip, different subnet in 
+           comparsion with the corresponding port parameters'''
+        ip_address = '20.20.20.100'
+        allowed_address_pairs = [{'ip_address': ip_address}]
+        network, subnet, port = self._create_vsd_managed_l3resources(
+            ntw_security='True',
+            port_security='True',
+            router_name='router63-1',
+            subnet_name='subnet63-1',
+            port_name='port63-1',
+            netpart=self.def_net_partition,
+            allowed_address_pairs=allowed_address_pairs)
+        self.assertEqual(port['allowed_address_pairs'][0]['ip_address'],
+                         allowed_address_pairs[0]['ip_address'])
+        tag_name = 'verify_vip_and_anti_spoofing'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+

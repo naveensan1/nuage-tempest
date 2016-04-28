@@ -571,6 +571,50 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         cls.eacl_templace = ''
 
     @nuage_test.header()
+    def test_l2_create_update_associate_port_to_policygroup(self):
+        # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
+        vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
+        network, subnet = self._create_os_l2_vsd_managed_subnet(vsd_l2_subnet)
+        policy_group = self.nuage_vsd_client.create_policygroup(
+            constants.L2_DOMAIN,
+            vsd_l2_subnet[0]['ID'],
+            name='myVSDpg-1',
+            type='SOFTWARE',
+            extra_params=None)
+        # When I retrieve the VSD-L2-Managed-Subnet
+        policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
+        # I expect the policyGroup in my list
+        pg_present = self._check_policy_group_in_list(policy_group[0]['ID'], policy_group_list)
+        self.assertTrue(pg_present, "Did not find vsd policy group in policy group list")
+        # And it has no external ID
+        self.assertIsNone(policy_group[0]['externalID'],
+                          "Policy Group has an external ID, while it should not")
+
+        # When I create a port in the subnet
+        # And I associate the port with the policy group
+        kwargs = {
+            'nuage_policy_groups': [policy_group[0]['ID']],
+            'name': 'port-with-vsd-pg'
+        }
+        port = self.create_port(network, **kwargs)
+        # self.update_port(port, **kwargs)
+        # Then I expect the port in the show policy group response
+        port_present = self._check_port_in_policy_group(port['id'], policy_group[0]['ID'])
+        self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
+                        (port['id'], policy_group[0]['ID']))
+        # When I disassociate the port from the policy group
+        kwargs = {
+            'nuage_policy_groups': [],
+            'name': 'port-without-vsd-pg'
+        }
+        self.update_port(port, **kwargs)
+        # Then I do NOT expect the port in the show plicy group response
+        port_present = self._check_port_in_policy_group(port['id'], policy_group[0]['ID'])
+        self.assertFalse(port_present, "Port(%s) disassiociated to policy group (%s) is still present" %
+                         (port['id'], policy_group[0]['ID']))
+        pass
+
+    @nuage_test.header()
     def test_l2_associate_port_to_policygroup(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -970,7 +1014,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         )
         # When I try to use this security group in a redirect-target-rule-creation
         # rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
-        #                                             security_group['id'])
+        #                                             security_groups['id'])
         rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
                                                     policy_group[0]['ID'])
         # When I retrieve the VSD-L2-Managed-Subnet
@@ -1008,7 +1052,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
         kwargs = {
             'fixed_ips': [{
                 'subnet_id': subnet['id'],
-                'ip_address': str(port_fixed_ip)
+                'ip_address': port_fixed_ip
             }],
             'allowed_address_pairs': [{
                 'ip_address':  aap_fixed_ip
@@ -1189,6 +1233,42 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
     def resource_setup(cls):
         super(VSDManagedAssociateFIPTest, cls).resource_setup()
         cls.vsd_fip_pool = cls._create_vsd_floatingip_pool()
+
+    @nuage_test.header()
+    def test_create_port_with_vsd_floatingip(self):
+        # Given I have a VSD-FloatingIP-pool
+        vsd_fip_pool = self.vsd_fip_pool
+        # And VSD-L3-Domain with a VSD-L3-Managed-Subnet
+        vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()
+        network, subnet = self._create_os_l3_vsd_managed_subnet(vsd_l3_subnet)
+        # And I have claimed a VSD-FloatingIP in the VSD-L3-Domain
+        claimed_fip = self.nuage_vsd_client.claim_floatingip(vsd_l3_domain[0]['ID'], vsd_fip_pool[0]['ID'])
+        # When I retrieve the nuage-floatingIP-list of the VSD-L3-Managed-Subnet
+        fip_list = self.nuage_network_client.list_nuage_floatingip_by_subnet(subnet['id'])
+        # I expect the VSD-floatingIP in my list
+        fip_present = self._check_fip_in_list(claimed_fip[0]['ID'], fip_list)
+        self.assertTrue(fip_present, msg="nuage floatingip not present in list, while expected to be")
+        # When I create a port in the subnet
+        kwargs = {"nuage_floatingip": {'id': claimed_fip[0]['ID'] }}
+        port = self.create_port(network, **kwargs)
+        # And I associate this port to the claimed floating ip (via update)
+        # self._associate_fip_to_port(port, claimed_fip[0]['ID'])
+
+        # Then I expect the claimed floating ip in the port show response
+        if CONF.nuage_sut.nuage_plugin_mode != 'ml2':
+            fip_present = self._check_fip_in_port_show(port['id'], claimed_fip[0]['ID'])
+            self.assertTrue(fip_present,
+                            msg="associated VSD claimed FIP (%s) not found in port (%s)" %
+                                (claimed_fip[0]['ID'], port['id']))
+
+        # When I disassociate the claimed fip from the port
+        self._disassociate_fip_from_port(port)
+        # Then I no longer expect the claimed floating ip in the port show response
+        if CONF.nuage_sut.nuage_plugin_mode != 'ml2':
+            fip_present = self._check_fip_in_port_show(port['id'], claimed_fip[0]['ID'])
+            self.assertFalse(fip_present,
+                             msg="disassociated VSD claimed FIP (%s) still found in port (%s)" %
+                                 (claimed_fip[0]['ID'], port['id']))
 
     @nuage_test.header()
     def test_create_list_associate_vsd_floatingip(self):

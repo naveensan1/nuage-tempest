@@ -1059,7 +1059,7 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                                                                     gateway=gateway,
                                                                     netmask=str(netmask),
                                                                     extra_params=extra_params)
-        self.vsd_shared_domain.append(vsd_fip_pool)
+        self.vsd_shared_domains.append(vsd_fip_pool)
         return vsd_fip_pool
 
     def _claim_vsd_floating_ip(self, l3domain_id, vsd_fip_pool_id):

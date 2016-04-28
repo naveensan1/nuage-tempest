@@ -14,6 +14,9 @@
 #    under the License.
 
 from netaddr import IPNetwork
+
+from nuagetempest.lib.test import nuage_test
+from nuagetempest.lib.test import tags
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_network as base_vsdman
 from tempest.lib import exceptions
 
@@ -29,6 +32,7 @@ from tempest import test
 CONF = config.CONF
 
 
+@nuage_test.class_header(tags=[tags.VSD_MANAGED, tags.MONOLITHIC])
 class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
                              test_netpartitions.NetPartitionTestJSON,
                              manager.NetworkScenarioTest,
@@ -70,7 +74,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
         self.servers.append(server)
         return server
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_l2(self):
         # create l2domain on VSD
         name = data_utils.rand_name('l2domain-')
@@ -95,7 +99,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
         self.assertEqual(subnet['cidr'], str(cidr))
         self.assertTrue(self._verify_vm_ip(network['id'], net_name))
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_vsd_managed_sharedsubnet_l2(self):
         name = data_utils.rand_name('shared-l2-managed')
         cidr = IPNetwork('10.20.0.0/16')
@@ -141,7 +145,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             vsd_managed_shared_l2dom['DHCPManaged'])
         self.assertTrue(self._verify_vm_ip(network['id'], net_name))
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_vsd_sharedsubnet_l3(self):
         name = data_utils.rand_name('shared-l3-')
         cidr = IPNetwork('10.20.0.0/16')
@@ -195,7 +199,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             vsd_shared_l3dom_subnet['DHCPManaged'])
         self.assertTrue(self._verify_vm_ip(network['id'], net_name))
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_vsd_unmanaged_sharedsubnet_l2(self):
         cidr = IPNetwork('10.20.30.0/16')
         name = data_utils.rand_name('shared-l2-unmanaged')
@@ -234,16 +238,16 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             subnet['enable_dhcp'],
             vsd_unmanaged_shared_l2dom['DHCPManaged'])
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_without_gateway_l2(self):
         # create l2domain on VSD
         pass
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_incorrect_gateway_l2(self):
         pass
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_wo_netpartition_l2(self):
         net_name = data_utils.rand_name('network-')
         network = self.create_network(network_name=net_name)
@@ -254,7 +258,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
                           mask_bits=24,
                           nuagenet=data_utils.rand_uuid())
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_unknown_netpartition_l2(self):
         # netpartition does not exist in neutron DB
         net_name = data_utils.rand_name('network-')
@@ -292,7 +296,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
                           nuagenet=vsd_l2dom[0]['ID'],
                           net_partition=netpart['name'])
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_duplicate_subnet_l2(self):
         name = data_utils.rand_name('l2domain-')
         cidr = IPNetwork('10.10.100.0/24')
@@ -321,7 +325,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             mask_bits=24, nuagenet=vsd_l2dom[0]['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_incorrect_cidr_l2(self):
         # netpartition does exist in neutron DB but it is not
         # where the l2domain is created
@@ -345,7 +349,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             nuagenet=vsd_l2dom[0]['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_disable_dhcp_unmanaged_l2(self):
         # create l2domain on VSD
         name = data_utils.rand_name('l2domain-')
@@ -367,7 +371,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             enable_dhcp=False)
         self.assertEqual(subnet['enable_dhcp'], False)
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_enable_dhcp_unmanaged_l2(self):
         # create unmanaged l2domain on VSD
         name = data_utils.rand_name('l2domain-')
@@ -389,7 +393,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             mask_bits=24, nuagenet=vsd_l2dom[0]['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_enable_dhcp_managed_l2(self):
         # This is same as test_link_subnet_l2
         # Only difference being enable_dhcp is explicitly set to True
@@ -412,7 +416,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             enable_dhcp=True)
         self.assertEqual(subnet['cidr'], str(cidr))
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_with_disable_dhcp_managed_l2(self):
         # create managed l2domain on VSD
         name = data_utils.rand_name('l2domain-')
@@ -434,7 +438,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             net_partition=CONF.nuage.nuage_default_netpartition,
             enable_dhcp=False)
 
-    @test.attr(type='smoke')
+    @nuage_test.header(tags=['smoke'])
     def test_link_subnet_l3(self):
         # create l3domain on VSD
         name = data_utils.rand_name('l3domain-')

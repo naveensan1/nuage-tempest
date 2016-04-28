@@ -1,5 +1,6 @@
 #from oslo_log import log as logging
 from nuagetempest.lib import nuage_ext
+from nuagetempest.lib import nuage_tempest_test_loader
 from nuagetempest.lib import topology
 import re
 import traceback
@@ -45,3 +46,7 @@ nuage_ext = NuageExtensionInit()
 #    vsd.add_user_to_group(global_ent, usr_filter=usr_filter, grp_filter=grp_filter)
 
 #add_csproot_to_cms()
+
+
+def load_tests(loader, tests, pattern):
+    return nuage_tempest_test_loader.nuage_load_tests(loader, pattern)

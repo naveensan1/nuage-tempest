@@ -23,6 +23,7 @@ from tempest import test
 from tempest.lib import exceptions
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
+from nuagetempest.lib.test import tags
 from tempest.lib import exceptions as lib_exc
 
 CONF = config.CONF
@@ -45,6 +46,7 @@ EXPECT_CIDR_IN_RANGE = "Bad request: cidr in subnet must be"
 EXPECT_GATEWAY_IN_CIDR = "Bad request: Gateway IP outside of the subnet CIDR"
 
 
+@nuage_test.class_header(tags=[tags.VSD_MANAGED, tags.MONOLITHIC])
 class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTest):
 
     @classmethod

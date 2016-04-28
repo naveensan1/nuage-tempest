@@ -23,7 +23,7 @@ from tempest.lib import exceptions
 
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
-
+from nuagetempest.lib.test import tags
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_port_attributes
 
@@ -45,6 +45,7 @@ SEVERAL_VSD_CLAIMED_FIPS = 3
 VALID_MAC_ADDRESS = 'fa:fa:3e:e8:e8:c0'
 
 
+@nuage_test.class_header(tags=tags.VSD_MANAGED)
 class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
 
     @classmethod

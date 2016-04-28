@@ -1,5 +1,5 @@
 heat_template_version: 2013-05-23
-description: Simple template to create network from VSD managed network
+description: Simple template to check vsd managed port attributes
 parameters:
   netpartition_name:
     type: string
@@ -136,7 +136,9 @@ resources:
       name: 'l3-heat-port'
       fixed_ips: [ { ip_address: { get_param: l3_fixed_ip_address }, subnet: { get_resource: l3_subnet } } ]
 #      value_specs: { nuage_redirect_targets: { get_resource: rt_l3 }, nuage_policy_groups: [get_param: l3_policy_group_id] }
-      value_specs: { nuage_redirect_targets: { get_resource: rt_l3 }, nuage_floatingip: { id: { get_param: claimed_fip_id } } }
+      value_specs: { nuage_redirect_targets: { get_resource: rt_l3 },
+                     nuage_floatingip: { id: { get_param: claimed_fip_id } },
+                     nuage_policy_groups: [get_param: l3_policy_group_id] }
 #      value_specs: { nuage_floatingip: { id: { get_param: claimed_fip_id } } }
 
   l3_server:

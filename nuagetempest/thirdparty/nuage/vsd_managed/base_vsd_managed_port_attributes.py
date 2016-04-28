@@ -313,6 +313,19 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         redirect_target = self.nuage_network_client.create_redirection_target(**post_body)
         return redirect_target
 
+    def associate_port_to_policy_group(self, port, policy_group_id):
+        kwargs = {
+            'nuage_policy_groups': [policy_group_id],
+        }
+        self.update_port(port, **kwargs)
+
+    def _disassociate_port_from_policy_group(self, port):
+        kwargs = {
+            'nuage_policy_groups': [],
+        }
+        self.update_port(port, **kwargs)
+        pass
+
     def _check_policy_group_in_list(self, pg_id, pg_list):
         pg_present = False
         for pg in pg_list['nuage_policy_groups']:
@@ -1203,8 +1216,8 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                                    cli_args,
                                    "--name port-with-multiple-vsd-pg")
 
-    def cli_disassociate_port_from_policy_group(self, port):
-        self.update_port_with_args(port['id'],
+    def cli_disassociate_port_from_policy_group(self, port_id):
+        self.update_port_with_args(port_id,
                                    "--no-nuage-policy-groups")
 
     def cli_check_port_in_show_policy_group(self, port_id, policy_group_id):

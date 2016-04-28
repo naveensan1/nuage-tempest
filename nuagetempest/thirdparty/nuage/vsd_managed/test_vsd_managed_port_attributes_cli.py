@@ -553,7 +553,7 @@ class VSDManagedPolicyGroupsCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
         self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
                         (port['id'], policy_group[0]['ID']))
         # When I disassociate the port from the policy group
-        self.cli_disassociate_port_from_policy_group(port)
+        self.cli_disassociate_port_from_policy_group(port['id'])
         # Then I do NOT expect the port in the show plicy group response
         port_present = self._check_port_in_policy_group(port['id'], policy_group[0]['ID'])
         self.assertFalse(port_present, "Port(%s) disassiociated to policy group (%s) is still present" %
@@ -598,7 +598,7 @@ class VSDManagedPolicyGroupsCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
                                 (ports[j]['id'], policy_groups[i][0]['ID']))
         # When I disassociate all policy groups from each port
         for i in range(SEVERAL_PORTS):
-            self.cli_disassociate_port_from_policy_group(ports[i])
+            self.cli_disassociate_port_from_policy_group(ports[i]['id'])
             # Then I do NOT expect the policy Groups in the show port response
             show_port = self.show_port(ports[i]['id'])
 
@@ -732,7 +732,7 @@ class VSDManagedPolicyGroupsCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
                                 (ports[j]['id'], policy_groups[i][0]['ID']))
         # When I disassociate all policy groups from each port
         for i in range(SEVERAL_PORTS):
-            self.cli_disassociate_port_from_policy_group(ports[i])
+            self.cli_disassociate_port_from_policy_group(ports[i]['id'])
 
             # Then I do NOT expect the policy Groups in the show port response
             show_port = self.show_port(ports[i]['id'])

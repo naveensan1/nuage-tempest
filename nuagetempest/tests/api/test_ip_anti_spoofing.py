@@ -3,6 +3,7 @@ from tempest.api.network import base
 from tempest import test
 from nuagetempest.tests import nuage_ext
 from tempest import config
+from nuagetempest.lib import topology
 from nuagetempest.lib.openstackData import openstackData
 from nuagetempest.services.nuage_client import NuageRestClient
 
@@ -10,6 +11,7 @@ from collections import namedtuple
 from enum import Enum
 from netaddr import IPNetwork
 
+TB = topology.testbed
 CONF = config.CONF
 
 # Enum for the IP MAC anti spoofing or VIP creation actions
@@ -1206,3 +1208,110 @@ class IpAntiSpoofingTest(IpAntiSpoofingTestBase):
         nuage_ext.nuage_extension.nuage_components(
             nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
 
+
+class IPAntiSpoofingCliTests(test.BaseTestCase):
+
+    @classmethod
+    def resource_setup(self):
+        super(IPAntiSpoofingCliTests, self).resource_setup()
+        self.def_net_partition = CONF.nuage.nuage_default_netpartition
+        self.os_cli = TB.osc_1.cli 
+        self.os_data = openstackData()
+        self.os_data.insert_resource(self.def_net_partition,
+                                    parent='CMS')
+
+    @classmethod
+    def resource_cleanup(cls):
+        cls.os_data.delete_resource(cls.def_net_partition)
+
+    @classmethod
+    def setup_clients(cls):
+        super(IPAntiSpoofingCliTests, cls).setup_clients()
+
+    def _create_ntw_with_sec_disabled(self, ntw_name):
+        kwargs = {'port_security_enabled': 'false'}
+        network = self.os_cli.create_network(ntw_name, **kwargs)
+        self.addCleanup(self.os_cli.delete_network, network['id']) 
+        return network
+
+    def _create_and_verify_ntw_port_with_sec_value(self, ntw_name, port_name,
+                                                   ntw_security=None,
+                                                   port_security=None):
+        if ntw_security is None:
+            network = self.os_cli.create_network(ntw_name)
+            ntw_security = 'True'
+        else:
+            kwargs = {'port_security_enabled': ntw_security}
+            network = self.os_cli.create_network(ntw_name, **kwargs)
+        self.addCleanup(self.os_cli.delete_network, network['id'])
+        self.assertEqual(network['name'], ntw_name) 
+        self.assertEqual(network['port_security_enabled'], ntw_security) 
+        
+        if port_security is None:
+            port = self.os_cli.create_port(network['id'], port_name)
+            port_security = ntw_security
+        else:
+            kwargs = {'port_security_enabled': port_security}
+            port = self.os_cli.create_port(network['id'], port_name, **kwargs)
+        self.addCleanup(self.os_cli.delete_port, port['id'])
+        self.assertEqual(port['port_security_enabled'], port_security)
+        self.assertEqual(port['name'], port_name) 
+        return port
+
+    def test_create_show_update_delete_ntw_with_sec_disabled(self):
+        ntw_name = data_utils.rand_name('network-')
+        network = self._create_ntw_with_sec_disabled(ntw_name)
+        self.assertEqual(network['port_security_enabled'], 'False')
+        self.assertEqual(network['name'], ntw_name) 
+        # check the net-show to verify the port_security option
+        ntw_show = self.os_cli.show_network(network['id'])
+        self.assertEqual(ntw_show['port_security_enabled'], 'False')
+        self.assertEqual(ntw_show['name'], ntw_name)
+        
+        # update the network to enable port security
+        kwargs = {'port_security_enabled': 'True'}
+        self.os_cli.update_network(network['id'], **kwargs)
+        ntw_show = self.os_cli.show_network(network['id'])
+        self.assertEqual(ntw_show['port_security_enabled'], 'True')
+        
+    def test_create_show_update_delete_port_with_sec_disabled(self):
+        ntw_name = data_utils.rand_name('network-')
+        port_name = data_utils.rand_name('port-')
+        port = self._create_and_verify_ntw_port_with_sec_value(
+            ntw_name, port_name,
+            port_security='False')
+ 
+        # Check the port-shows the right port-security value
+        port_show = self.os_cli.show_port(port['id'])
+        self.assertEqual(port_show['port_security_enabled'], 'False') 
+        self.assertEqual(port_show['name'], port_name)
+
+        # Update the port to enable port security
+        kwargs = {'port_security_enabled': 'True'}
+        self.os_cli.update_port(port['id'], **kwargs)
+        port_show = self.os_cli.show_port(port['id'])
+        self.assertEqual(port_show['port_security_enabled'], 'True')
+
+    def test_create_port_in_sec_disabled_ntw(self):
+        ntw_name = data_utils.rand_name('network-')
+        port_name = data_utils.rand_name('port-')
+        port = self._create_and_verify_ntw_port_with_sec_value(
+            ntw_name, port_name,
+            ntw_security='False')
+    
+    def test_create_sec_disabled_port_in_sec_disabled_ntw(self):
+        ntw_name = data_utils.rand_name('network-')
+        port_name = data_utils.rand_name('port-')
+        port = self._create_and_verify_ntw_port_with_sec_value(
+            ntw_name, port_name,
+            ntw_security='False',
+            port_security='False')  
+     
+    def test_create_sec_enabled_port_in_sec_disabled_ntw(self):
+        ntw_name = data_utils.rand_name('network-')
+        port_name = data_utils.rand_name('port-')
+        port = self._create_and_verify_ntw_port_with_sec_value(
+            ntw_name, port_name,
+            ntw_security='False',
+            port_security='True')  
+       

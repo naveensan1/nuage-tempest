@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from tempest.lib.common.utils import data_utils
 import openstack_cliclient
 import output_parser as cli_output_parser
+from nuagetempest.lib.openstackcli import vpnaas_cliclient
 
 CONF = config.CONF
 
@@ -111,9 +112,11 @@ class SubnetClient(openstack_cliclient.ClientTestBase):
         """Wrapper utility that returns a test subnet."""
         the_params = '{} {} '.format(network_id, cidr)
         if gateway_ip:
-            the_params.append('--gateway {} '.format(gateway_ip))
+            #the_params.append('--gateway {} '.format(gateway_ip))
+            the_params+= '--gateway {} '.format(gateway_ip)
         for k,v  in kwargs.iteritems():
-            the_params.append('--{} {} '.format(k, v))
+            #the_params.append('--{} {} '.format(k, v))
+            the_params+= '--{} {} '.format(k, v)
 
         response = self.cli.neutron('subnet-create', params=the_params)
 
@@ -296,6 +299,20 @@ class BgpVpnClient(openstack_cliclient.ClientTestBase):
         response = self.cli.neutron('bgpvpn-net-assoc-create', params=params, fail_ok=fail_ok)
         assert response[0].startswith('BGPVPN Nuage driver does not support') == True
 
+class VPNaaSClient(vpnaas_cliclient.VPNaaSClient):
+
+    force_tenant_isolation = False
+
+    _ip_version = 4
+
+    @classmethod
+    def skip_checks(self):
+        if not CONF.service_available.neutron:
+            raise self.skipException("Neutron support is required")
+
+    def __init__(self, osc):
+        super(VPNaaSClient, self).__init__(osc)
+
 class OpenstackCliClient(object):
     """
     Base class for the Neutron tests that use the remote CLI clients
@@ -307,6 +324,7 @@ class OpenstackCliClient(object):
         self.subnets_client = SubnetClient(osc)
         self.routers_client = RouterClient(osc)
         self.bgpvpn_client = BgpVpnClient(osc)
+        self.vpnaas_client = VPNaaSClient(osc)
         self._ip_version = 4
         
     def resource_setup(self):
@@ -319,6 +337,7 @@ class OpenstackCliClient(object):
         self.security_group_rules = []
         self.vms = []
         self.bgpvpns = []
+        self.vpnaas = []
 
     def resource_cleanup(self):
         # Clean up ports
@@ -343,6 +362,10 @@ class OpenstackCliClient(object):
         for bgpvpn in self.bgpvpns:
             self.delete_bgpvpn(bgpvpn['id'])
             self.bgpvpns.remove(bgpvpn)
+
+        for vpnaas in self.vpnaas:
+            self.delete_vpnaas(vpnaas['id'])
+            self.vpnaas.remove(vpnaas)
 
     def __del__(self):
         self.resource_cleanup()

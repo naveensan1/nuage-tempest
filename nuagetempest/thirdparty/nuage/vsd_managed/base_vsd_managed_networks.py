@@ -58,44 +58,44 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
     @classmethod
     def resource_setup(cls):
         super(BaseVSDManagedNetwork, cls).resource_setup()
-        cls.vsd_l2dom_template = []
-        cls.vsd_l2domain = []
-        cls.vsd_l3dom_template = []
-        cls.vsd_l3domain = []
-        cls.vsd_zone = []
-        cls.vsd_subnet = []
-        cls.vsd_shared_domain = []
+        cls.vsd_l2dom_templates = []
+        cls.vsd_l2domains = []
+        cls.vsd_l3dom_templates = []
+        cls.vsd_l3domains = []
+        cls.vsd_zones = []
+        cls.vsd_subnets = []
+        cls.vsd_shared_domains = []
         cls.keypairs = {}
-        cls.security_group = []
-        cls.vsd_policy_group = []
+#        cls.security_groups = []
+        cls.vsd_policy_groups = []
 
     @classmethod
     def resource_cleanup(cls):
         # cleanup the OpenStack managed objects first
         super(BaseVSDManagedNetwork, cls).resource_cleanup()
 
-        for vsd_policy_group in cls.vsd_policy_group:
+        for vsd_policy_group in cls.vsd_policy_groups:
             cls.nuage_vsd_client.delete_policygroup(vsd_policy_group[0]['id'])
 
-        for vsd_l2domain in cls.vsd_l2domain:
+        for vsd_l2domain in cls.vsd_l2domains:
             cls.nuage_vsd_client.delete_l2domain(vsd_l2domain[0]['ID'])
 
-        for vsd_l2dom_template in cls.vsd_l2dom_template:
+        for vsd_l2dom_template in cls.vsd_l2dom_templates:
             cls.nuage_vsd_client.delete_l2domaintemplate(vsd_l2dom_template[0]['ID'])
 
-        for vsd_subnet in cls.vsd_subnet:
+        for vsd_subnet in cls.vsd_subnets:
             cls.nuage_vsd_client.delete_domain_subnet(vsd_subnet[0]['ID'])
 
-        for vsd_zone in cls.vsd_zone:
+        for vsd_zone in cls.vsd_zones:
             cls.nuage_vsd_client.delete_zone(vsd_zone[0]['ID'])
 
-        for vsd_l3domain in cls.vsd_l3domain:
+        for vsd_l3domain in cls.vsd_l3domains:
             cls.nuage_vsd_client.delete_domain(vsd_l3domain[0]['ID'])
 
-        for vsd_l3dom_template in cls.vsd_l3dom_template:
+        for vsd_l3dom_template in cls.vsd_l3dom_templates:
             cls.nuage_vsd_client.delete_l3domaintemplate(vsd_l3dom_template[0]['ID'])
 
-        for vsd_shared_domain in cls.vsd_shared_domain:
+        for vsd_shared_domain in cls.vsd_shared_domains:
             cls.nuage_vsd_client.delete_vsd_shared_resource(vsd_shared_domain[0]['ID'])
 
     @classmethod
@@ -109,7 +109,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
         # todo: create open ingress/egress policy and apply to this template
         vsd_l2dom_tmplt = cls.nuage_vsd_client.create_l2domaintemplate(
             kwargs['name'] + '-template', extra_params=params)
-        cls.vsd_l2dom_template.append(vsd_l2dom_tmplt)
+        cls.vsd_l2dom_templates.append(vsd_l2dom_tmplt)
         return vsd_l2dom_tmplt
 
     @classmethod
@@ -120,7 +120,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
             name = kwargs['name']
         # todo: create open ingress/egress policy and apply to this template
         vsd_l2dom_tmplt = cls.nuage_vsd_client.create_l2domaintemplate(name=name)
-        cls.vsd_l2dom_template.append(vsd_l2dom_tmplt)
+        cls.vsd_l2dom_templates.append(vsd_l2dom_tmplt)
         return vsd_l2dom_tmplt
 
     @classmethod
@@ -131,7 +131,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
             name = kwargs['name']
         vsd_l2dom = cls.nuage_vsd_client.create_l2domain(name=name,
                                                          templateId=kwargs['tid'])
-        cls.vsd_l2domain.append(vsd_l2dom)
+        cls.vsd_l2domains.append(vsd_l2dom)
         return vsd_l2dom
 
     @classmethod
@@ -141,7 +141,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
         else:
             name = kwargs['name']
         vsd_l3dom_tmplt = cls.nuage_vsd_client.create_l3domaintemplate(name=name)
-        cls.vsd_l3dom_template.append(vsd_l3dom_tmplt)
+        cls.vsd_l3dom_templates.append(vsd_l3dom_tmplt)
         return vsd_l3dom_tmplt
 
     @classmethod
@@ -152,7 +152,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
             name = kwargs['name']
         vsd_l3dom = cls.nuage_vsd_client.create_domain(name,
                                                        kwargs['tid'])
-        cls.vsd_l3domain.append(vsd_l3dom)
+        cls.vsd_l3domains.append(vsd_l3dom)
         return vsd_l3dom
 
     @classmethod
@@ -168,7 +168,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
         vsd_zone = cls.nuage_vsd_client.create_zone(kwargs['domain_id'],
                                                     name=name,
                                                     extra_params=extra_params)
-        cls.vsd_zone.append(vsd_zone)
+        cls.vsd_zones.append(vsd_zone)
         return vsd_zone
 
     @classmethod
@@ -179,7 +179,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
             str(kwargs['cidr'].ip),
             str(kwargs['cidr'].netmask),
             kwargs['gateway'])
-        cls.vsd_subnet.append(vsd_subnet)
+        cls.vsd_subnets.append(vsd_subnet)
         return vsd_subnet
 
     @classmethod
@@ -209,7 +209,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
                                                                gateway,
                                                                None,
                                                                extra_params)
-        cls.vsd_subnet.append(vsd_subnet)
+        cls.vsd_subnets.append(vsd_subnet)
         return vsd_subnet
 
     @classmethod
@@ -222,7 +222,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
         vsd_subnet = cls.nuage_vsd_client.create_domain_unmanaged_subnet(kwargs['zone_id'],
                                                                          name,
                                                                          kwargs['extra_params'])
-        cls.vsd_subnet.append(vsd_subnet)
+        cls.vsd_subnets.append(vsd_subnet)
         return vsd_subnet
 
     @classmethod
@@ -233,7 +233,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
             name = kwargs['name']
         vsd_l2_shared_domain = cls.nuage_vsd_client.create_vsd_shared_resource(name=name,
                                                                                type='L2DOMAIN')
-        cls.vsd_shared_domain.append(vsd_l2_shared_domain)
+        cls.vsd_shared_domains.append(vsd_l2_shared_domain)
         return vsd_l2_shared_domain
 
     @classmethod
@@ -261,7 +261,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
         vsd_l2_shared_domain = cls.nuage_vsd_client.create_vsd_shared_resource(name=name,
                                                                                type='L2DOMAIN',
                                                                                extra_params=extra_params)
-        cls.vsd_shared_domain.append(vsd_l2_shared_domain)
+        cls.vsd_shared_domains.append(vsd_l2_shared_domain)
         return vsd_l2_shared_domain
 
     @classmethod
@@ -289,7 +289,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
         vsd_l3_shared_domain = cls.nuage_vsd_client.create_vsd_shared_resource(name=name,
                                                                                type='PUBLIC',
                                                                                extra_params=extra_params)
-        cls.vsd_shared_domain.append(vsd_l3_shared_domain)
+        cls.vsd_shared_domains.append(vsd_l3_shared_domain)
         return vsd_l3_shared_domain
 
     @classmethod
@@ -307,7 +307,7 @@ class BaseVSDManagedNetwork(base.BaseAdminNetworkTest,
                                                                name=name,
                                                                type=type,
                                                                extra_params=extra_params)
-        cls.vsd_policy_group.append(policy_group)
+        cls.vsd_policy_groups.append(policy_group)
         return policy_group
         pass
 

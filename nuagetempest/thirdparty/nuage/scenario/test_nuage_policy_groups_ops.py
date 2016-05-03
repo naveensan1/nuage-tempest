@@ -120,6 +120,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         vm1 = self._create_server(name='vm1', network_id=network['id'], port_id=port1['id'])
         vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
         # These Vm's have connectivity
+        # for i in range(5):
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
         # When I disassociate all ports from the policy group
@@ -170,6 +171,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         # self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
         # Then these VM's have no more connectivity
+        # time.sleep(5)
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
         # When I re-associate that port with the policy group
@@ -183,6 +185,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
         #
+        #end for loop
         the_floating_ip = self.floating_ips.pop()
         self.floating_ips_client.delete_floatingip(the_floating_ip['id'])
 
@@ -251,6 +254,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         # vm2 = self._create_server(name='vm2', network_id=network['id'], port_id=port2['id'])
         # These Vm's have connectivity
         vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
+        # for i in range(5):
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
 
@@ -288,7 +292,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
-        self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (2)")
+        self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
 
         # When I re-associate the port with the policy group
         kwargs = {
@@ -300,7 +304,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
+        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (4)")
 
         # When I disassociate the port from the policy group
         kwargs = {
@@ -312,7 +316,15 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
-        self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
+        self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (5)")
+        # When I re-associate the port with the policy group
+        kwargs = {
+            'nuage_policy_groups': [policy_group[0]['ID']],
+            'name': 'port-with-vsd-3rd'
+        }
+        self.update_port(port1, **kwargs)
+        self.update_port(port2, **kwargs)
+
         the_floating_ip = self.floating_ips.pop()
         self.floating_ips_client.delete_floatingip(the_floating_ip['id'])
         # the_server = self.servers.pop()
@@ -321,6 +333,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         self._clear_connectivity_vm_interfaces(self.conn_router_id, self.conn_subnet_id, self.conn_port_id)
 
 
+    @nuage_test.nuage_skip_because(message="2E2 test with VSd managed test still WIP")
     def test_e2e_l3_vm(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()

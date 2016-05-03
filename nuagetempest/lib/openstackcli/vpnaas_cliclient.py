@@ -128,7 +128,7 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
             params = params + '--{} {} '.format(k, v)
         ipsecsiteconnection = self.cli.neutron('ipsec-site-connection-create', params=params)
         self.assertFirstLineStartsWith(ipsecsiteconnection.split('\n'),
-                                       'Created a new ipsecsiteconnection:')
+                                       'Created a new ipsec_site_connection:')
         ipsecsiteconnection = self.parser.details(ipsecsiteconnection)
         response = {'ipsecsiteconnection':ipsecsiteconnection}
         return response

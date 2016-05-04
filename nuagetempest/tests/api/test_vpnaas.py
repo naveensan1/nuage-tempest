@@ -5,14 +5,10 @@ from nuagetempest.services.vpnaas.vpnaas_mixins import VPNMixin
 from nuagetempest.lib import topology
 from tempest import test
 from tempest.common.utils import data_utils
-from tempest.lib import exceptions as lib_exc
 from nuagetempest.lib.test import nuage_test
 from testtools.matchers import Contains
-from testtools.matchers import Equals
 from testtools.matchers import Not
 from nuagetempest.lib.openstackData import openstackData
-from nuagetempest.tests import nuage_ext
-import uuid
 import netaddr
 
 LOG = logging.getLogger(__name__)
@@ -34,25 +30,27 @@ class VPNaaSBase(VPNMixin):
     def resource_cleanup(cls):
         cls.os_data.delete_resource(cls.def_net_partition)
 
+
 class VPNaaSTest(VPNaaSBase):
 
-    def test_ikepolicy_create_list(self):
+    def test_ikepolicy_create_delete(self):
         ikepolicies = self.ikepolicy_client.list_ikepolicy()
         pre_ids = [ikepolicy['id'] for ikepolicy in ikepolicies]
-        with self.ikepolicy(tenant_id=self.tenant_id) as created_ikepolicy:
-            ikepolicies = self.ikepolicy_client.list_ikepolicies()
+        with self.ikepolicy('ikepolicy') as created_ikepolicy:
+            ikepolicies = self.ikepolicy_client.list_ikepolicy()
             post_ids = [ikepolicy['id'] for ikepolicy in ikepolicies]
             self.assertThat(pre_ids, Not(Contains(created_ikepolicy['id'])))
             self.assertThat(post_ids, Contains(created_ikepolicy['id']))
 
-    def test_ipsecpolicy_create_list(self):
-        ipsecpolicy = self.ipsecpolicy_client.list_ipsecpolicy()
+    def test_ipsecpolicy_create_delete(self):
+        ipsecpolicies = self.ipsecpolicy_client.list_ipsecpolicy()
         pre_ids = [ipsecpolicy['id'] for ipsecpolicy in ipsecpolicies]
-        with self.ipsecpolicy(tenant_id=self.tenant_id) as created_ipsecpolicy:
-            ipsecpolicies = self.ipsecpolicy_client.list_ipsecpolicies()
+        with self.ipsecpolicy('ipsecpolicy') as created_ipsecpolicy:
+            ipsecpolicies = self.ipsecpolicy_client.list_ipsecpolicy()
             post_ids = [ipsecpolicy['id'] for ipsecpolicy in ipsecpolicies]
             self.assertThat(pre_ids, Not(Contains(created_ipsecpolicy['id'])))
             self.assertThat(post_ids, Contains(created_ipsecpolicy['id']))
+
 
 class VPNaaSCliTests(test.BaseTestCase):
 
@@ -63,7 +61,7 @@ class VPNaaSCliTests(test.BaseTestCase):
         self.os_handle = TB.osc_1.cli
         self.os_data = openstackData()
         self.os_data.insert_resource(self.def_net_partition,
-                                    parent='CMS')
+                                     parent='CMS')
 
     def setup(self):
         super(VPNaaSCliTests, self).setup()
@@ -130,7 +128,7 @@ class VPNaaSCliTests(test.BaseTestCase):
             TB.osc_1.cli.create_subnet(
                 network, gateway=gateway_ip,
                 cidr=cidr, mask_bits=mask_bit
-                )
+            )
         )
         routername = name + '-router-'
         routername = data_utils.rand_name(routername)
@@ -143,7 +141,7 @@ class VPNaaSCliTests(test.BaseTestCase):
         )
         return subnet, router
 
-    def _delete_verify_vpn_environment(self, router,subnet):
+    def _delete_verify_vpn_environment(self, router, subnet):
         TB.osc_1.cli.routers_client.delete_router(
             router['id'])
         TB.osc_1.cli.networks_client.delete_network(
@@ -159,7 +157,8 @@ class VPNaaSCliTests(test.BaseTestCase):
             )
         )
         # Showing the created VPNService
-        vpnservice_info = TB.osc_1.cli.vpnaas_client.show_vpnservice(vpnservice['vpnservice']['id'])
+        vpnservice_info = TB.osc_1.cli.vpnaas_client.show_vpnservice(
+            vpnservice['vpnservice']['id'])
         self.assertEqual(vpnservice_info['name'], name)
         return vpnservice['vpnservice']
 
@@ -172,8 +171,8 @@ class VPNaaSCliTests(test.BaseTestCase):
         self.assertEqual(result, True)
 
     def _create_verify_ipsecsiteconnection(self, vpnservice_id, ikepolicy_id,
-                                  ipsecpolicy_id, peer_address, peer_id,
-                                  peer_cidrs, psk, name):
+                                           ipsecpolicy_id, peer_address,
+                                           peer_id, peer_cidrs, psk, name):
         # Creating a IPSecSiteConnection
         ipsecsiteconnection = (
             TB.osc_1.cli.vpnaas_client.create_ipsecsiteconnection(
@@ -194,7 +193,9 @@ class VPNaaSCliTests(test.BaseTestCase):
         # Deleting the VPNService
         TB.osc_1.cli.vpnaas_client.delete_ipsecsiteconnection(id)
         # Verifying delete in list VPNService
-        ipsecsiteconnections = TB.osc_1.cli.vpnaas_client.list_ipsecsiteconnection()
+        ipsecsiteconnections = (
+            TB.osc_1.cli.vpnaas_client.list_ipsecsiteconnection()
+        )
         result = self._verify_resource_list(id, ipsecsiteconnections, False)
         self.assertEqual(result, True)
 
@@ -214,23 +215,9 @@ class VPNaaSCliTests(test.BaseTestCase):
 
     def test_create_delete_vpnservice(self):
         name = 'vpn'
-        pubnetname = name + '-publicnet-'
-        pubnetname = data_utils.rand_name(pubnetname)
-        pubnet = (
-            TB.osc_1.cli.networks_client.create_network_with_args(
-                pubnetname, '--router:external'
-            )
-        )
-        pubcidr = '172.20.0.0/24'
-        gateway = '172.20.0.1' 
-        pub_mask = int(pubcidr.split('/')[1])
-        pubcidr = netaddr.IPNetwork(pubcidr)
-        pubsubnet = (
-            TB.osc_1.cli.create_subnet(
-                pubnet['network'], gateway=gateway,
-                cidr=pubcidr, mask_bits=pub_mask
-                )
-        )
+        pubnetid = CONF.network.public_network_id
+        pubnet = TB.osc_1.cli.networks_client.show_network(pubnetid)
+        # Creating Site for VPN Service
         subnet, router = (
             self._create_verify_vpn_environment(
                 name, '10.20.0.0/24', pubnet
@@ -242,9 +229,9 @@ class VPNaaSCliTests(test.BaseTestCase):
         self._delete_verify_vpnservice(vpnservice['id'])
 
     def test_create_delete_ipsecsiteconnection(self):
-        name = 'vpn'
         pubnetid = CONF.network.public_network_id
         pubnet = TB.osc_1.cli.networks_client.show_network(pubnetid)
+
         # Creating Site1
         name1 = 'vpn1'
         cidr1 = '10.20.0.0/24'
@@ -255,7 +242,7 @@ class VPNaaSCliTests(test.BaseTestCase):
         )
 
         # VPN1
-        vpnservice1 = self._create_verify_vpnservice(name1, router1, subnet1) 
+        vpnservice1 = self._create_verify_vpnservice(name1, router1, subnet1)
 
         # Creating Site2
         name2 = 'vpn2'

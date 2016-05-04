@@ -71,27 +71,6 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
 
     @classmethod
     def resource_cleanup(cls):
-        # for vsd_l2domain in cls.vsd_l2domain:
-        #     cls.nuageclient.delete_l2domain(vsd_l2domain[0]['ID'])
-        #
-        # for vsd_l2dom_template in cls.vsd_l2dom_template:
-        #     cls.nuageclient.delete_l2domaintemplate(vsd_l2dom_template[0]['ID'])
-        #
-        # for vsd_subnet in cls.vsd_subnet:
-        #     cls.nuageclient.delete_domain_subnet(vsd_subnet[0]['ID'])
-        #
-        # for vsd_zone in cls.vsd_zone:
-        #     cls.nuageclient.delete_zone(vsd_zone[0]['ID'])
-        #
-        # for vsd_l3domain in cls.vsd_l3domain:
-        #     cls.nuageclient.delete_domain(vsd_l3domain[0]['ID'])
-        #
-        # for vsd_l3dom_template in cls.vsd_l3dom_template:
-        #     cls.nuageclient.delete_l3domaintemplate(vsd_l3dom_template[0]['ID'])
-        #
-        # for vsd_shared_domain in cls.vsd_shared_domain:
-        #     cls.nuageclient.delete_vsd_shared_resource(vsd_shared_domain[0]['ID'])
-
         super(BaseVSDPublicResourcesTest, cls).resource_cleanup()
 
     def _given_vsdl2sharedunmgd_linkedto_vsdl2domunmgd(self):
@@ -547,9 +526,9 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
     #
     #     keypair = self.create_keypair()
     #     self.keypairs[keypair['name']] = keypair
-    #     self.security_group = \
+    #     self.security_groups = \
     #         self._create_security_group_for_nuage(tenant_id=self.tenant_id)
-    #     security_groups = [{'name': self.security_group['name']}]
+    #     security_groups = [{'name': self.security_groups['name']}]
     #     create_kwargs = {
     #         'networks': [
     #             {'uuid': network_id},
@@ -581,9 +560,9 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
 
         keypair = self.create_keypair()
         self.keypairs[keypair['name']] = keypair
-        self.security_group = \
+        self.security_groups = \
             self._create_security_group_for_nuage(tenant_id=self.tenant_id)
-        security_groups = [{'name': self.security_group['name']}]
+        security_groups = [{'name': self.security_groups['name']}]
 
         self.instance = self.create_server(
             name=name,

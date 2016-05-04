@@ -52,9 +52,10 @@ class NetworkClient(openstack_cliclient.ClientTestBase):
         response = {'network': network}
         return response
 
-    def create_network(self, name=None, **kwargs):
+    def create_network(self, name=None):
         """Wrapper utility that returns a test network."""
         network_name = name or data_utils.rand_name('test-network')
+        kwargs = {}
         return self.create_network_with_args(network_name, **kwargs)
 
     def delete_network(self, network_id):
@@ -118,7 +119,7 @@ class SubnetClient(openstack_cliclient.ClientTestBase):
         """Wrapper utility that returns a test subnet."""
         the_params = '{} {} '.format(network_id, cidr)
         if gateway_ip:
-            the_params.append('--gateway {} '.format(gateway_ip))
+            the_params += ('--gateway {} '.format(gateway_ip))
         for k,v  in kwargs.iteritems():
             the_params += ('--{} {} '.format(k, v))
 
@@ -139,7 +140,6 @@ class SubnetClient(openstack_cliclient.ClientTestBase):
         response = self.cli.neutron('subnet-update', params=the_params)
         self.assertFirstLineStartsWith(response.split('\n'), 'Updated subnet:')
 
-    @classmethod
     def _delete_subnet(self, subnet_id):
         response = self.cli.neutron('subnet-delete', params=subnet_id)
         return response
@@ -256,9 +256,9 @@ class PortClient(openstack_cliclient.ClientTestBase):
     def __init__(self, osc):
         super(PortClient, self).__init__(osc)
 
-    def create_port_with_args(self, network_id, **kwargs):
+    def create_port(self, network, **kwargs):
         """Wrapper utility that returns a test port."""
-        the_params = '{} '.format(network_id)
+        the_params = '{} '.format(network['id'])
         for k,v  in kwargs.iteritems():
             the_params += ('--{} {} '.format(k, v))
  
@@ -268,10 +268,6 @@ class PortClient(openstack_cliclient.ClientTestBase):
         response = {'port': port}
         return response
 
-    def create_port(self, network_id, **kwargs):
-        """Wrapper utility that returns a test network."""
-        return self.create_port_with_args(network_id, **kwargs)
-    
     def delete_port(self, port_id):
         response = self._delete_port(port_id)
         self.assertFirstLineStartsWith(response.split('\n'), 'Deleted port:')
@@ -288,9 +284,9 @@ class PortClient(openstack_cliclient.ClientTestBase):
         ports = self.parser.listing(response)
         return ports
 
-    def update_port_with_args(self, port_id, **kwargs):
+    def update_port(self, port, **kwargs):
         """Wrapper utility that updates returns a test port."""
-        the_params = '{} '.format(port_id)
+        the_params = '{} '.format(port['id'])
         for k,v  in kwargs.iteritems():
             the_params += ('--{} {} '.format(k, v))
         response = self.cli.neutron('port-update', params=the_params)
@@ -415,7 +411,11 @@ class OpenstackCliClient(object):
     def create_network(self, network_name=None, **kwargs):
         """Wrapper utility that returns a test network."""
         network_name = network_name or data_utils.rand_name('test-network-')
-        body = self.networks_client.create_network(name=network_name, **kwargs)
+        if not kwargs:
+            body = self.networks_client.create_network(name=network_name)
+        else:
+            body = self.networks_client.create_network(
+                name=network_name, **kwargs)
         network = body['network']
         self.networks.append(network)
         return network
@@ -454,8 +454,8 @@ class OpenstackCliClient(object):
         body = self.ports_client.show_port(port_id)
         return body['port']
     
-    def update_port(self, port_id, **kwargs):
-        self.ports_client.update_port_with_args(port_id, **kwargs)
+    def update_port(self, port, **kwargs):
+        self.ports_client.update_port(port, **kwargs)
     
     def create_subnet(self, network, gateway='', cidr=None, mask_bits=None,
                       ip_version=None, client=None, **kwargs):
@@ -489,7 +489,7 @@ class OpenstackCliClient(object):
                     gateway_ip=gateway_ip,
                     **kwargs)
                 break
-            except lib_exc.BadRequest as e:
+            except Exception  as e:
                 is_overlapping_cidr = 'overlaps with another subnet' in str(e)
                 if not is_overlapping_cidr:
                     raise
@@ -499,7 +499,14 @@ class OpenstackCliClient(object):
         subnet = body['subnet']
         self.subnets.append(subnet)
         return subnet 
-    
+     
+    def delete_subnet(self, subnet_id):
+        try:
+            body = self.subnets_client._delete_subnet(subnet_id)
+        except Exception:
+            raise
+
+   
     def create_router(self, router_name=None, **kwargs):
         body = self.routers_client.create_router(
             router_name, **kwargs)

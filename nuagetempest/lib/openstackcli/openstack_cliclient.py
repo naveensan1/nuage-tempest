@@ -38,7 +38,7 @@ class CLIClient(object):
         self.osc = osc
 
     def nova(self, action, flags='', params='', fail_ok=False,
-             endpoint_type='publicURL', merge_stderr=False):
+             endpoint_type='publicURL', merge_stderr=False, timeout=10):
         """Executes nova command for the given action.
         :param action: the cli command to run using nova
         :type action: string
@@ -56,10 +56,10 @@ class CLIClient(object):
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'nova', action, flags, params, fail_ok, merge_stderr)
+            'nova', action, flags, params, fail_ok, merge_stder, timeout)
 
     def nova_manage(self, action, flags='', params='', fail_ok=False,
-                    merge_stderr=False):
+                    merge_stderr=False, timeout=10):
         """Executes nova-manage command for the given action.
         :param action: the cli command to run using nova-manage
         :type action: string
@@ -84,7 +84,7 @@ class CLIClient(object):
         return resp
 
     def keystone(self, action, flags='', params='', fail_ok=False,
-                 merge_stderr=False):
+                 merge_stderr=False, timeout=10):
         """Executes keystone command for the given action.
         :param action: the cli command to run using keystone
         :type action: string
@@ -99,10 +99,10 @@ class CLIClient(object):
         :type merge_stderr: boolean
         """
         return self.cmd_with_auth(
-            'keystone', action, flags, params, fail_ok, merge_stderr)
+            'keystone', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def glance(self, action, flags='', params='', fail_ok=False,
-               endpoint_type='publicURL', merge_stderr=False):
+               endpoint_type='publicURL', merge_stderr=False, timeout=10):
         """Executes glance command for the given action.
         :param action: the cli command to run using glance
         :type action: string
@@ -120,11 +120,11 @@ class CLIClient(object):
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'glance', action, flags, params, fail_ok, merge_stderr)
+            'glance', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def ceilometer(self, action, flags='', params='',
                    fail_ok=False, endpoint_type='publicURL',
-                   merge_stderr=False):
+                   merge_stderr=False, timeout=10):
         """Executes ceilometer command for the given action.
         :param action: the cli command to run using ceilometer
         :type action: string
@@ -142,10 +142,11 @@ class CLIClient(object):
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'ceilometer', action, flags, params, fail_ok, merge_stderr)
+            'ceilometer', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def heat(self, action, flags='', params='',
-             fail_ok=False, endpoint_type='publicURL', merge_stderr=False):
+             fail_ok=False, endpoint_type='publicURL',
+             merge_stderr=False, timeout=10):
         """Executes heat command for the given action.
         :param action: the cli command to run using heat
         :type action: string
@@ -163,10 +164,10 @@ class CLIClient(object):
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'heat', action, flags, params, fail_ok, merge_stderr)
+            'heat', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def cinder(self, action, flags='', params='', fail_ok=False,
-               endpoint_type='publicURL', merge_stderr=False):
+               endpoint_type='publicURL', merge_stderr=False, timeout=10):
         """Executes cinder command for the given action.
         :param action: the cli command to run using cinder
         :type action: string
@@ -187,7 +188,7 @@ class CLIClient(object):
             'cinder', action, flags, params, fail_ok, merge_stderr)
 
     def swift(self, action, flags='', params='', fail_ok=False,
-              endpoint_type='publicURL', merge_stderr=False):
+              endpoint_type='publicURL', merge_stderr=False, timeout=10):
         """Executes swift command for the given action.
         :param action: the cli command to run using swift
         :type action: string
@@ -205,10 +206,10 @@ class CLIClient(object):
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'swift', action, flags, params, fail_ok, merge_stderr)
+            'swift', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def neutron(self, action, flags='', params='', fail_ok=False,
-                endpoint_type='publicURL', merge_stderr=False):
+                endpoint_type='publicURL', merge_stderr=False, timeout=10):
         """Executes neutron command for the given action.
         :param action: the cli command to run using neutron
         :type action: string
@@ -226,10 +227,11 @@ class CLIClient(object):
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'neutron', action, flags, params, fail_ok, merge_stderr)
+            'neutron', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def neutron_debug(self, action, flags='', params='', fail_ok=False,
-                      endpoint_type='publicURL', merge_stderr=False):
+                      endpoint_type='publicURL', merge_stderr=False,
+                       timeout=10):
         """Executes neutron-debug command for the given action.
         :param action: the cli command to run using neutron
         :type action: string
@@ -246,7 +248,7 @@ class CLIClient(object):
         :type merge_stderr: boolean
         """
         cmd = ' '.join([os.path.join(cmd),
-                    flags, action, params])
+                    flags, action, params, timeout])
         LOG.debug("running: '%s'" % cmd)
         response = self.osc.cmd(cmd)
         response = response[0]
@@ -256,7 +258,8 @@ class CLIClient(object):
         return resp
 
     def sahara(self, action, flags='', params='',
-               fail_ok=False, endpoint_type='publicURL', merge_stderr=True):
+               fail_ok=False, endpoint_type='publicURL',
+               merge_stderr=True, timeout=10):
         """Executes sahara command for the given action.
         :param action: the cli command to run using sahara
         :type action: string
@@ -274,10 +277,10 @@ class CLIClient(object):
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'sahara', action, flags, params, fail_ok, merge_stderr)
+            'sahara', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def openstack(self, action, flags='', params='', fail_ok=False,
-                  merge_stderr=False):
+                  merge_stderr=False, timeout=10):
         """Executes openstack command for the given action.
         :param action: the cli command to run using openstack
         :type action: string
@@ -292,10 +295,10 @@ class CLIClient(object):
         :type merge_stderr: boolean
         """
         return self.cmd_with_auth(
-            'openstack', action, flags, params, fail_ok, merge_stderr)
+            'openstack', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def cmd_with_auth(self, cmd, action, flags='', params='',
-                      fail_ok=False, merge_stderr=False):
+                      fail_ok=False, merge_stderr=False, timeout=10):
         """Executes given command with auth attributes appended.
         :param cmd: command to be executed
         :type cmd: string
@@ -322,10 +325,10 @@ class CLIClient(object):
                     flags, action, params])
         LOG.debug("running: '%s'" % cmd)
         if fail_ok:
-            response = self.osc.cmd(cmd, strict=False)
+            response = self.osc.cmd(cmd, strict=False, timeout=timeout)
             assert response[2] == 1
             return response[1]
-        response = self.osc.cmd(cmd)
+        response = self.osc.cmd(cmd, timeout=timeout)
         response = response[0]
         resp = ''
         for line in response:
@@ -373,6 +376,6 @@ class ClientTestBase(object):
         """
         msg = 'Beginning of first line has invalid content: {}'.format(lines[:3])
         assert lines[0].startswith(beginning) == True, msg
-        
+       
     def runTest(cls):
         pass

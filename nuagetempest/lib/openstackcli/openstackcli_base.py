@@ -22,6 +22,7 @@ from tempest.lib.common.utils import data_utils
 import openstack_cliclient
 import output_parser as cli_output_parser
 from nuagetempest.lib.openstackcli import vpnaas_cliclient
+from tempest.lib import exceptions as lib_exc
 
 CONF = config.CONF
 

@@ -14,12 +14,12 @@
 
 from tempest import config
 from oslo_log import log as logging
-from tempest.lib.common.utils import data_utils
 import openstack_cliclient
 
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
+
 
 class VPNaaSClient(openstack_cliclient.ClientTestBase):
 
@@ -34,11 +34,11 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
 
     def __init__(self, osc):
         super(VPNaaSClient, self).__init__(osc)
-        
+
     def create_ikepolicy(self, name, **kwargs):
         params = ''
-        params+= '{} '.format(name)
-        for k,v in kwargs.iteritems():
+        params += '{} '.format(name)
+        for k, v in kwargs.iteritems():
             params = params + '--{} {} '.format(k, v)
         ikepolicy = self.cli.neutron('vpn-ikepolicy-create', params=params)
         self.assertFirstLineStartsWith(ikepolicy.split('\n'),
@@ -49,7 +49,8 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
 
     def delete_ikepolicy(self, id):
         response = self.cli.neutron('vpn-ikepolicy-delete {}'.format(id))
-        
+        return response
+
     def show_ikepolicy(self, id):
         response = self.cli.neutron('vpn-ikepolicy-show {}'.format(id))
         item = self.parser.details(response)
@@ -59,11 +60,11 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
         response = self.cli.neutron('vpn-ikepolicy-list')
         items = self.parser.listing(response)
         return items
-        
+
     def create_ipsecpolicy(self, name, **kwargs):
         params = ''
-        params+= '{} '.format(name)
-        for k,v in kwargs.iteritems():
+        params += '{} '.format(name)
+        for k, v in kwargs.iteritems():
             params = params + '--{} {} '.format(k, v)
         ipsecpolicy = self.cli.neutron('vpn-ipsecpolicy-create', params=params)
         self.assertFirstLineStartsWith(ipsecpolicy.split('\n'),
@@ -74,7 +75,8 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
 
     def delete_ipsecpolicy(self, id):
         response = self.cli.neutron('vpn-ipsecpolicy-delete {}'.format(id))
-        
+        return response
+
     def show_ipsecpolicy(self, id):
         response = self.cli.neutron('vpn-ipsecpolicy-show {}'.format(id))
         item = self.parser.details(response)
@@ -87,60 +89,64 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
 
     def create_vpnservice(self, routerid, subnetid, name, **kwargs):
         params = '{} '.format(routerid)
-        params+= '{} '.format(subnetid)
-        params+= '--{} {} '.format('name', name)
-        for k,v in kwargs.iteritems():
+        params += '{} '.format(subnetid)
+        params += '--{} {} '.format('name', name)
+        for k, v in kwargs.iteritems():
             params = params + '--{} {} '.format(k, v)
         vpnservice = self.cli.neutron('vpn-service-create', params=params)
         self.assertFirstLineStartsWith(vpnservice.split('\n'),
                                        'Created a new vpnservice:')
         vpnservice = self.parser.details(vpnservice)
-        response = {'vpnservice':vpnservice}
+        response = {'vpnservice': vpnservice}
         return response
-    
+
     def delete_vpnservice(self, id):
         response = self.cli.neutron('vpn-service-delete {}'.format(id))
-        
+        return response
+
     def show_vpnservice(self, id):
         response = self.cli.neutron('vpn-service-show {}'.format(id))
         item = self.parser.details(response)
         return item
-    
+
     def list_vpnservice(self):
         response = self.cli.neutron('vpn-service-list')
         items = self.parser.listing(response)
         return items
-        
+
     def create_ipsecsiteconnection(self, vpnservice_id, ikepolicy_id,
-                                  ipsecpolicy_id, peer_address, peer_id,
-                                  peer_cidrs, psk, name, **kwargs):
+                                   ipsecpolicy_id, peer_address, peer_id,
+                                   peer_cidrs, psk, name, **kwargs):
 
         params = '--{} {} '.format('vpnservice-id', vpnservice_id)
-        params+= '--{} {} '.format('ikepolicy-id', ikepolicy_id)
-        params+= '--{} {} '.format('ipsecpolicy-id', ipsecpolicy_id)
-        params+= '--{} {} '.format('peer-address', peer_address)
-        params+= '--{} {} '.format('peer-id', peer_id)
-        params+= '--{} {} '.format('peer-cidr', peer_cidrs)
-        params+= '--{} {} '.format('psk', psk)
-        params+= '--{} {} '.format('name', name)
+        params += '--{} {} '.format('ikepolicy-id', ikepolicy_id)
+        params += '--{} {} '.format('ipsecpolicy-id', ipsecpolicy_id)
+        params += '--{} {} '.format('peer-address', peer_address)
+        params += '--{} {} '.format('peer-id', peer_id)
+        params += '--{} {} '.format('peer-cidr', peer_cidrs)
+        params += '--{} {} '.format('psk', psk)
+        params += '--{} {} '.format('name', name)
 
-        for k,v in kwargs.iteritems():
+        for k, v in kwargs.iteritems():
             params = params + '--{} {} '.format(k, v)
-        ipsecsiteconnection = self.cli.neutron('ipsec-site-connection-create', params=params)
+        ipsecsiteconnection = self.cli.neutron(
+            'ipsec-site-connection-create', params=params)
         self.assertFirstLineStartsWith(ipsecsiteconnection.split('\n'),
                                        'Created a new ipsec_site_connection:')
         ipsecsiteconnection = self.parser.details(ipsecsiteconnection)
-        response = {'ipsecsiteconnection':ipsecsiteconnection}
+        response = {'ipsecsiteconnection': ipsecsiteconnection}
         return response
-    
+
     def delete_ipsecsiteconnection(self, id):
-        response = self.cli.neutron('ipsec-site-connection-delete {}'.format(id))
-        
+        response = self.cli.neutron(
+            'ipsec-site-connection-delete {}'.format(id))
+        return response
+
     def show_ipsecsiteconnection(self, id):
         response = self.cli.neutron('ipsec-site-connection-show {}'.format(id))
         item = self.parser.details(response)
         return item
-    
+
     def list_ipsecsiteconnection(self):
         response = self.cli.neutron('ipsec-site-connection-list')
         items = self.parser.listing(response)

@@ -207,16 +207,16 @@ class RouterClient(openstack_cliclient.ClientTestBase):
         response = self.cli.neutron('router-gateway-set', params=the_params)
         self.assertFirstLineStartsWith(response.split('\n'), 'Set gateway for router')
 
-    def add_router_interface_with_args(self, *args):
+    def add_router_interface(self, router_id, subnet_id):
         """Wrapper utility that sets the router gateway."""
-        the_params = ''
-        for arg in args:
-            the_params += ' '
-            the_params += arg
-
+        the_params = '{} {} '.format(router_id, subnet_id)
         response = self.cli.neutron('router-interface-add', params=the_params)
         self.assertFirstLineStartsWith(response.split('\n'), 'Added interface')
         
+    def remove_router_interface(cls, router_id, subnet_id):
+        response = cls.cli.neutron('router-interface-delete', params=router_id + ' ' + subnet_id)
+        return response
+
     def delete_router(self, router_id):
         self._clear_router_gateway(router_id)
         interfaces = self._list_router_ports(router_id)
@@ -234,10 +234,6 @@ class RouterClient(openstack_cliclient.ClientTestBase):
         response = cls.cli.neutron('router-port-list', params=router_id)
         ports = cls.parser.listing(response)
         return ports
-
-    def _remove_router_interface_with_subnet_id(cls, router_id, subnet_id):
-        response = cls.cli.neutron('router-interface-delete', params=router_id + ' ' + subnet_id)
-        return response
     
     def _delete_router(cls, router_id):
         cls.cli.neutron('router-delete', params=router_id)
@@ -505,7 +501,6 @@ class OpenstackCliClient(object):
             body = self.subnets_client._delete_subnet(subnet_id)
         except Exception:
             raise
-
    
     def create_router(self, router_name=None, **kwargs):
         body = self.routers_client.create_router(
@@ -519,7 +514,19 @@ class OpenstackCliClient(object):
             body = self.routers_client.delete_router(router_id)
         except Exception:
             raise
-        
+  
+    def create_router_interface(self, router_id, subnet_id):
+        try:
+            self.routers_client.add_router_interface(router_id, subnet_id)
+        except Exception:
+            raise
+   
+    def remove_router_interface(self, router_id, subnet_id):
+        try:
+            self.routers_client.remove_router_interface(router_id, subnet_id)
+        except Exception:
+            raise
+
     def create_bgpvpn(self, **kwargs):
         body = self.bgpvpn_client.create_bgpvpn(**kwargs)
         bgpvpn = body['bgpvpn']

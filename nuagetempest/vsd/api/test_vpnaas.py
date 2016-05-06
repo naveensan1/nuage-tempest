@@ -22,12 +22,14 @@ class VPNaaSCliTests():
             pass
 
         def verify_vpn_dummy_router(self, obj):
+            pass
 
     class _create_delete_ipsecsiteconnection():
         def __init__(self):
             pass
 
         def verify_ipsec_vminterface(self, obj):
+            pass
 
         def verify_vpn_dummy_router(self, obj):
-
+            pass

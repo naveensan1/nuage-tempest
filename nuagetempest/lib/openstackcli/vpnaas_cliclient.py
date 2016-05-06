@@ -87,15 +87,19 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
         items = self.parser.listing(response)
         return items
 
-    def create_vpnservice(self, routerid, subnetid, name, **kwargs):
+    def create_vpnservice(self, routerid, subnetid, name, positive=True, **kwargs):
         params = '{} '.format(routerid)
         params += '{} '.format(subnetid)
         params += '--{} {} '.format('name', name)
         for k, v in kwargs.iteritems():
             params = params + '--{} {} '.format(k, v)
         vpnservice = self.cli.neutron('vpn-service-create', params=params)
-        self.assertFirstLineStartsWith(vpnservice.split('\n'),
+        if positive:
+            self.assertFirstLineStartsWith(vpnservice.split('\n'),
                                        'Created a new vpnservice:')
+        else:
+            self.assertFirstLineStartsWith(vpnservice.split('\n'),
+                                       'One VPN service per router:')
         vpnservice = self.parser.details(vpnservice)
         response = {'vpnservice': vpnservice}
         return response

@@ -2,6 +2,9 @@ import time
 import re
 import logging
 from nuagetempest.tests import conf
+from nuagetempest.lib import topology
+
+TB = topology.testbed
 
 LOG = logging.getLogger(__name__)
 
@@ -11,3 +14,13 @@ def get_external_id(id):
 
 def get_filter_str(key, value):
     return key + '  == "{}"'.format(value)
+
+def poll_for_vm_boot(vrs, vm_ip, max_tries):
+    vrs_data = vrs.vmportshow()
+    for vm in vrs_data:
+        for each_try in (0, max_tries):
+            if vm['ip'] != '0':
+                break
+    if vm['ip'] == vm_ip:
+            return vm
+    return None 

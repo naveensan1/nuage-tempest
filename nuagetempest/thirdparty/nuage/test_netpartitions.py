@@ -1,3 +1,6 @@
+from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from oslo_log import log as logging
 from tempest.api.network import base
@@ -8,6 +11,9 @@ from tempest import test
 
 
 CONF = config.CONF
+external_id_release = Release('4.0r4')
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 LOG = logging.getLogger(__name__)
 
@@ -26,6 +32,7 @@ class NetPartitionTestJSON(base.BaseNetworkTest):
             build_interval=CONF.network.build_interval,
             build_timeout=CONF.network.build_timeout,
             **cls.os.default_params)
+        cls.nuageclient = NuageRestClient()
 
     @classmethod
     def setUpClass(cls):
@@ -64,6 +71,33 @@ class NetPartitionTestJSON(base.BaseNetworkTest):
         self.assertEqual('201', body.response['status'])
         netpart = body['net_partition']
         self.assertEqual(name, netpart['name'])
+        if external_id_release <= current_release:
+            net_partition = self.nuageclient.get_global_resource(
+                resource=n_constants.NET_PARTITION,
+                filters='externalID',
+                filter_value=netpart['id'] + '@openstack')
+            self.assertEqual(name, net_partition[0]['name'])
+            default_l2dom_template = self.nuageclient.get_resource(
+                resource=n_constants.L2_DOMAIN_TEMPLATE,
+                filters='externalID',
+                filter_value=netpart['id'] + '@openstack',
+                netpart_name=name)
+            self.assertIsNot(default_l2dom_template, "", "Default L2Domain "
+                                                         "Template Not Found")
+            default_dom_template = self.nuageclient.get_resource(
+                resource=n_constants.DOMAIN_TEMPLATE,
+                filters='externalID',
+                filter_value=netpart['id'] + '@openstack',
+                netpart_name=name)
+            self.assertIsNot(default_dom_template, "", "Default Domain "
+                                                       "Template Not Found")
+            zone_templates = self.nuageclient.get_child_resource(
+                resource=n_constants.DOMAIN_TEMPLATE,
+                resource_id=default_dom_template[0]['ID'],
+                child_resource=n_constants.ZONE_TEMPLATE,
+                filters='externalID',
+                filter_value=netpart['id'] + '@openstack')
+            self.assertEqual(2, len(zone_templates))
         body = self.client.list_netpartition()
         netpartition_idlist = list()
         netpartition_namelist = list()

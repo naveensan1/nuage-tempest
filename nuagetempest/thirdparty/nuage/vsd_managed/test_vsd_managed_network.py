@@ -15,6 +15,7 @@
 
 from netaddr import IPNetwork
 
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.test import tags
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_network as base_vsdman
@@ -30,6 +31,9 @@ from tempest.scenario import manager
 from tempest import test
 
 CONF = config.CONF
+external_id_release = Release('4.0r4')
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 
 @nuage_test.class_header(tags=[tags.VSD_MANAGED, tags.MONOLITHIC])
@@ -52,8 +56,15 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
 
     @classmethod
     def get_server_ip_from_vsd(cls, vm_id):
-        vm_details = cls.nuageclient.get_resource(constants.VM, filters='UUID',
-                                                  filter_value=vm_id)[0]
+        if external_id_release <= current_release:
+            vm_details = cls.nuageclient.get_resource(
+                constants.VM,
+                filters='externalID',
+                filter_value=cls.nuageclient.get_vsd_external_id(vm_id))[0]
+        else:
+            vm_details = cls.nuageclient.get_resource(constants.VM,
+                                                      filters='UUID',
+                                                      filter_value=vm_id)[0]
         interfaces = vm_details.get('interfaces')
         if interfaces:
             return interfaces[0]['IPAddress']

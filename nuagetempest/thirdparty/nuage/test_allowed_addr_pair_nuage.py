@@ -15,6 +15,7 @@
 
 import uuid
 
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from tempest import test
 from tempest import config
 from tempest.api.network import base
@@ -24,6 +25,9 @@ from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.lib.utils import constants as n_constants
 
 CONF = config.CONF
+external_id_release = Release('4.0r4')
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 
 class AllowedAddressPairTest(base.BaseNetworkTest):
@@ -201,6 +205,10 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filters='virtualIP',
             filter_value=str(addrpair_port['fixed_ips'][0]['ip_address']))
         self.assertEqual(addrpair_port['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
 
     def test_create_address_pair_on_l3subnet_with_no_mac(self):
         # Create port with allowed address pair attribute
@@ -242,6 +250,10 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filters='virtualIP',
             filter_value=str(addrpair_port['fixed_ips'][0]['ip_address']))
         self.assertEqual(port['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
 
     def test_create_address_pair_on_l3subnet_with_cidr(self):
         # Create port with allowed address pair attribute
@@ -319,6 +331,10 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filters='virtualIP',
             filter_value=str(addrpair_port_1['fixed_ips'][0]['ip_address']))
         self.assertEqual(addrpair_port_1['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
         # Update the address pairs
         # Create port with allowed address pair attribute
         addrpair_port_2 = self.create_port(self.l3network)
@@ -347,6 +363,10 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filters='virtualIP',
             filter_value=str(addrpair_port_2['fixed_ips'][0]['ip_address']))
         self.assertEqual(addrpair_port_2['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
         # Verify old VIP is deleted
         nuage_vip = self.nuage_vsd_client.get_virtual_ip(
             n_constants.VPORT,
@@ -441,6 +461,10 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
                          nuage_vip[0]['associatedFloatingIPID'])
         self.assertEqual(nuage_domain_fip[0]['assignedToObjectType'],
                          'virtualip')
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
         self.ports_client.delete_port(port['id'])
         self.ports_client.delete_port(addrpair_port['id'])
         self.floating_ips_client.delete_floatingip(created_floating_ip['id'])
@@ -505,6 +529,10 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filters='virtualIP',
             filter_value=str(addrpair_port['fixed_ips'][0]['ip_address']))
         self.assertEqual(addrpair_port['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
         # Check static roues on VSD
         nuage_static_route = self.nuage_vsd_client.get_staticroute(
             parent=n_constants.DOMAIN, parent_id=nuage_domain[0]['ID'])

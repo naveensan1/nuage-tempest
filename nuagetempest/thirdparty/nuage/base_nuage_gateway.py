@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
@@ -29,6 +29,9 @@ import uuid
 
 
 CONF = config.CONF
+external_id_release = Release('4.0r4')
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 LOG = logging.getLogger(__name__)
 
@@ -244,13 +247,29 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
         self.assertEqual(actual_port['name'], expected_port['name'])
         self.assertEqual(actual_port['ID'], expected_port['id'])
 
-    def verify_vlan_properties(self, actual_vlan, expected_vlan):
+    def verify_vlan_properties(self, actual_vlan, expected_vlan,
+                               verify_ext=True):
         self.assertEqual(actual_vlan['ID'], expected_vlan['id'])
         self.assertEqual(actual_vlan['userMnemonic'],
                          expected_vlan['usermnemonic'])
         self.assertEqual(actual_vlan['value'], expected_vlan['value'])
+        if external_id_release <= current_release and verify_ext:
+            external_id = (expected_vlan['gatewayport'] + "." +
+                           str(expected_vlan['value']))
+            self.assertEqual(actual_vlan['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 external_id))
 
     def verify_vport_properties(self, actual_vport, expected_vport):
         self.assertEqual(actual_vport['ID'], expected_vport['id'])
         self.assertEqual(actual_vport['type'], expected_vport['type'])
         self.assertEqual(actual_vport['name'], expected_vport['name'])
+        if external_id_release <= current_release:
+            if expected_vport['type'] == n_constants.BRIDGE_VPORT:
+                self.assertEqual(actual_vport['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     expected_vport['subnet']))
+            else:
+                self.assertEqual(actual_vport['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     expected_vport['port']))

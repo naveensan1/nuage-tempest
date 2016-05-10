@@ -119,14 +119,13 @@ class VPNMixin(BaseMixin):
                   else self.ipsecsiteconnection_client)
         ipsecsiteconnection = {
             'name': data_utils.rand_name('ipsecsiteconnection')}
-        ipsecsiteconnection = {'peer_cidrs': peer_cidrs}
-        ipsecsiteconnection = {'peer_address': peer_address}
-        ipsecsiteconnection = {'peer_id': peer_id}
         ipsecsiteconnection.update(kwargs)
         ipsecsiteconnection = (
             client.create_ipsecsiteconnection(
                 vpnservice_id, ikepolicy_id,
-                ipsecpolicy_id, **ipsecsiteconnection)
+                ipsecpolicy_id, peer_address,
+                peer_id, peer_cidrs, psk,
+                **ipsecsiteconnection)
         )
         try:
             yield ipsecsiteconnection

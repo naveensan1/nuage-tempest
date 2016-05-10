@@ -172,6 +172,8 @@ class VPNServiceClient(BaseNeutronResourceClient):
                                                path_prefix='vpn')
 
     def create_vpnservice(self, router_id, subnet_id, **kwargs):
+        kwargs['router_id'] = router_id
+        kwargs['subnet_id'] = subnet_id
         return super(VPNServiceClient, self).create(**kwargs)
 
     def show_vpnservice(self, id, fields=None):

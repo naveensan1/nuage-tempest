@@ -67,7 +67,7 @@ class NetworkClient(openstack_cliclient.ClientTestBase):
     def show_network(self, network_id):
         response = self.cli.neutron('net-show', params=network_id)
         network = self.parser.details(response)
-        assert network['id'] == network_id
+        #assert network['id'] == network_id
         response = {'network': network}
         return response
 
@@ -98,7 +98,7 @@ class SubnetClient(openstack_cliclient.ClientTestBase):
         response = self.cli.neutron('subnet-show', params=subnet_id)
         subnet = self.parser.details(response)
         networks = self.parser.listing(response)
-        assert subnet['id'] == subnet_id
+        #assert subnet['id'] == subnet_id
         response = {'subnet': subnet}
         return response
 
@@ -186,13 +186,14 @@ class RouterClient(openstack_cliclient.ClientTestBase):
     def show_router(self, router_id):
         response = self.cli.neutron('router-show', params=router_id)
         router = self.parser.details(response)
-        assert router['id'] == router_id
+        #assert router['id'] == router_id
         response = {'router': router}
         return response
 
     def list_routers(self):
         response = self.cli.neutron('router-list')
-        return response
+        routers = self.parser.listing(response)
+        return routers
 
     def set_router_gateway_with_args(self, *args):
         """Wrapper utility that sets the router gateway."""

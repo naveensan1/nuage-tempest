@@ -59,6 +59,14 @@ class VPNMixin(BaseMixin):
         cls.ipsecsiteconnection_client_admin = (
             cls.admin_manager.ipsecsiteconnection_client
         )
+        cls.network_client = cls.manager.network_client
+        cls.network_client_admin = cls.admin_manager.network_client
+        cls.networks_client = cls.manager.networks_client
+        cls.networks_client_admin = cls.admin_manager.networks_client
+        cls.subnets_client = cls.manager.subnets_client
+        cls.subnets_client_admin = cls.admin_manager.subnets_client
+        cls.routers_client = cls.manager.routers_client
+        cls.routers_client_admin = cls.admin_manager.routers_client
 
     @contextlib.contextmanager
     def ikepolicy(self, do_delete=True, as_admin=True, **kwargs):

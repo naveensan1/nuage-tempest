@@ -202,6 +202,13 @@ class IPSecSiteConnectionClient(BaseNeutronResourceClient):
     def create_ipsecsiteconnection(self, vpnservice_id, ikepolicy_id,
                                    ipsecpolicy_id, peer_address, peer_id,
                                    peer_cidrs, psk, **kwargs):
+        kwargs['vpnservice_id'] = vpnservice_id
+        kwargs['ikepolicy_id'] = ikepolicy_id
+        kwargs['ipsecpolicy_id'] = ipsecpolicy_id
+        kwargs['peer_address'] = peer_address
+        kwargs['peer_id'] = peer_id
+        kwargs['peer_cidrs'] = peer_cidrs
+        kwargs['psk'] = psk
         return super(IPSecSiteConnectionClient, self).create(**kwargs)
 
     def show_ipsecsiteconnection(self, id, fields=None):

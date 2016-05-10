@@ -68,6 +68,7 @@ class VPNaaSTest(VPNaaSBase):
             parent = 'router1'
         )
         kwargs = {'name': 'vpnservice'}
+        import pdb;pdb.set_trace()
         with self.vpnservice(router_id, subnet_id,
                              **kwargs) as created_vpnservice:
             vpnservices = self.vpnservice_client.list_vpnservice()
@@ -87,28 +88,31 @@ class VPNaaSTest(VPNaaSBase):
             [ipsecsiteconnection['id'] \
                  for ipsecsiteconnection in ipsecsiteconnections]
         )
-        import pdb;pdb.set_trace()
         routers = self.routers_client.list_routers()
         subnets = self.subnets_client.list_subnets()
         router_id = routers['routers'][0]['id']
         subnet_id = subnets['subnets'][0]['id']
-        kwargs = {'name': 'ipsecsiteconnection'}
-        with self.vpnservice(router_id, subnet_id,
-                **kwargs) as created_vpnservice,
-                self.ikepolicy('ikepolicy') as created_ikepolicy,
-                self.ipsecpolicy('ipsecpolicy') as created_ipsecpolicy:
-
+        kwargs = {'name': 'vpn'}
+        with self.vpnservice(router_id, subnet_id, **kwargs) as created_vpnservice, self.ikepolicy('ikepolicy') as created_ikepolicy, self.ipsecpolicy('ipsecpolicy') as created_ipsecpolicy:
             vpnservices = self.vpnservice_client.list_vpnservice()
             post_ids = [vpnservice['id'] for vpnservice in vpnservices]
             self.assertThat(pre_ids, Not(Contains(created_vpnservice['id'])))
             self.assertThat(post_ids, Contains(created_vpnservice['id']))
-            with self.ipsecsiteconnection(created_vpnservice['id'],
-                                       ) as created_ipsecsiteconnection:
+            ipnkwargs = {'name': 'ipsecconn'}
+            with self.ipsecsiteconnection(
+                    created_vpnservice['id'], created_ikepolicy['id'],
+                    created_ipsecpolicy['id'], '172.20.0.2',
+                    '172.20.0.2', '2.0.0.0/24', 'secret',
+                    **ipnkwargs) as created_ipsecsiteconnection:
                 ipsecsiteconnections = (
                     self.ipsecsiteconnection_client.list_ipsecsiteconnection()
                 )
-                
-            
+                post_ids = (
+                    [ipsecsiteconnection['id'] \
+                         for ipsecsiteconnection in ipsecsiteconnections]
+                )
+                self.assertThat(pre_ids, Not(Contains(created_ipsecsiteconnection['id'])))
+                self.assertThat(post_ids, Contains(created_ipsecsiteconnection['id']))
 
 
 class VPNaaSCliTests(test.BaseTestCase):

@@ -124,29 +124,9 @@ DHCP_OPTION_NUMBER_TO_NAME = {
     255: 'server-ip-address'
 }
 
-# Some options need to be treated as int (for easier comparison with the VSD dhcp options response)
-TREAT_DHCP_OPTION_AS_INT = [
-    'time-offset',
-    'boot-file-size',
-    'ip-forward-enable',
-    'non-local-source-routing',
-    'max-datagram-reassembly',
-    'default-ttl',
-    'mtu',
-    'all-subnets-local',
-    'router-discovery',
-    'trailer-encapsulation',
-    'arp-timeout',
-    'ethernet-encap',
-    'tcp-ttl',
-    'tcp-keepalive',
-    'client-arch'
-]
 
 # Some options are treated as raw hex, (for easier comparison with the VSD dhcp options response)
 TREAT_DHCP_OPTION_AS_RAW_HEX = [
-    'user-class',
-    'netbios-nodetype',
     'client-machine-id',
     'classless-static-route',
     'client-interface-id',
@@ -154,10 +134,9 @@ TREAT_DHCP_OPTION_AS_RAW_HEX = [
     'server-ip-address'
 ]
 
-# Some options need to be concatenated (for easier comparison with the VSD dhcp options response)
-TREAT_DHCP_OPTION_AS_CONCAT_STRING = [
-    'domain-search',
-    'sip-server'
+# For easier vsd dhcp options comparison
+TREAT_DHCP_OPTION_NETBIOS_NODETYPE = [
+    'netbios-nodetype'
 ]
 
 # Use these values for negative tests on ip addresses
@@ -444,7 +423,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         for retrieved_option in retrieved:
             for option in extra_dhcp_opts:
                 if (retrieved_option['opt_value'] == option['opt_value'] and
-                    retrieved_option['opt_name'] == option['opt_name']):
+                            retrieved_option['opt_name'] == option['opt_name']):
                     break
             else:
                 self.fail('Extra DHCP option not found in port %s' %
@@ -460,25 +439,32 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         hex_val = hex_val.zfill(length)
         return hex_val
 
+    def _convert_netbios_type(self, value):
+        if value == '0x1':
+            result = 'B-node'
+        elif value == '0x2':
+            result = 'P-node'
+        elif value == '0x4':
+            result = 'M-node'
+        elif value == '0x8':
+            result = 'H-node'
+        else:
+            result = 'error'
+        return result
+
     def _convert_to_vsd_opt_values(self, opt_values, opt_name):
         # convert all elements in the openstack extra dhcp option value list into the format return by VSD
         # so we can use easy list comparison
         tmp_var = ""
-        if opt_name in TREAT_DHCP_OPTION_AS_INT:
-            for opt_value in opt_values:
-                # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(hex(int(opt_value)))
-                # more than integer in the list: VSD wil have them concatenated, so let's do this here as well
-                tmp_var += self._convert_to_hex(hex(int(opt_value)))
-            opt_values = [tmp_var]
-        elif opt_name in TREAT_DHCP_OPTION_AS_RAW_HEX:
+        if opt_name in TREAT_DHCP_OPTION_AS_RAW_HEX:
             for opt_value in opt_values:
                 # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
                 tmp_var += self._convert_to_hex(opt_value)
             opt_values = [tmp_var]
-        elif opt_name in TREAT_DHCP_OPTION_AS_CONCAT_STRING:
+        if opt_name in TREAT_DHCP_OPTION_NETBIOS_NODETYPE:
             for opt_value in opt_values:
                 # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
-                tmp_var += opt_value
+                tmp_var += self._convert_netbios_type(opt_value)
             opt_values = [tmp_var]
         return opt_values
 
@@ -486,7 +472,6 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         # Verify the contents of the extra dhcp options returned by VSD (vsd_dhcp_options)
         # with the corresponding contents of the extra dhcp options passed to the plugin (extra_dhcp_opt)
         # The format is different, hence a more complex comparison loop
-        # extra_dhcp_opts[1]['opt_value'] = 'beafbeaf'
         for retrieved_option in vsd_dchp_options:
             for option in extra_dhcp_opts:
                 # VSD returns option numbers, not names: convert
@@ -499,6 +484,18 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
                 if vsd_opt_name == 'router' and option_value_list == ['0.0.0.0']:
                     if retrieved_option['value'] == '00':
                         vsd_opt_value = ['0.0.0.0']
+                elif vsd_opt_name == 'server-ip-address':
+                    # option 255 is treated bizarre in openstack. It should not contain any data, but for OS it does
+                    # use that value in 'value' instead of 'actualValues'
+                    vsd_opt_value = [retrieved_option['value']]
+                elif vsd_opt_name == 'user-class':
+                    # in case of 'user-class', the value as passed to OS is available in the 'value' field
+                    # just prepend with '0x' to lign up completely with what was passed to the plugin
+                    vsd_opt_value = ['0x' + str(retrieved_option['value'])]
+                elif vsd_opt_name == 'classless-static-route':
+                    # 'actualValues' contains a nice UI format (cidr + ip address).
+                    # Use the encode value in the 'value' field
+                    vsd_opt_value = [retrieved_option['value']]
                 # Compare element by element, as the VSD stores it all in hex ...
                 converted_os_opt_values = self._convert_to_vsd_opt_values(option_value_list, option['opt_name'])
                 if converted_os_opt_values == vsd_opt_value and vsd_opt_name == option['opt_name']:
@@ -603,7 +600,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts,
                                                                          new_extra_dhcp_opts)
-        # Check value 0.0.0.0, which should disbable the default route
+        # Check value 0.0.0.0, which should disable the default route
         extra_dhcp_opts = [
             {'opt_value': '0.0.0.0', 'opt_name': 'router'}
         ]
@@ -1050,16 +1047,12 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         extra_dhcp_opts = [
             {'opt_value': '0x4', 'opt_name': 'netbios-nodetype'}
         ]
-        self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
-                                                                         extra_dhcp_opts,
-                                                                         new_extra_dhcp_opts)
         new_extra_dhcp_opts = [
             {'opt_value': '0x8', 'opt_name': 'netbios-nodetype'}
         ]
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts,
                                                                          new_extra_dhcp_opts)
-        pass
 
     def _check_nuage_create_show_list_update_port_with_extra_dhcp_options_047_netbios_scope(self, nuage_network_type):
         extra_dhcp_opts = [
@@ -1111,10 +1104,10 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
 
     def _check_nuage_create_show_list_update_port_with_extra_dhcp_options_060_vendor_class(self, nuage_network_type):
         extra_dhcp_opts = [
-            {'opt_value': 'nuage-vendor-class-string', 'opt_name': 'vendor-class'}
+            {'opt_value': '0401020304', 'opt_name': 'vendor-class'}
         ]
         new_extra_dhcp_opts = [
-            {'opt_value': 'newer-nuage-vendor-class-string', 'opt_name': 'vendor-class'}
+            {'opt_value': '06010203040506', 'opt_name': 'vendor-class'}
         ]
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts,
@@ -1273,7 +1266,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
 
     def _check_nuage_create_show_list_update_port_with_extra_dhcp_options_119_domain_search(self, nuage_network_type):
         extra_dhcp_opts = [
-            {'opt_value': 'sales.domain.com', 'opt_name': 'domain-search'}
+            {'opt_value': 'sales.domain.com;eng.domain.org', 'opt_name': 'domain-search'}
         ]
         new_extra_dhcp_opts = [
             {'opt_value': 'eng.domain.com;marketing.domain.com', 'opt_name': 'domain-search'}
@@ -1297,11 +1290,16 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
     def _check_nuage_create_show_list_update_port_with_extra_dhcp_options_121_classless_static_route(
             self,
             nuage_network_type):
+        # Create a port with Extra DHCP Options: see http://tools.ietf.org/html/rfc3442
+        # Subnet number   Subnet mask      Destination descriptor
+        # 10.17.0.0       255.255.0.0      16.10.17         -> r = 10.11.12.13 0x0a0b0c0d
+        # 10.229.0.128    255.255.255.128  25.10.229.0.128  -> r = 10.11.12.14 0x0a0b0c0e
+        # 10.198.122.47   255.255.255.255  32.10.198.122.47
         extra_dhcp_opts = [
-            {'opt_value': '0x0a1679000a167901', 'opt_name': 'classless-static-route'}
+            {'opt_value': '0x100a110a0b0c0d', 'opt_name': 'classless-static-route'}
         ]
         new_extra_dhcp_opts = [
-            {'opt_value': '0x0a167a000a167a01;0x0a167b000a167b01', 'opt_name': 'classless-static-route'}
+            {'opt_value': '0X190ae500800a0b0c0e;0x100a110a0b0c0d', 'opt_name': 'classless-static-route'}
         ]
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts,
@@ -1309,16 +1307,11 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         pass
 
     def _check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap(self, nuage_network_type):
-        # Create a port with Extra DHCP Options: see http://tools.ietf.org/html/rfc3442
-        # Subnet number   Subnet mask      Destination descriptor
-        # 10.17.0.0       255.255.0.0      16.10.17         -> r = 10.11.12.13 0x0a0b0c0d
-        # 10.229.0.128    255.255.255.128  25.10.229.0.128  -> r = 10.11.12.14 0x0a0b0c0e
-        # 10.198.122.47   255.255.255.255  32.10.198.122.47
         extra_dhcp_opts = [
-            {'opt_value': '0x100a110a0b0c0d', 'opt_name': 'vendor-id-encap'}
+            {'opt_value': '0x0a1679000a167901', 'opt_name': 'vendor-id-encap'}
         ]
         new_extra_dhcp_opts = [
-            {'opt_value': '0X190ae500800a0b0c0e;0x100a110a0b0c0d', 'opt_name': 'vendor-id-encap'}
+            {'opt_value': '0x0a167a000a167a01;0x0a167b000a167b01', 'opt_name': 'vendor-id-encap'}
         ]
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts,

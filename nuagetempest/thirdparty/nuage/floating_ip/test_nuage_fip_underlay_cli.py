@@ -91,7 +91,8 @@ class TestNuageFipUnderlayCli(remote_cli_base_testcase.RemoteCliBaseTestCase,
         ext_subnet_name = "subnet-invalid-underlay-value-" + rand_name_str
         invalid_underlay_values = ['Ttrue', 'Treu', 'Tru', 'Truet', 'Trrue', 'Truue', 'Truee',
                                    'Flase', 'Falsche', 'Fales', 'Flaes', 'FFalse', 'fFalse']
-        exp_message = "Invalid input for operation: '(.*)' cannot be converted to boolean"
+        # exp_message = "Invalid input for operation: '(.*)' cannot be converted to boolean"
+        exp_message = "error: argument --underlay: invalid choice: u'(.*)"
         for underlay in invalid_underlay_values:
             underlay_str = "--underlay=" + str(underlay)
             self.assertRaisesRegexp(exceptions.SSHExecCommandFailed,
@@ -179,7 +180,6 @@ class TestNuageFipUnderlayCli(remote_cli_base_testcase.RemoteCliBaseTestCase,
         Must fails, as an external network is required
         """
         self._as_admin()
-        self.needs_ini_nuage_fip_underlay(True)
         underlay_states = [False, True]
         for underlay in underlay_states:
             network_name = data_utils.rand_name('internal-pat-network-neg-')

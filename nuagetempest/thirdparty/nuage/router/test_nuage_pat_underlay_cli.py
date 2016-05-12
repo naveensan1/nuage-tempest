@@ -45,7 +45,8 @@ class TestNuagePatUnderlayCLI(remote_cli_base_testcase.RemoteCliBaseTestCase,
     @nuage_test.header()
     def test_cli_create_router_with_external_gateway_with_snat(self):
         self._as_admin()
-        self._verify_create_router_with_external_gateway_with_snat()
+        # self._verify_create_router_with_external_gateway_with_snat()
+        self._cli_verify_create_router_with_external_gateway_with_snat()
 
     @nuage_test.header()
     def test_cli_update_router_with_external_gateway_with_snat(self):

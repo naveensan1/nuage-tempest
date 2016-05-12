@@ -121,9 +121,6 @@ class SubnetClient(openstack_cliclient.ClientTestBase):
         """Wrapper utility that returns a test subnet."""
         the_params = '{} {} '.format(network_id, cidr)
         if gateway_ip:
-            the_params+= '--gateway {} '.format(gateway_ip)
-        for k,v  in kwargs.iteritems():
-            the_params+= '--{} {} '.format(k, v)
             the_params += ('--gateway {} '.format(gateway_ip))
         for k,v  in kwargs.iteritems():
             the_params += ('--{} {} '.format(k, v))

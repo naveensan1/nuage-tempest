@@ -4,4 +4,4 @@ test_fipsubs_in_shared_domain_with_plugin_file
 test_nuage_fip_network_basic_ops
 
 # VSD-14984
-test_router_cgit geate_update_show_delete_with_backhaul_vnid_rt_rd
+test_router_create_update_show_delete_with_backhaul_vnid_rt_rd

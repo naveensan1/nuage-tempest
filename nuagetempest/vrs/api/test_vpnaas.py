@@ -38,20 +38,42 @@ class VPNaaSCliTests():
             pass
 
         def verify_ipsec_vminterface(self, obj):
-            tag_vpnservice = (
-                obj.os_data_struct.get_resource('vpnservice').user_data
+            """ Verify the ipsecsiteconnection
+            VM interface on the VRS1 - network node """
+            # VPNservice 1
+            tag_vpnservice1 = (
+                obj.os_data_struct.get_resource('vpnservice1').user_data
             )
-            vpnservice = (
+            vpnservice1 = (
                 obj.os_data_struct.get_resource(\
-                        tag_vpnservice['name']).os_data
+                        tag_vpnservice1['name']).os_data
             )
-            os_vpnservice_ip = vpnservice['external_v4_ip']
+            os_vpnservice_ip1 = vpnservice1['external_v4_ip']
+
+            # VPNservice 2
+            tag_vpnservice2 = (
+                obj.os_data_struct.get_resource('vpnservice2').user_data
+            )
+            vpnservice2 = (
+                obj.os_data_struct.get_resource(\
+                        tag_vpnservice2['name']).os_data
+            )
+            os_vpnservice_ip2 = vpnservice2['external_v4_ip']
+
+            # Checking on VRS
             vms = TB.vrs_1.cmd.vmportshow()
-            vpnvm = (
-                (vm for vm in vms if vm['ip'] == os_vpnservice_ip).next()
+            # VPN1 vminterface
+            vpnvm1 = (
+                (vm for vm in vms if vm['ip'] == os_vpnservice_ip1).next()
             )
-            obj.assertEqual(vpnvm['ip'], os_vpnservice_ip)
-            obj.assertEqual(vpnvm['bridge'], 'alubr0')
+            obj.assertEqual(vpnvm1['ip'], os_vpnservice_ip1)
+            obj.assertEqual(vpnvm1['bridge'], 'alubr0')
+            # VPN2 vminterface
+            vpnvm2 = (
+                (vm for vm in vms if vm['ip'] == os_vpnservice_ip2).next()
+            )
+            obj.assertEqual(vpnvm2['ip'], os_vpnservice_ip2)
+            obj.assertEqual(vpnvm2['bridge'], 'alubr0')
 
         def verify_vpn_dummy_router(self, obj):
             pass
@@ -73,6 +95,8 @@ class VPNaaSTest():
             pass
 
         def verify_ipsec_vminterface(self, obj):
+            """ Verify the ipsecsiteconnection
+            VM interface on the VRS1 - network node """
             vpnservice = (
                 obj.os_data_struct.get_resource('vpnservice').os_data
             )

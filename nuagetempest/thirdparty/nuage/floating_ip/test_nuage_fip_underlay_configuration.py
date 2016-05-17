@@ -218,10 +218,10 @@ class FIPtoUnderlayTestNuageConfigDefaultTrue(base_nuage_fip_underlay.NuageFipUn
     #  Scaling tests
     #
     #
-    # TODO: add check on amount of external networks and then scale to max
-    @nuage_test.nuage_skip_because(message="Todo: check external networks before scaling to max")
-    @nuage_test.header()
-    def test_scale_create_external_subnet_with_underlay_gre(self):
-        self._verify_create_external_subnet_with_underlay_scale('GRE', 32)
-        # def test_scale_create_external_subnet_with_underlay_VXLAN(self):
-        #     self._verify_create_external_subnet_with_underlay_scale('VXLAN',400)
+    # # TODO: add check on amount of external networks and then scale to max
+    # @nuage_test.nuage_skip_because(message="Todo: check external networks before scaling to max")
+    # @nuage_test.header()
+    # def test_scale_create_external_subnet_with_underlay_gre(self):
+    #     self._verify_create_external_subnet_with_underlay_scale('GRE', 32)
+    #     # def test_scale_create_external_subnet_with_underlay_VXLAN(self):
+    #     #     self._verify_create_external_subnet_with_underlay_scale('VXLAN',400)

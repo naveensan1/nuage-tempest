@@ -1604,9 +1604,9 @@ class NuageExtraDHCPOptionsJSON(NuageExtraDHCPOptionsBase):
         self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap(
             NUAGE_NETWORK_TYPE['OS_Managed_L2'])
 
-    def test_nuage_openstack_managed_layer2_port_with_extra_dhcp_options_255_server_ip_address(self):
-        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
-            NUAGE_NETWORK_TYPE['OS_Managed_L2'])
+    # def test_nuage_openstack_managed_layer2_port_with_extra_dhcp_options_255_server_ip_address(self):
+    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
+    #         NUAGE_NETWORK_TYPE['OS_Managed_L2'])
 
     def test_nuage_openstack_managed_layer2_port_with_16_extra_dhcp_options(self):
         self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options(
@@ -1845,9 +1845,9 @@ class NuageExtraDHCPOptionsJSON(NuageExtraDHCPOptionsBase):
         self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap(
             NUAGE_NETWORK_TYPE['OS_Managed_L3'])
 
-    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_255_server_ip_address(self):
-        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
-            NUAGE_NETWORK_TYPE['OS_Managed_L3'])
+    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_255_server_ip_address(self):
+    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
+    #         NUAGE_NETWORK_TYPE['OS_Managed_L3'])
 
     def test_nuage_openstack_managed_layer3_create_port_with_16_extra_dhcp_options(self):
         self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options(
@@ -2088,9 +2088,9 @@ class NuageExtraDHCPOptionsJSON(NuageExtraDHCPOptionsBase):
         self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap(
             NUAGE_NETWORK_TYPE['VSD_Managed_L2'])
 
-    def test_nuage_vsd_managed_layer2_port_with_extra_dhcp_options_255_server_ip_address(self):
-        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
-            NUAGE_NETWORK_TYPE['VSD_Managed_L2'])
+    # def test_nuage_vsd_managed_layer2_port_with_extra_dhcp_options_255_server_ip_address(self):
+    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
+    #         NUAGE_NETWORK_TYPE['VSD_Managed_L2'])
 
     def test_nuage_vsd_managed_layer2_create_port_with_16_extra_dhcp_options(self):
         self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options(
@@ -2327,9 +2327,9 @@ class NuageExtraDHCPOptionsJSON(NuageExtraDHCPOptionsBase):
         self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap(
             NUAGE_NETWORK_TYPE['VSD_Managed_L3'])
 
-    def test_nuage_vsd_managed_layer3_port_with_extra_dhcp_options_255_server_ip_address(self):
-        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
-            NUAGE_NETWORK_TYPE['VSD_Managed_L3'])
+    # def test_nuage_vsd_managed_layer3_port_with_extra_dhcp_options_255_server_ip_address(self):
+    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address(
+    #         NUAGE_NETWORK_TYPE['VSD_Managed_L3'])
 
     def test_nuage_vsd_managed_layer3_create_port_with_16_extra_dhcp_options(self):
         self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options(

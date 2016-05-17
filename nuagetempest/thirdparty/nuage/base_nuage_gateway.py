@@ -151,6 +151,22 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
         cls.create_router_interface(
             cls.router['id'], cls.subnet['id'])
 
+        # Resource for non-default net-partition
+        netpart_body = cls.client.create_netpartition(
+            data_utils.rand_name('Enterprise-'))
+        cls.nondef_netpart = netpart_body['net_partition'] 
+        cls.nondef_network = cls.create_network()
+        cls.nondef_subnet = cls.create_subnet(cls.nondef_network,
+            net_partition=cls.nondef_netpart['id'])
+        cls.nondef_router = cls.create_router(
+            data_utils.rand_name('router-'),
+            external_network_id=cls.ext_net_id,
+            tunnel_type='VXLAN',
+            net_partition=cls.nondef_netpart['id'])
+        cls.create_router_interface(cls.nondef_router['id'],
+            cls.nondef_subnet['id'])
+
+
     @classmethod
     def resource_cleanup(cls):
         has_exception = False
@@ -210,6 +226,12 @@ class BaseNuageGatewayTest(base.BaseAdminNetworkTest):
                 has_exception = True
 
         super(BaseNuageGatewayTest, cls).resource_cleanup()
+        try:
+            cls.client.delete_netpartition(cls.nondef_netpart['id'])
+        except Exception as exc:
+            LOG.exception(exc)
+            has_exception = True
+            
         if has_exception:
             raise exceptions.TearDownException()
 

@@ -1220,7 +1220,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
             {'opt_value': '0x080001020304050607', 'opt_name': 'user-class'}
         ]
         new_extra_dhcp_opts = [
-            {'opt_value': '0xff00010203040506070809aabbccddeeff', 'opt_name': 'user-class'}
+            {'opt_value': '0x1000010203040506070809aabbccddeeff', 'opt_name': 'user-class'}
         ]
         self._nuage_create_show_list_update_port_with_extra_dhcp_options(nuage_network_type,
                                                                          extra_dhcp_opts,

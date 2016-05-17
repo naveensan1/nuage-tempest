@@ -20,6 +20,7 @@ from tempest.common.utils import data_utils
 from tempest import config
 from tempest import exceptions
 from tempest.lib import exceptions as lib_exceptions
+from tempest import test
 import test_netpartitions
 
 
@@ -218,6 +219,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
             if not resource_found:
                 assert False, (item['name'] + " not found")
 
+    @test.attr(type='smoke')
     def test_create_application_domain(self):
         name = data_utils.rand_name('app_domain-')
         kwargs = {'name': name}
@@ -240,6 +242,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self.assertEqual(appd_domain['rd'], '2020:2021')
         self.assertEqual(appd_domain['tunnel_type'], 'VXLAN')
 
+    @test.attr(type='smoke')
     def test_create_application_domain_with_template(self):
         name = data_utils.rand_name('app_domain-')
         l3_dom_templ = self.create_vsd_l3dom_template(name=name)
@@ -249,6 +252,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self.assertEqual(appd_domain['name'], name)
         self.assertEqual(appd_domain['applicationDeploymentPolicy'], 'ZONE')
 
+    @test.attr(type='smoke')
     def test_create_update_show_list_application_in_valid_app_dom(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -290,6 +294,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self._compare_resource_lists(list_resp['applications'], list_vsd_resp,
                                      self._verify_application_properties)
 
+    @test.attr(type='smoke')
     def test_create_update_show_list_std_tier_in_valid_application(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -338,6 +343,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self._compare_resource_lists(list_resp['tiers'], list_vsd_resp,
                                      self._verify_tier_properties)
 
+    @test.attr(type='smoke')
     def test_create_update_show_list_flow_in_valid_application(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -398,6 +404,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self._compare_resource_lists(list_resp['flows'], list_vsd_resp,
                                      self._verify_flow_properties)
 
+    @test.attr(type='smoke')
     def test_create_update_show_list_application_service(self):
         name = data_utils.rand_name('service-')
         kwargs = {'name': name,
@@ -498,7 +505,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
         self.assertEqual(list_resp['appdports'][0]['name'],
                          list_vsd_resp[0]['name'])
 
-
+    @test.attr(type='smoke')
     def test_create_delete_invalid_application(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -528,6 +535,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
                           self.client.delete_resource,
                           uri)
 
+    @test.attr(type='smoke')
     def test_create_delete_invalid_tier(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -567,6 +575,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
                           self.client.delete_resource,
                           uri)
 
+    @test.attr(type='smoke')
     def test_create_delete_invalid_flow(self):
         name = data_utils.rand_name('app_domain-')
         app_name = data_utils.rand_name('app-')
@@ -607,6 +616,7 @@ class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
                           self.client.delete_resource,
                           uri)
 
+    @test.attr(type='smoke')
     def test_create_delete_invalid_service(self):
         name = data_utils.rand_name('service-')
         kwargs = {'name': name,

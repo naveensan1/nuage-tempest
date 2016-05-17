@@ -57,7 +57,7 @@ class NeutronRedirectionTargetsTest(nuage_base.NuageBaseOrchestrationTest):
         for resource in resources:
             cls.test_resources[resource['logical_resource_id']] = resource
 
-
+    @test.attr(type='smoke')
     def test_created_redirecttarget_resources(self):
         """Verifies created redirect target resources."""
         resources = [('secgrp', self.template['resources'][

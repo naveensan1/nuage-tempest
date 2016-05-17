@@ -4,6 +4,7 @@ from tempest.api.network import base
 from tempest import config
 from tempest import exceptions
 from tempest.lib.common.utils.data_utils import rand_name
+from tempest import test
 
 
 CONF = config.CONF
@@ -56,6 +57,7 @@ class NetPartitionTestJSON(base.BaseNetworkTest):
         cls.net_partitions.append(netpartition)
         return netpartition
 
+    @test.attr(type='smoke')
     def test_create_list_verify_delete_netpartition(self):
         name = rand_name('tempest-np')
         body = self.client.create_netpartition(name)

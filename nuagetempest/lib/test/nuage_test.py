@@ -1,12 +1,15 @@
 # Copyright 2015 Alcatel-Lucent
 # All Rights Reserved.
 
+import copy
 import functools
+import inspect
+import logging
 import testtools
 
 from tempest import config
 from tempest import test
-import logging
+from nuagetempest.lib.test import tags as test_tags
 
 CONF = config.CONF
 
@@ -36,9 +39,15 @@ def nuage_skip_because(*args, **kwargs):
     return decorator
 
 
-def header(*args, **kwargs):
-    """A decorator useful to log info on the test
+def header(tags=None, since=None, until=None):
+    """A decorator to log info on the test, add tags and release filtering.
 
+    :param tags: A set of tags to tag the test with. header(tags=['smoke'])
+    behaves the same as test.attr(type='smoke'). It exists for convenience.
+    :param since: Optional. Mark a test with a 'since' release version to
+    indicate this test should only run on setups with release >= since
+    :param until: Optional. Mark a test with a 'until' release version to
+    indicate this test should only run on setups with release < until
     """
     def decorator(f):
         @functools.wraps(f)
@@ -53,11 +62,56 @@ def header(*args, **kwargs):
             ))
 
             result = f(self, *func_args, **func_kwargs)
-
             logging.info("TESTCASE COMPLETED: %s" % f.func_code.co_name)
-
             return result
+
+        _add_tags_to_method(tags, wrapper)
+        if since:
+            wrapper._since = since
+        if until:
+            wrapper._until = until
         return wrapper
+    return decorator
+
+
+def _add_tags_to_method(tags, wrapper):
+    if tags:
+        if isinstance(tags, str):
+            tags = {tags}
+        else:
+            tags = tags
+        try:
+            existing = copy.deepcopy(wrapper.__testtools_attrs)
+            # deepcopy the original one, otherwise it will affect other
+            # classes which extend this class.
+            if test_tags.ML2 in tags and test_tags.MONOLITHIC in existing:
+                existing.remove(test_tags.MONOLITHIC)
+            if test_tags.MONOLITHIC in tags and test_tags.ML2 in existing:
+                existing.remove(test_tags.ML2)
+            existing.update(tags)
+            wrapper.__testtools_attrs = existing
+        except AttributeError:
+            wrapper.__testtools_attrs = set(tags)
+
+
+def class_header(tags=None, since=None, until=None):
+    """Applies the header decorator to all test_ methods of this class.
+
+    :param tags: Optional. A set of tags to tag the test with.
+    header(tags=['smoke']) behaves the same as test.attr(type='smoke'). It
+    exists for convenience.
+    :param since: Optional. Mark a test with a 'since' release version to
+    indicate this test should only run on setups with release >= since
+    :param until: Optional. Mark a test with a 'until' release version to
+    indicate this test should only run on setups with release < until
+    """
+    method_wrapper = header(tags=tags, since=since, until=until)
+
+    def decorator(cls):
+        for name, method in inspect.getmembers(cls, inspect.ismethod):
+            if name.startswith('test_'):
+                setattr(cls, name, method_wrapper(method))
+        return cls
     return decorator
 
 

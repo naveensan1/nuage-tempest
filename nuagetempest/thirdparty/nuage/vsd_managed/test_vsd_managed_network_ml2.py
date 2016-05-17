@@ -12,19 +12,22 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from nuagetempest.thirdparty.nuage.vsd_managed import test_vsd_managed_network
 
 import testtools
 from netaddr import IPNetwork
 from tempest.lib import exceptions
 from tempest.lib.common.utils import data_utils
 
+from nuagetempest.lib.test import nuage_test
+from nuagetempest.lib.test import tags
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.thirdparty.nuage.vsd_managed import test_vsd_managed_network
 from tempest import config
 
 CONF = config.CONF
 
 
+@nuage_test.class_header(tags=[tags.ML2, tags.VSD_MANAGED])
 class VSDManagedNetworksTestJSONML2(
         test_vsd_managed_network.VSDManagedTestNetworks):
     credentials = ['admin']
@@ -60,6 +63,7 @@ class VSDManagedNetworksTestJSONML2(
     def test_link_subnet_with_incorrect_gateway_l3(self):
         pass
 
+    @nuage_test.header(tags=['smoke'])
     def test_create_port_subnet_l2_managed(self):
         net_name = data_utils.rand_name()
         cidr = IPNetwork('10.10.100.0/24')
@@ -84,6 +88,7 @@ class VSDManagedNetworksTestJSONML2(
         self.assertIsNotNone(nuage_vport, "vport should be created.")
 
     # HP - Unica scenario with DHCP-options defined in VSD
+    @nuage_test.header(tags=['smoke'])
     def test_link_vsd_sharedsubnet_l3_with_dhcp_option(self):
         name = data_utils.rand_name('shared-l3-')
         cidr = IPNetwork('10.20.0.0/16')

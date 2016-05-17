@@ -30,9 +30,6 @@ def skip_checks(fn):
 
 class NuageExtension(object):
 
-    def __init__(self):
-        pass
-
     @skip_checks
     def nuage_components(self, tag, cls):
         m = re.search(r"(.*)\.(\w+)\.(\w+)\.(\w+)", tag)

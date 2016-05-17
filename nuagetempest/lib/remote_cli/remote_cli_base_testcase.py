@@ -25,6 +25,7 @@ class Role(Enum):
 
 
 class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
+    credentials = ['primary', 'admin']
 
     """
     Base class for the Neutron tests that use the remote CLI clients
@@ -48,11 +49,18 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
             raise cls.skipException("Neutron support is required")
 
     @classmethod
+    def setup_clients(cls):
+        super(RemoteCliBaseTestCase, cls).setup_clients()
+        cls.users_client = cls.os_adm.users_client
+        cls.tenants_client = cls.os_adm.tenants_client
+
+    @classmethod
     def resource_setup(cls):
         # Create no network resources for these test.
         cls.set_network_resources()
         super(RemoteCliBaseTestCase, cls).resource_setup()
 
+        cls.client_manager
         cls.network_cfg = CONF.network
 
         # cls.cli = ssh_cli.CLIClient(
@@ -111,9 +119,16 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
             tenant_name=CONF.auth.admin_tenant_name,
             password=CONF.auth.admin_password,
             uri=cls.uri)
+
+        cls.tenant = cls.tenants_client.create_tenant(
+            data_utils.rand_name())['tenant']
+        cls.user = cls.users_client.create_user(data_utils.rand_name(),
+                                                "tigris",
+                                                cls.tenant['id'],
+                                                "")['user']
         cls.tenant_cli = ssh_cli.CLIClient(
-            username="demo",
-            tenant_name="demo",
+            username=cls.user['name'],
+            tenant_name=cls.tenant['name'],
             password="tigris",
             uri=cls.uri)
         cls.me = Role.tenant
@@ -210,11 +225,12 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
                 cls._delete_network(network['id'])
             cls.networks = []
 
-            cls.clear_credentials()
-
             # Todo: Hendrik check with Janwhy the next line was here.
             # resources get delted twice, causing testcas failure
             # super(RemoteCliBaseTestCase, cls).resource_cleanup()
+        cls.users_client.delete_user(cls.user['id'])
+        cls.tenants_client.delete_tenant(cls.tenant['id'])
+        super(RemoteCliBaseTestCase, cls).resource_cleanup()
 
     def create_network_with_args(self, *args):
         """Wrapper utility that returns a test network."""

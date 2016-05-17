@@ -67,6 +67,10 @@ NuageSutGroup = [
                default='monolytic',
                choices=['monolytic', 'ml2'],
                help="The mode for controlling services on controller node."),
+    cfg.StrOpt('release',
+               default='0.0',
+               help="The release of the sut. "
+                    "Valid examples: 3.2R1, 4.0, 4.0r2"),
     cfg.StrOpt('controller_service_management_mode',
                default='devstack',
                choices=['devstack', 'ubuntu', 'rhel'],

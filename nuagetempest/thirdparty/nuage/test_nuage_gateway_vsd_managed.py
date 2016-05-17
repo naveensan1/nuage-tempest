@@ -21,6 +21,7 @@ from oslo_log import log as logging
 
 from tempest.common.utils import data_utils
 from tempest import config
+from tempest import test
 
 CONF = config.CONF
 
@@ -40,6 +41,7 @@ class NuageGatewayTestVSDManaged(base.BaseNuageGatewayTest,
     def resource_cleanup(cls):
         super(NuageGatewayTestVSDManaged, cls).resource_cleanup()
 
+    @test.attr(type='smoke')
     def test_vport_l3(self):
         name = data_utils.rand_name('l3domain-')
         vsd_l3dom_tmplt = self.create_vsd_l3dom_template(
@@ -112,6 +114,7 @@ class NuageGatewayTestVSDManaged(base.BaseNuageGatewayTest,
         self.assertIsNotNone(vport, "show Bridge Vport failed")
         self.verify_vport_properties(gw_vport[0], vport)
 
+    @test.attr(type='smoke')
     def test_vport_managed_l2(self):
         name = data_utils.rand_name('l2domain-')
         cidr = IPNetwork('10.10.100.0/24')
@@ -172,6 +175,7 @@ class NuageGatewayTestVSDManaged(base.BaseNuageGatewayTest,
         self.assertIsNotNone(vport, "show Bridge Vport failed")
         self.verify_vport_properties(gw_vport[0], vport)
 
+    @test.attr(type='smoke')
     def test_vport_unmanaged_l2(self):
         name = data_utils.rand_name('l2domain-')
         vsd_l2dom_tmplt = self.create_vsd_dhcpunmanaged_l2dom_template(

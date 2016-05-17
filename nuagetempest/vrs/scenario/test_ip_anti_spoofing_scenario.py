@@ -64,7 +64,6 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             obj.assertEqual(vm_vrs['ip'], vm_address)
             obj.assertNotEqual(vm_vrs['evpn_id'], 0)
             obj.assertNotEqual(vm_vrs['vrf_id'], 0)
-
             table_entries = TB.vrs_1.cmd(
                 'ovs-appctl bridge/dump-flows alubr0 | grep table_id=60')
             table_entry = self.ip_anti_spoof._get_table_entry(table_entries,

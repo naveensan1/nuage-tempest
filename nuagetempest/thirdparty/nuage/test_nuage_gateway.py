@@ -92,6 +92,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
                 if not found_port:
                     assert False, "Gateway Port not found"
 
+    @test.attr(type='smoke')
     def test_show_gateway_port(self):
         for gw_port in self.gatewayports:
             body = self.admin_client.show_gateway_port(gw_port[0]['ID'])
@@ -319,6 +320,28 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
                          port['fixed_ips'][0]['ip_address'])
 
     @test.attr(type='smoke')
+    def test_port_fip_assoc_nondef_netpart(self):
+        # Verify port creation
+        post_body = {"network_id": self.nondef_network['id'],
+                     "device_owner": 'compute:ironic'}
+        body = self.ports_client.create_port(**post_body)
+        port = body['port']
+
+        self.addCleanup(self.ports_client.delete_port, port['id'])
+        # Associate a fip to the vport
+        body = self.floating_ips_client.create_floatingip(
+            floating_network_id=self.ext_net_id,
+            port_id=port['id'],
+            fixed_ip_address=port['fixed_ips'][0]['ip_address'])
+        created_floating_ip = body['floatingip']
+        self.addCleanup(self.floating_ips_client.delete_floatingip,
+                        created_floating_ip['id'])
+        self.assertIsNotNone(created_floating_ip['id'])
+        self.assertEqual(created_floating_ip['fixed_ip_address'],
+                         port['fixed_ips'][0]['ip_address'])
+
+
+    @test.attr(type='smoke')
     def test_host_port_fip_assoc(self):
         # Verify port creation
         post_body = {"network_id": self.network['id'],
@@ -432,6 +455,63 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             assert False, "Bridge Vport not found"
 
     @test.attr(type='smoke')
+    def test_list_nuage_vport_nondef_netpart(self):
+        # Create a host vport
+        # Create a neutron port
+        post_body = {"network_id": self.nondef_network['id'],
+                     "device_owner": 'compute:ironic'}
+        body = self.ports_client.create_port(**post_body)
+        port = body['port']
+
+        self.addCleanup(self.ports_client.delete_port, port['id'])
+        # Create host vport
+        kwargs = {
+            'gatewayvlan': self.gatewayvlans[0][0]['ID'],
+            'port': port['id'],
+            'subnet': None,
+            'tenant': self.client.tenant_id
+        }
+
+        body = self.client.create_gateway_vport(**kwargs)
+        vport = body['nuage_gateway_vport']
+
+        gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
+        self.verify_vport_properties(gw_vport[0], vport)
+        body = self.admin_client.list_gateway_vport(self.nondef_subnet['id'])
+        vports = body['nuage_gateway_vports']
+        found_vport = False
+        for vport in vports:
+            if vport['name'] == gw_vport[0]['name']:
+                found_vport = True
+                self.verify_vport_properties(gw_vport[0], vport)
+
+        if not found_vport:
+            assert False, "Host Vport not found"
+
+        # Create Bridge vport
+        kwargs = {
+            'gatewayvlan': self.gatewayvlans[1][0]['ID'],
+            'port': None,
+            'subnet': self.nondef_subnet['id'],
+            'tenant': self.client.tenant_id
+        }
+        body = self.client.create_gateway_vport(**kwargs)
+        vport = body['nuage_gateway_vport']
+        self.gatewayvports.append(vport)
+        gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
+        self.verify_vport_properties(gw_vport[0], vport)
+        body = self.admin_client.list_gateway_vport(self.nondef_subnet['id'])
+        vports = body['nuage_gateway_vports']
+        found_vport = False
+        for vport in vports:
+            if vport['name'] == gw_vport[0]['name']:
+                found_vport = True
+                self.verify_vport_properties(gw_vport[0], vport)
+
+        if not found_vport:
+            assert False, "Bridge Vport not found"
+
+    @test.attr(type='smoke')
     def test_show_nuage_vport(self):
         post_body = {"network_id": self.network['id'],
                      "device_owner": 'compute:ironic'}
@@ -452,6 +532,32 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
         body = self.admin_client.show_gateway_vport(
             gw_vport[0]['ID'], self.subnet['id'])
+        vport = body['nuage_gateway_vport']
+        if vport is None:
+            assert False, "Host Vport not found"
+        self.verify_vport_properties(gw_vport[0], vport)
+
+    @test.attr(type='smoke')
+    def test_show_nuage_vport_nondef_netpart(self):
+        post_body = {"network_id": self.nondef_network['id'],
+                     "device_owner": 'compute:ironic'}
+        body = self.ports_client.create_port(**post_body)
+        port = body['port']
+
+        self.addCleanup(self.ports_client.delete_port, port['id'])
+        # Create host vport
+        kwargs = {
+            'gatewayvlan': self.gatewayvlans[2][0]['ID'],
+            'port': port['id'],
+            'subnet': None,
+            'tenant': self.client.tenant_id
+        }
+
+        body = self.client.create_gateway_vport(**kwargs)
+        vport = body['nuage_gateway_vport']
+        gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
+        body = self.admin_client.show_gateway_vport(
+            gw_vport[0]['ID'], self.nondef_subnet['id'])
         vport = body['nuage_gateway_vport']
         if vport is None:
             assert False, "Host Vport not found"
@@ -540,6 +646,120 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         l3domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID',
             filter_value=self.router['id'])
+        default_pg = self.nuage_vsd_client.get_policygroup(
+            n_constants.DOMAIN, l3domain[0]['ID'])
+        self.assertEqual(default_pg[0]['name'],
+                         'defaultPG-VSG-BRIDGE-' + vport['subnet'])
+        vport_from_pg = self.nuage_vsd_client.get_vport(
+            n_constants.POLICYGROUP,
+            default_pg[0]['ID'])
+        self.assertEqual(vport_from_pg[0]['name'], vport['name'])
+        nuage_eacl_template = self.nuage_vsd_client.get_egressacl_template(
+            n_constants.DOMAIN,
+            l3domain[0]['ID'])
+        nuage_eacl_entrytemplate = \
+            self.nuage_vsd_client.get_egressacl_entytemplate(
+                n_constants.EGRESS_ACL_TEMPLATE,
+                nuage_eacl_template[0]['ID'])
+        vport_tp_pg_mapping = False
+        for nuage_eacl_entry in nuage_eacl_entrytemplate:
+            if nuage_eacl_entry['locationID'] == default_pg[0]['ID']:
+                self.assertEqual(
+                    nuage_eacl_entrytemplate[0]['networkType'],
+                    'ENDPOINT_DOMAIN')
+                self.assertEqual(
+                    nuage_eacl_entrytemplate[0]['locationType'],
+                    'POLICYGROUP')
+                vport_tp_pg_mapping = True
+
+        if vport_tp_pg_mapping is False:
+            assert False, "Bridge Vport not found in default PG"
+
+    @test.attr(type='smoke')
+    def test_default_security_group_host_port_nondef_netpart(self):
+        post_body = {"network_id": self.nondef_network['id'],
+                     "device_owner": 'nuage:vip'}
+        body = self.ports_client.create_port(**post_body)
+        port = body['port']
+
+        self.addCleanup(self.ports_client.delete_port, port['id'])
+        # Create host vport
+        kwargs = {
+            'gatewayvlan': self.gatewayvlans[3][0]['ID'],
+            'port': port['id'],
+            'subnet': None,
+            'tenant': self.client.tenant_id
+        }
+        body = self.client.create_gateway_vport(**kwargs)
+        vport = body['nuage_gateway_vport']
+        gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
+        body = self.admin_client.show_gateway_vport(
+            gw_vport[0]['ID'], self.nondef_subnet['id'])
+        vport = body['nuage_gateway_vport']
+        if vport is None:
+            assert False, "Host Vport not found"
+        self.verify_vport_properties(gw_vport[0], vport)
+        l3domain = self.nuage_vsd_client.get_l3domain(
+            filters='externalID',
+            filter_value=self.nondef_router['id'], 
+            netpart_name=self.nondef_netpart['name'])
+        default_pg = self.nuage_vsd_client.get_policygroup(
+            n_constants.DOMAIN, l3domain[0]['ID'])
+        self.assertEqual(default_pg[0]['name'],
+                         'defaultPG-VRSG-HOST-' + vport['subnet'])
+        vport_from_pg = self.nuage_vsd_client.get_vport(
+            n_constants.POLICYGROUP,
+            default_pg[0]['ID'])
+        self.assertEqual(vport_from_pg[0]['name'], vport['name'])
+        nuage_eacl_template = self.nuage_vsd_client.get_egressacl_template(
+            n_constants.DOMAIN,
+            l3domain[0]['ID'])
+        nuage_eacl_entrytemplate = \
+            self.nuage_vsd_client.get_egressacl_entytemplate(
+                n_constants.EGRESS_ACL_TEMPLATE,
+                nuage_eacl_template[0]['ID'])
+        vport_tp_pg_mapping = False
+        for nuage_eacl_entry in nuage_eacl_entrytemplate:
+            if nuage_eacl_entry['locationID'] == default_pg[0]['ID']:
+                self.assertEqual(
+                    nuage_eacl_entrytemplate[0]['networkType'],
+                    'ENDPOINT_DOMAIN')
+                self.assertEqual(
+                    nuage_eacl_entrytemplate[0]['locationType'],
+                    'POLICYGROUP')
+                vport_tp_pg_mapping = True
+
+        if vport_tp_pg_mapping is False:
+            assert False, "Host Vport not found in default PG"
+
+    @test.attr(type='smoke')
+    def test_default_security_group_bridge_port_nondef_netpart(self):
+        kwargs = {
+            'gatewayvlan': self.gatewayvlans[4][0]['ID'],
+            'port': None,
+            'subnet': self.nondef_subnet['id'],
+            'tenant': self.client.tenant_id
+        }
+        body = self.client.create_gateway_vport(**kwargs)
+        vport = body['nuage_gateway_vport']
+        self.gatewayvports.append(vport)
+
+        gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
+        self.verify_vport_properties(gw_vport[0], vport)
+        body = self.admin_client.list_gateway_vport(self.nondef_subnet['id'])
+        vports = body['nuage_gateway_vports']
+        found_vport = False
+        for vport in vports:
+            if vport['name'] == gw_vport[0]['name']:
+                found_vport = True
+                self.verify_vport_properties(gw_vport[0], vport)
+
+        if not found_vport:
+            assert False, "Bridge Vport not found"
+        l3domain = self.nuage_vsd_client.get_l3domain(
+            filters='externalID',
+            filter_value=self.nondef_router['id'],
+            natpart_name=self.nondef_netpart['name'])
         default_pg = self.nuage_vsd_client.get_policygroup(
             n_constants.DOMAIN, l3domain[0]['ID'])
         self.assertEqual(default_pg[0]['name'],

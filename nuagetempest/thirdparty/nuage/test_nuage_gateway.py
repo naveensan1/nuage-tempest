@@ -537,7 +537,6 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             assert False, "Host Vport not found"
         self.verify_vport_properties(gw_vport[0], vport)
 
-
     @test.attr(type='smoke')
     def test_show_nuage_vport_nondef_netpart(self):
         post_body = {"network_id": self.nondef_network['id'],

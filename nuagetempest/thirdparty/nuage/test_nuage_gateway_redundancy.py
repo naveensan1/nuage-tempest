@@ -155,8 +155,7 @@ class NuageGatewayTestRedundancy(base.BaseNuageGatewayTest,
                                  "Gateway %s not found" % gw[0]['name'])
             self.verify_gateway_properties(gw[0], gateway)
 
-    
-    @test.attr(type='smoke')@test.attr(type='smoke')
+    @test.attr(type='smoke')
     def test_show_gateway_redundant(self):
         for gw in self.gatewaygroups:
             body = self.admin_client.show_gateway(gw[0]['ID'])

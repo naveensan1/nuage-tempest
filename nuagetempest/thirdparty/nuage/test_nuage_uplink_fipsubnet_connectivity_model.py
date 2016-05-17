@@ -17,6 +17,8 @@ import netaddr
 import uuid
 
 from oslo_log import log as logging
+
+from nuagetempest.lib.test import nuage_test
 from tempest.api.network.admin import test_floating_ips_admin_actions
 from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions

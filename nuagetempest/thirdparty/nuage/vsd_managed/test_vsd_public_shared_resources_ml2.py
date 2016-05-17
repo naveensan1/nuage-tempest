@@ -23,6 +23,7 @@ from tempest.lib import exceptions as lib_exc
 from tempest.lib.common.utils import data_utils
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
+from nuagetempest.lib.test import tags
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_public_resources
 
@@ -46,6 +47,7 @@ EXPECT_CIDR_IN_RANGE = "Bad request: cidr in subnet must be"
 EXPECT_GATEWAY_IN_CIDR = "Invalid input for operation: Gateway is not valid on subnet."
 
 
+@nuage_test.class_header(tags=[tags.ML2, tags.VSD_MANAGED])
 class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDPublicResourcesTest):
 
     @nuage_test.header()

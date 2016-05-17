@@ -23,7 +23,7 @@ from tempest.lib import exceptions
 
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
-
+from nuagetempest.lib.test import tags
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_port_attributes
 
@@ -45,6 +45,7 @@ SEVERAL_VSD_CLAIMED_FIPS = 3
 VALID_MAC_ADDRESS = 'fa:fa:3e:e8:e8:c0'
 
 
+@nuage_test.class_header(tags=tags.VSD_MANAGED)
 class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
 
     @classmethod
@@ -101,6 +102,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         pass
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_create_delete_vsd_redirection_target_l2_mgd_subnet(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack
         vsd_l2_subnet, l2dom_template = self._create_vsd_l2_managed_subnet()
@@ -206,6 +208,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         pass
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_create_delete_os_redirection_target_l3_mgd_subnet(self):
         # Given I have a VSD-L3-Managed-Subnet in openstack        #
         vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()
@@ -453,7 +456,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         else:
             # TODO: VSD-14420 adapt expected return code into badrequest
             LOG.warning("VSD-14420: throws wrong http error code: ServerFault iso BadRequest")
-            msg = "Nuage API: 'ID'"
+            msg = "Nuage API: vPort Tag with endpoint type as NONE/VIRTUAL_WIRE cannot have redundancy enabled and trigger type as GARP"
             expected_exception = exceptions.ServerFault
 
         self.assertRaisesRegexp(
@@ -482,7 +485,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         else:
             # TODO: Need a valid error message, this message should fail ! See VSD-14421
             LOG.warning("VSD-14421: throws wrong http error code: ServerFault iso BadRequest")
-            msg = "Nuage API: 'ID'"
+            msg = "Nuage API: An L2 domain redirectiontarget cannot have an L3 endpoint"
             expected_exception = exceptions.ServerFault
 
         self.assertRaisesRegexp(
@@ -615,6 +618,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         pass
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_l2_associate_port_to_policygroup(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -1174,6 +1178,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
                          "Removed allowed-address-pair stil present in port (%s)" % addrpair_port['id'])
         pass
 
+    @test.attr(type='smoke')
     def test_create_address_pair_l3domain_with_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l3_subnet, l3_domain = self._create_vsd_l3_managed_subnet()
@@ -1271,6 +1276,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
                                  (claimed_fip[0]['ID'], port['id']))
 
     @nuage_test.header()
+    @test.attr(type='smoke')
     def test_create_list_associate_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
         vsd_fip_pool = self.vsd_fip_pool

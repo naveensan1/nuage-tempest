@@ -101,6 +101,7 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
 
+    @test.attr(type='smoke')
     def test_create_address_pair_on_l2domain_with_mac(self):
         # Create port with allowed address pair attribute
         # For /32 cidr
@@ -159,6 +160,7 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
 
+    @test.attr(type='smoke')
     def test_create_address_pair_on_l3subnet_with_mac(self):
         # Create port with allowed address pair attribute
         addrpair_port = self.create_port(self.l3network)
@@ -277,6 +279,7 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
 
+    @test.attr(type='smoke')
     def test_update_address_pair_on_l3subnet(self):
         addrpair_port_1 = self.create_port(self.l3network)
         allowed_address_pairs = [
@@ -352,6 +355,7 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filter_value=str(addrpair_port_1['fixed_ips'][0]['ip_address']))
         self.assertEmpty(nuage_vip)
 
+    @test.attr(type='smoke')
     def test_create_address_pair_with_same_ip(self):
         # Create a vm
         post_body = {"network_id": self.l3network['id'],

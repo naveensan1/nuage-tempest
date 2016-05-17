@@ -360,7 +360,6 @@ class BgpvpnCliTests(test.BaseTestCase):
         self.def_net_partition = CONF.nuage.nuage_default_netpartition
         self.os_cli = TB.osc_1.cli 
         self.os_data = openstackData()
-        import pdb;pdb.set_trace()
         self.os_data.insert_resource(self.def_net_partition,
                                     parent='CMS')
 

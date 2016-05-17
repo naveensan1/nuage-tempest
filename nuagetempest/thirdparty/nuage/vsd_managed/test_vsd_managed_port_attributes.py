@@ -456,7 +456,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         else:
             # TODO: VSD-14420 adapt expected return code into badrequest
             LOG.warning("VSD-14420: throws wrong http error code: ServerFault iso BadRequest")
-            msg = "Nuage API: 'ID'"
+            msg = "Nuage API: vPort Tag with endpoint type as NONE/VIRTUAL_WIRE cannot have redundancy enabled and trigger type as GARP"
             expected_exception = exceptions.ServerFault
 
         self.assertRaisesRegexp(
@@ -485,7 +485,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         else:
             # TODO: Need a valid error message, this message should fail ! See VSD-14421
             LOG.warning("VSD-14421: throws wrong http error code: ServerFault iso BadRequest")
-            msg = "Nuage API: 'ID'"
+            msg = "Nuage API: An L2 domain redirectiontarget cannot have an L3 endpoint"
             expected_exception = exceptions.ServerFault
 
         self.assertRaisesRegexp(

@@ -20,26 +20,6 @@ class Topology(object):
         self.duts_list = self.parse_topologyfile()
         self.make_testbed()
 
-    def open_ssh_sessions(self):
-
-        def _open_ssh_session(dut):
-            try:
-                dut.ssh.open()
-            except:
-                exc = ''.join(traceback.format_exception(*sys.exc_info()))
-                dut.ssh.log.error(exc)
-                failed.append(dut)
-
-        threads = []
-        failed = []
-        for dut in self.duts.values():
-            t = threading.Thread(target=_open_ssh_session, args=(dut,))
-            t.is_daemon = True
-            t.start()
-            threads.append(t)
-
-        [thread.join() for thread in threads]
-
     @property
     def _vrs(self):
         vrs = {}

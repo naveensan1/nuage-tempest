@@ -982,7 +982,7 @@ class VSDManagedAssociateFIPCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
     @classmethod
     def resource_cleanup(cls):
         super(VSDManagedAssociateFIPCLITest, cls).resource_cleanup()
-        super(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes, cls).resource_cleanup()
+        # super(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes, cls).resource_cleanup()
         # cleanup the OpenStack managed objects first
         # super(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes, cls).resource_cleanup()
     #

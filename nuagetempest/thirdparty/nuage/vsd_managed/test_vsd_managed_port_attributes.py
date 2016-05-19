@@ -449,15 +449,10 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         # I expect an error
         msg = "Cannot have more than 1 vPort under a redirectiontarget with redundancy disabled"
         expected_exception = exceptions.BadRequest
-
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
-            msg = "Nuage API: 'ID'"
-            expected_exception = exceptions.ServerFault
-        else:
-            # TODO: VSD-14420 adapt expected return code into badrequest
-            LOG.warning("VSD-14420: throws wrong http error code: ServerFault iso BadRequest")
-            msg = "Nuage API: vPort Tag with endpoint type as NONE/VIRTUAL_WIRE cannot have redundancy enabled and trigger type as GARP"
-            expected_exception = exceptions.ServerFault
+        # TODO: VSD-14420 adapt expected return code into badrequest
+        LOG.warning("VSD-14420: throws wrong http error code: ServerFault iso BadRequest")
+        msg = "Nuage API: vPort Tag with endpoint type as NONE/VIRTUAL_WIRE cannot have redundancy enabled and trigger type as GARP"
+        expected_exception = exceptions.ServerFault
 
         self.assertRaisesRegexp(
             expected_exception,

@@ -592,11 +592,16 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             filter_value=self.router['id'])
         default_pg = self.nuage_vsd_client.get_policygroup(
             n_constants.DOMAIN, l3domain[0]['ID'])
-        self.assertEqual(default_pg[0]['name'],
-                         'defaultPG-VRSG-HOST-' + vport['subnet'])
+        print default_pg
+        if default_pg[0]['name'] == 'defaultPG-VRSG-HOST-' + vport['subnet']:
+            pg_num = 0   
+        else:
+            pg_num = 1
+        self.assertEqual(default_pg[pg_num]['name'],
+                     'defaultPG-VRSG-HOST-' + vport['subnet'])
         vport_from_pg = self.nuage_vsd_client.get_vport(
             n_constants.POLICYGROUP,
-            default_pg[0]['ID'])
+            default_pg[pg_num]['ID'])
         self.assertEqual(vport_from_pg[0]['name'], vport['name'])
         nuage_eacl_template = self.nuage_vsd_client.get_egressacl_template(
             n_constants.DOMAIN,
@@ -607,7 +612,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
                 nuage_eacl_template[0]['ID'])
         vport_tp_pg_mapping = False
         for nuage_eacl_entry in nuage_eacl_entrytemplate:
-            if nuage_eacl_entry['locationID'] == default_pg[0]['ID']:
+            if nuage_eacl_entry['locationID'] == default_pg[pg_num]['ID']:
                 self.assertEqual(
                     nuage_eacl_entrytemplate[0]['networkType'],
                     'ENDPOINT_DOMAIN')
@@ -628,11 +633,11 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             'tenant': self.client.tenant_id
         }
         body = self.client.create_gateway_vport(**kwargs)
-        vport = body['nuage_gateway_vport']
-        self.gatewayvports.append(vport)
+        vport1 = body['nuage_gateway_vport']
+        self.gatewayvports.append(vport1)
 
-        gw_vport = self.nuage_vsd_client.get_host_vport(vport['id'])
-        self.verify_vport_properties(gw_vport[0], vport)
+        gw_vport = self.nuage_vsd_client.get_host_vport(vport1['id'])
+        self.verify_vport_properties(gw_vport[0], vport1)
         body = self.admin_client.list_gateway_vport(self.subnet['id'])
         vports = body['nuage_gateway_vports']
         found_vport = False
@@ -649,7 +654,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         default_pg = self.nuage_vsd_client.get_policygroup(
             n_constants.DOMAIN, l3domain[0]['ID'])
         self.assertEqual(default_pg[0]['name'],
-                         'defaultPG-VSG-BRIDGE-' + vport['subnet'])
+                         'defaultPG-VRSG-BRIDGE-' + vport['subnet'])
         vport_from_pg = self.nuage_vsd_client.get_vport(
             n_constants.POLICYGROUP,
             default_pg[0]['ID'])
@@ -675,6 +680,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         if vport_tp_pg_mapping is False:
             assert False, "Bridge Vport not found in default PG"
 
+
     @test.attr(type='smoke')
     def test_default_security_group_host_port_nondef_netpart(self):
         post_body = {"network_id": self.nondef_network['id'],
@@ -685,7 +691,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[3][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[5][0]['ID'],
             'port': port['id'],
             'subnet': None,
             'tenant': self.client.tenant_id
@@ -735,7 +741,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
     @test.attr(type='smoke')
     def test_default_security_group_bridge_port_nondef_netpart(self):
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[4][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[6][0]['ID'],
             'port': None,
             'subnet': self.nondef_subnet['id'],
             'tenant': self.client.tenant_id
@@ -759,11 +765,11 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         l3domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID',
             filter_value=self.nondef_router['id'],
-            natpart_name=self.nondef_netpart['name'])
+            netpart_name=self.nondef_netpart['name'])
         default_pg = self.nuage_vsd_client.get_policygroup(
             n_constants.DOMAIN, l3domain[0]['ID'])
         self.assertEqual(default_pg[0]['name'],
-                         'defaultPG-VSG-BRIDGE-' + vport['subnet'])
+                         'defaultPG-VRSG-BRIDGE-' + vport['subnet'])
         vport_from_pg = self.nuage_vsd_client.get_vport(
             n_constants.POLICYGROUP,
             default_pg[0]['ID'])

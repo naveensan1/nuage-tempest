@@ -466,7 +466,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[0][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[11][0]['ID'],
             'port': port['id'],
             'subnet': None,
             'tenant': self.client.tenant_id
@@ -490,7 +490,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
 
         # Create Bridge vport
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[1][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[8][0]['ID'],
             'port': None,
             'subnet': self.nondef_subnet['id'],
             'tenant': self.client.tenant_id
@@ -547,7 +547,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[7][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[9][0]['ID'],
             'port': port['id'],
             'subnet': None,
             'tenant': self.client.tenant_id
@@ -654,7 +654,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         default_pg = self.nuage_vsd_client.get_policygroup(
             n_constants.DOMAIN, l3domain[0]['ID'])
         self.assertEqual(default_pg[0]['name'],
-                         'defaultPG-VSG-BRIDGE-' + vport['subnet'])
+                         'defaultPG-VRSG-BRIDGE-' + vport['subnet'])
         vport_from_pg = self.nuage_vsd_client.get_vport(
             n_constants.POLICYGROUP,
             default_pg[0]['ID'])
@@ -774,7 +774,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         default_pg = self.nuage_vsd_client.get_policygroup(
             n_constants.DOMAIN, l3domain[0]['ID'])
         self.assertEqual(default_pg[0]['name'],
-                         'defaultPG-VRG-BRIDGE-' + vport['subnet'])
+                         'defaultPG-VRSG-BRIDGE-' + vport['subnet'])
         vport_from_pg = self.nuage_vsd_client.get_vport(
             n_constants.POLICYGROUP,
             default_pg[0]['ID'])

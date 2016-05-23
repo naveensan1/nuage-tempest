@@ -389,7 +389,7 @@ class NuageGatewayTestRedundancy(base.BaseNuageGatewayTest,
         self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
-            'gatewayvlan': self.group_vlans[0][0]['ID'],
+            'gatewayvlan': self.group_vlans[6][0]['ID'],
             'port': port['id'],
             'subnet': None,
             'tenant': self.client.tenant_id
@@ -418,7 +418,7 @@ class NuageGatewayTestRedundancy(base.BaseNuageGatewayTest,
 
         # Create Bridge vport
         kwargs = {
-            'gatewayvlan': self.group_vlans[1][0]['ID'],
+            'gatewayvlan': self.group_vlans[7][0]['ID'],
             'port': None,
             'subnet': self.nondef_subnet['id'],
             'tenant': self.client.tenant_id

@@ -864,8 +864,8 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
 
     @test.attr(type='smoke')
     def test_list_nuage_vport_nondef_netpart(self):
-        self._create_list_nuage_vport(self.gatewayvlans[0],
-                                      self.gatewayvlans[1],
+        self._create_list_nuage_vport(self.gatewayvlans[12],
+                                      self.gatewayvlans[13],
                                       nondef_netpart=True)
 
     @test.attr(type='smoke')
@@ -875,8 +875,8 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
 
     @test.attr(type='smoke')
     def test_list_nuage_vport_from_rdn_gateways_nondef_netpart(self):
-        self._create_list_nuage_vport(self.gatewayvlans[8],
-                                      self.gatewayvlans[9],
+        self._create_list_nuage_vport(self.gatewayvlans[10],
+                                      self.gatewayvlans[11],
                                       nondef_netpart=True)
 
     @test.attr(type='smoke')
@@ -915,7 +915,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
         self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[2][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[6][0]['ID'],
             'port': port['id'],
             'subnet': None,
             'tenant': self.client.tenant_id
@@ -965,7 +965,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
         self.addCleanup(self.ports_client.delete_port, port['id'])
         # Create host vport
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[3][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[7][0]['ID'],
             'port': port['id'],
             'subnet': None,
             'tenant': self.client.tenant_id
@@ -1008,7 +1008,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
     @test.attr(type='smoke')
     def test_default_security_group_bridge_port_nondef_netpart(self):
         kwargs = {
-            'gatewayvlan': self.gatewayvlans[4][0]['ID'],
+            'gatewayvlan': self.gatewayvlans[5][0]['ID'],
             'port': None,
             'subnet': self.nondef_subnet['id'],
             'tenant': self.client.tenant_id

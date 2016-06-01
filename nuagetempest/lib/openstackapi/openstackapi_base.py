@@ -1,6 +1,9 @@
+from nuagetempest.services.vpnaas import vpnaas_client
+from nuagetempest.services.vpnaas import vpnaas_mixins
 from tempest.api.network import base
 from tempest.api.network import base_routers
 from tempest.api.network import base_security_groups
+from tempest.api.compute import base as basecompute
 from tempest.common import custom_matchers
 from tempest.common.utils import data_utils
 from tempest import config
@@ -12,7 +15,9 @@ CONF = config.CONF
 class OpenstackAPIClient(base_security_groups.BaseSecGroupTest,
                          base_routers.BaseRouterTest,
                          base.BaseAdminNetworkTest,
-                         base.BaseNetworkTest):
+                         base.BaseNetworkTest,
+                         vpnaas_mixins.VPNMixin,
+                         basecompute.BaseV2ComputeTest):
     """Base API Client:
      
      Openstack API Client which will be inherited 

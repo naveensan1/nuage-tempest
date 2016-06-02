@@ -436,14 +436,14 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
             'cli-nuage-rt-l2-red-enabled-neg'
         )
         # Todo: uncomment when OPENSTACK-1361 is solved
-        # self.assertRaisesRegex(
-        #     exceptions.SSHExecCommandFailed,
-        #     msg,
-        #     self._cli_create_redirect_target_with_args,
-        #     "--insertion-mode VIRTUAL_WIRE  --redundancy-enabled true --subnet",
-        #     cli_subnet['name'],
-        #     'cli-nuage-rt-l2-red-enabled-neg'
-        # )
+        self.assertRaisesRegex(
+            exceptions.SSHExecCommandFailed,
+            msg,
+            self._cli_create_redirect_target_with_args,
+            "--insertion-mode VIRTUAL_WIRE  --redundancy-enabled true --subnet",
+            cli_subnet['name'],
+            'cli-nuage-rt-l2-red-enabled-neg'
+        )
 
     @test.attr(type=['negative'])
     @nuage_test.header()

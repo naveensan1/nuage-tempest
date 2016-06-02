@@ -559,7 +559,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
 ######################################################################################################################
 ######################################################################################################################
 
-
+@nuage_test.class_header(tags=tags.VSD_MANAGED)
 class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
 
     @classmethod
@@ -1029,6 +1029,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
 ################################################################################################################
 
 
+@nuage_test.class_header(tags=tags.VSD_MANAGED)
 class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
 
     @classmethod
@@ -1227,6 +1228,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
     ################################################################################################################
 
 
+@nuage_test.class_header(tags=tags.VSD_MANAGED)
 class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
 
     @classmethod

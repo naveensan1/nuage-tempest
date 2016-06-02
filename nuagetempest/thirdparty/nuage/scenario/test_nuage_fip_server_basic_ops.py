@@ -34,6 +34,7 @@ Floating_IP_tuple = collections.namedtuple('Floating_IP_tuple',
 
 EXTRA_DHCP_OPT_MTU_VALUE = '1498'
 EXTRA_DHCP_OPT_DOMAIN_NAME = 'nuagenetworks.com'
+EXTRA_DHCP_OPT_DOMAIN_SEARCH = 'sales.domain.com;eng.domain.org'
 FIP_RATE_LIMIT = '5'
 
 class TestNetworkBasicOps(base_nuage_network_scenario_test.NuageNetworkScenarioTest,
@@ -117,7 +118,8 @@ class TestNetworkBasicOps(base_nuage_network_scenario_test.NuageNetworkScenarioT
             # Don't forget to add the security group to allow ssh
             extra_dhcp_opts = [
                 {'opt_value': EXTRA_DHCP_OPT_MTU_VALUE, 'opt_name': 'mtu'},
-                {'opt_value': EXTRA_DHCP_OPT_DOMAIN_NAME, 'opt_name': 'domain-name'}
+                {'opt_value': EXTRA_DHCP_OPT_DOMAIN_NAME, 'opt_name': 'domain-name'},
+                {'opt_value': EXTRA_DHCP_OPT_DOMAIN_SEARCH, 'opt_name': 'domain-search'}
                 ]
             port_kvargs = {
                 'extra_dhcp_opts': extra_dhcp_opts,

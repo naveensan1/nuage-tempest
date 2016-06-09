@@ -735,9 +735,7 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # So that we can ssh into this VM and check ping on the second NIC, which
         # is a port that we associated/disassociate to the policy group
         network = self._create_network(client=None, tenant_id=None)
-        tenant_id = self.networks_client.tenant_id
-        # Use same tenant for router creation
-        router = self._get_router(tenant_id=tenant_id, client=self.admin_routers_client)
+        router = self._get_router(tenant_id=None, client=self.admin_routers_client)
         kwargs = {
             'network': network,
             'cidr': OS_CONNECTING_NW_CIDR,

@@ -62,7 +62,8 @@ def _filter_test_class_by_release(test_class, current_release):
 
 @functools.total_ordering
 class Release(object):
-    release_regex = re.compile("((\d\.?)+)[\D]*(\d+)?")
+    release_regex = re.compile("^([a-zA-Z]+)?[\D]*"
+                               "((\d+(\.(?=\d))?){2,})?[\D]*(\d+)?$")
 
     def __init__(self, release_string):
         self._parse_release(release_string)
@@ -71,12 +72,13 @@ class Release(object):
         parsed = Release.release_regex.search(release)
         if parsed is None:
             raise Exception("Can not parse release String '%s'" % release)
-        self.major_release = parsed.group(1)
-        self.sub_release = int(parsed.group(3)) if parsed.group(3) else None
-        self.major_list = self.major_release.split(".")
+        self.openstack_release = (parsed.group(1) or '').lower()
+        self.major_release = parsed.group(2) or '0.0'
+        self.sub_release = int(parsed.group(5)) if parsed.group(5) else -1
+        self.major_list = self.major_release.split('.')
 
     def __eq__(self, other):
-        """ Compares self with another Release object.
+        """Compares self with another Release object.
 
         Releases are considered equal when the major part of the release is
         equal and the sub-release is equal. With 1 exception: if any of the sub
@@ -85,12 +87,17 @@ class Release(object):
         :param other: Release object to compare with
         :return: True when the releases are considered equal else False.
         """
-        return (self.major_release == other.major_release and
-                (self.sub_release is None or other.sub_release is None or
-                 self.sub_release == other.sub_release))
+        equal = True
+        equal &= self.openstack_release == other.openstack_release
+        equal &= self.major_release == other.major_release
+        equal &= self.sub_release == other.sub_release
+        return equal
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __lt__(self, other):
-        """ Compares self with another Release object to be 'less than'
+        """Compares self with another Release object to be 'less than'
 
         Major release is checked first, if equal, the sub releases are taken
         into account. 0.0 is an exception and 0.0 will always be greater than
@@ -98,9 +105,26 @@ class Release(object):
         :param other: Release object to compare with
         :return: True when self is less than other..
         """
-        comparison = cmp(other.major_list, self.major_list)
-        if comparison > 0 and self.major_release != "0.0":
+        if other.major_release == '0.0':
             return True
-        if comparison == 0:
-            return other.sub_release > self.sub_release
-        return other.major_release == "0.0"
+        if self.openstack_release and other.openstack_release and \
+                self.openstack_release[0] > other.openstack_release[0]:
+            return False
+        if self.major_release == '0.0':
+            return True
+        if other.major_list and self.major_list:
+            comparison = cmp(other.major_list, self.major_list)
+            if comparison == 0:
+                return self.sub_release <= other.sub_release
+            return comparison > 0
+        else:
+            if self.sub_release == other.sub_release:
+                return self.openstack_release is None
+
+    def __str__(self):
+        return ("%s %s%s" % (self.openstack_release or "",
+                             self.major_release or "",
+                             ('R' + str(self.sub_release))
+                             if self.sub_release != -1 else "")
+                ).strip()
+

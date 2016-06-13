@@ -1,5 +1,4 @@
 from oslo_log import log as logging
-
 from tempest import config
 from nuagetempest.services.vpnaas.vpnaas_mixins import VPNMixin
 from nuagetempest.lib import topology
@@ -329,7 +328,7 @@ class VPNaaSCliTests(test.BaseTestCase):
         routername = data_utils.rand_name(routername)
         router = self.os_handle.create_router(router_name=routername)
         # Adding created resources to os_data_struct
-        self.os_handle.routers_client.add_router_interface_with_args(
+        self.os_handle.routers_client.add_router_interface(
             router['id'], subnet['id']
         )
         self.os_handle.routers_client.set_router_gateway_with_args(

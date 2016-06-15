@@ -16,6 +16,10 @@ CONF = config.CONF
 MSG_INVALID_INPUT = "Invalid input for nuage_fip_rate. Reason: \'nuage_fip_rate\' " + \
                     "should be a number higher than 0, -1 for unlimited " + \
                     "or \'default\' for the configured default value.."
+
+MSG_INVALID_INPUT2 = "Nuage API: Error in REST call to VSD: fipPir\(NaN\) must be a valid Integer greater than zero or set to INFINITY"
+
+
 MSG_INVALID_INPUT_FOR_OPERATION = "Invalid input for operation: " + \
                                   "'nuage_fip_rate' should be a number higher than 0, -1 for unlimited " + \
                                   "or 'default' for the configured default value.."
@@ -53,8 +57,11 @@ class TestNuageFipRateLimitBaseCreateNegative(base_nuage_fip_rate_limit.NuageFip
     @nuage_test.header()
     @test.attr(type=['negative'])
     def test_create_fip_with_default_rate_limit_invalid_value(self):
-        self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT,
+        # self.assertRaisesRegexp(lib_exc.BadRequest,
+        #                         MSG_INVALID_INPUT2,
+        #                         self._create_fip_with_fip_rate_limit, self.port, 'NaN')
+        self.assertRaisesRegexp(lib_exc.ServerFault,
+                                MSG_INVALID_INPUT2,
                                 self._create_fip_with_fip_rate_limit, self.port, 'NaN')
 
     @nuage_test.header()
@@ -98,8 +105,11 @@ class TestNuageFipRateLimitBaseUpdateNegative(base_nuage_fip_rate_limit.NuageFip
     @nuage_test.header()
     @test.attr(type=['negative'])
     def test_update_fip_with_default_rate_limit_invalid_value(self):
-        self.assertRaisesRegexp(lib_exc.BadRequest,
-                                MSG_INVALID_INPUT,
+        # self.assertRaisesRegexp(lib_exc.BadRequest,
+        #                         MSG_INVALID_INPUT2,
+        #                         self._update_fip_with_fip_rate_limit, self.port, self.fip, 'NaN')
+        self.assertRaisesRegexp(lib_exc.ServerFault,
+                                MSG_INVALID_INPUT2,
                                 self._update_fip_with_fip_rate_limit, self.port, self.fip, 'NaN')
 
     @nuage_test.header()

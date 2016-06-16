@@ -20,7 +20,8 @@ class ServiceManager():
     def __init__(self):
         self.service_start_cmd = constants.NEUTRON_KILODEVSTACK_UBUNTU_START_CMD
 
-        if CONF.nuage_sut.controller_service_management_mode == "ubuntu":
+        if CONF.nuage_sut.controller_service_management_mode == "ubuntu" or\
+           CONF.nuage_sut.controller_service_management_mode == "rhel":
             self.service_start_cmd = constants.NEUTRON_KILO_UBUNTU_START_CMD
             self.service_stop_cmd = constants.NEUTRON_KILO_UBUNTU_STOP_CMD
 
@@ -112,7 +113,8 @@ class ServiceManager():
         pids = response.split('\n')
 
         LOG.debug("Stopping service " + service)
-        if CONF.nuage_sut.controller_service_management_mode == "ubuntu":
+        if CONF.nuage_sut.controller_service_management_mode == "ubuntu" or\
+           CONF.nuage_sut.controller_service_management_mode == "rhel":
             self.execute(self.service_stop_cmd)
         else:
             if len(response) > 0 and (len(pids) >= 1):
@@ -127,7 +129,8 @@ class ServiceManager():
                 LOG.debug("No process found for service '" + service + "'")
 
     def get_configuration_attribute(self, config_file, config_group, config_key):
-        if CONF.nuage_sut.controller_service_management_mode == "ubuntu":
+        if CONF.nuage_sut.controller_service_management_mode == "ubuntu" or\
+           CONF.nuage_sut.controller_service_management_mode == "rhel":
             cmd = "source functions-common.sh; iniget " + config_file + ' ' + config_group + ' ' + config_key
             response = self.execute(cmd)
             response = response.rstrip('\n')
@@ -143,7 +146,8 @@ class ServiceManager():
         return response
 
     def set_configuration_attribute(self, config_file, config_group, config_key, value):
-        if CONF.nuage_sut.controller_service_management_mode == "ubuntu":
+        if CONF.nuage_sut.controller_service_management_mode == "ubuntu" or\
+           CONF.nuage_sut.controller_service_management_mode == "rhel":
             cmd = "source functions-common.sh; iniset " + config_file + ' ' + config_group + ' ' + config_key + ' ' + value
         else:
             cmd = "sudo crudini --set " + config_file + ' ' + config_group + ' ' + config_key + ' ' + value
@@ -154,7 +158,8 @@ class ServiceManager():
         return response
 
     def comment_configuration_attribute(self, config_file, config_group, config_key):
-        if CONF.nuage_sut.controller_service_management_mode == "ubuntu":
+        if CONF.nuage_sut.controller_service_management_mode == "ubuntu" or\
+           CONF.nuage_sut.controller_service_management_mode == "rhel":
             cmd = "source functions-common.sh; inicomment " + config_file + ' ' + config_group + ' ' + config_key
         else:
             cmd = "sudo crudini --del " + config_file + ' ' + config_group + ' ' + config_key

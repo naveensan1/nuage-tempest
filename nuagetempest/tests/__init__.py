@@ -25,28 +25,19 @@ class NuageExtensionInit():
                 t_part4 = str.split(t[2])[0][4:]
                 return t_part1 + '.' + t_part2 + '.' + class_name + '.' + t_part4 + '.' + tag
 
-for dut in dir(topology.testbed):
-    if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
-        if dut.split('_')[0] == 'vsd':
-            obj = getattr(topology.testbed, dut)
-            obj.api.new_session()
-            obj.update_vsd_session()
-        else:
-            obj = getattr(topology.testbed, dut)
-            obj.ssh.open()
+if __name__ == '__main__':
+
+    for dut in dir(topology.testbed):
+        if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
+            if dut.split('_')[0] == 'vsd':
+                obj = getattr(topology.testbed, dut)
+                obj.api.new_session()
+                obj.update_vsd_session()
+            else:
+                obj = getattr(topology.testbed, dut)
+                obj.ssh.open()
 
 nuage_ext = NuageExtensionInit()
-
-#def add_csproot_to_cms():
-#    vsd = topology.testbed.vsd_1
-#    global_ent_id = vsd.session.user.enterprise_id
-#    global_ent = vsd.vspk.NUEnterprise(id=global_ent_id)
-#    grp_filter = 'name IS "CMS Group"'
-#    usr_filter = 'userName IS "csproot"'
-#    vsd.add_user_to_group(global_ent, usr_filter=usr_filter, grp_filter=grp_filter)
-
-#add_csproot_to_cms()
-
 
 def load_tests(loader, tests, pattern):
     return nuage_tempest_test_loader.nuage_load_tests(loader, pattern)

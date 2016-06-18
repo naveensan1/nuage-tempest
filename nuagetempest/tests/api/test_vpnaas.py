@@ -1,10 +1,10 @@
 from oslo_log import log as logging
 from tempest import config
 from nuagetempest.services.vpnaas.vpnaas_mixins import VPNMixin
-from nuagetempest.lib import topology
+#from nuagetempest.lib import topology
 from tempest import test
 from tempest.common.utils import data_utils
-from nuagetempest.lib.test import nuage_test
+#from nuagetempest.lib.test import nuage_test
 from testtools.matchers import Contains
 from testtools.matchers import Not
 from nuagetempest.lib.openstackData import openstackData
@@ -13,7 +13,7 @@ import netaddr
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-TB = topology.testbed
+TB = nuage_ext.TB
 
 
 class VPNaaSBase(VPNMixin):

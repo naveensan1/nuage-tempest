@@ -1,11 +1,16 @@
 import itertools
 import libVSD
 import threading
+import traceback
+import sys
 from tempest import config
 from libduts import sros, linux
 from nuagetempest.lib.openstackcli import openstackcli_base
-from nuagetempest.lib.openstackapi import openstackapi_base
+#from nuagetempest.lib.openstackapi import openstackapi_base
 import re
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
 
 CONF = config.CONF
 
@@ -49,7 +54,7 @@ class Topology(object):
         except IOError:
             if any(comp in CONF.nuagext.nuage_components for comp in ('vsc', 'vrs')):
                 raise Exception('Testbed topo file or exec server is not provided')
-            elif 'vsd' in CONF.nuagext.nuage_components: 
+            elif 'vsd' in CONF.nuagext.nuage_components:
                 vsd_dut = {}
                 vsd_dut['component'] = 'VSD'
                 vsd_dut['name'] = 'vsd-1'
@@ -167,7 +172,7 @@ class Topology(object):
         if self._is_osc(component):
             osc = linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
             setattr(osc, 'cli', openstackcli_base.OpenstackCliClient(osc))
-            setattr(osc, 'api', openstackapi_base.OpenstackAPIClient())
+            #setattr(osc, 'api', openstackapi_base.OpenstackAPIClient())
             return osc
 
         err = 'Cannot find a class corresponding to {}'.format(name)
@@ -182,18 +187,72 @@ class Topology(object):
         vsd_counter.next()
         osc_counter = itertools.count()
         osc_counter.next()
+        testbed = CONF.nuagext.exec_server
+        self.testbed = linux.Linux(testbed, id='testbed')
+        LOG.debug('testbed')
+        LOG.debug(testbed)
+        self.duts = {}
         for dut in self.duts_list:
             if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:
-                dutobj = 'vrs_' + str(vrs_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'vrs_' + str(vrs_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
             elif dut['component'] == "VSC" and 'vsc' in CONF.nuagext.nuage_components:
-                dutobj = 'vsc_' + str(vsc_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'vsc_' + str(vsc_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
             elif dut['component'] == "VSD" and 'vsd' in CONF.nuagext.nuage_components:
-                dutobj = 'vsd_' + str(vsd_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'vsd_' + str(vsd_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
             elif dut['component'] == "OSC":
-                dutobj = 'osc_' + str(osc_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'osc_' + str(osc_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
 
-testbed = Topology()
+    #def open_ssh_sessions(self, timeout=1):
+
+    #    def _open_ssh_session(dut):
+    #        try:
+    #            dut.ssh.open()
+    #        except:
+    #            exc = ''.join(traceback.format_exception(*sys.exc_info()))
+    #            dut.ssh.log.error(exc)
+    #            failed.append(dut)
+#
+#        threads = []
+#        failed = []
+#        for dut in self.duts.values():
+#            t = threading.Thread(target=_open_ssh_session, args=(dut,))
+#            t.is_daemon = True
+#            t.start()
+#            threads.append(t)
+#
+#        [thread.join() for thread in threads]
+#    
+#
+#    def open_ssh(self):
+#        for dut in self.duts.values():
+#            LOG.debug(dut)
+#            #try:
+#            #    dut.ssh.open()
+#            #except:
+#            #    exc = ''.join(traceback.format_exception(*sys.exc_info()))
+#            #    dut.ssh.log.error(exc)
+#            #    failed.append(dut)
+#
+#            if type(dut) == 'libVSD':
+#                LOG.debug('I am Inside VSD')
+#                dut.api.new_session()
+#                dut.update_vsd_session()
+#            else:
+#                dut.ssh.open()
+
+def initialize_topology():
+    x = Topology()
+    #x.testbed = linux.Linux(testbed, id='testbed')
+    return Topology()

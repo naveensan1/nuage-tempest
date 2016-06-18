@@ -10,9 +10,11 @@ conf = config.CONF
 #LOG = logging.getLogger(__name__)
 
 class NuageExtensionInit():
-    
-    def __init__(self):
+
+    def setup(self):
         self.nuage_extension = nuage_ext.NuageExtension()
+        self.TB = topology.initialize_topology() 
+        self._open_ssh()
 
     def _generate_tag(self, tag, class_name):
         tb = traceback.extract_stack()
@@ -25,15 +27,16 @@ class NuageExtensionInit():
                 t_part4 = str.split(t[2])[0][4:]
                 return t_part1 + '.' + t_part2 + '.' + class_name + '.' + t_part4 + '.' + tag
 
-for dut in dir(topology.testbed):
-    if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
-        if dut.split('_')[0] == 'vsd':
-            obj = getattr(topology.testbed, dut)
-            obj.api.new_session()
-            obj.update_vsd_session()
-        else:
-            obj = getattr(topology.testbed, dut)
-            obj.ssh.open()
+    def _open_ssh():
+        for dut in dir(topology.testbed):
+            if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
+                if dut.split('_')[0] == 'vsd':
+                    obj = getattr(topology.testbed, dut)
+                    obj.api.new_session()
+                    obj.update_vsd_session()
+                else:
+                    obj = getattr(topology.testbed, dut)
+                    obj.ssh.open()
 
 nuage_ext = NuageExtensionInit()
 

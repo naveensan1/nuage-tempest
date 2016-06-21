@@ -11,7 +11,7 @@ from collections import namedtuple
 from enum import Enum
 from netaddr import IPNetwork
 
-TB = topology.testbed
+#TB = topology.testbed
 
 CONF = config.CONF
 

@@ -4,7 +4,7 @@ from nuagetempest.services.vpnaas.vpnaas_mixins import VPNMixin
 #from nuagetempest.lib import topology
 from tempest import test
 from tempest.common.utils import data_utils
-#from nuagetempest.lib.test import nuage_test
+from nuagetempest.lib.test import nuage_test
 from testtools.matchers import Contains
 from testtools.matchers import Not
 from nuagetempest.lib.openstackData import openstackData
@@ -13,7 +13,7 @@ import netaddr
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-TB = nuage_ext.TB
+#TB = nuage_ext.TB
 
 
 class VPNaaSBase(VPNMixin):
@@ -21,6 +21,7 @@ class VPNaaSBase(VPNMixin):
     @classmethod
     def resource_setup(cls):
         super(VPNaaSBase, cls).resource_setup()
+        TB = nuage_ext.TB
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data_struct = openstackData()
         cls.os_data_struct.insert_resource(cls.def_net_partition,
@@ -87,6 +88,8 @@ class VPNaaSTest(VPNaaSBase):
         """ Create delete vpnservice with environment and also 
         verifies the dummy router and subnet created by plugin """
 
+        LOG.debug(dir(TB))
+        return True
         vpnservices = self.vpnservice_client.list_vpnservice()
         pre_ids = [vpnservice['id'] for vpnservice in vpnservices]
         routers = self.routers_client.list_routers()

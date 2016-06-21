@@ -8,7 +8,7 @@ from nuagetempest.tests.api import test_vpnaas
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-TB = topology.testbed
+#TB = topology.testbed
 
 
 class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,

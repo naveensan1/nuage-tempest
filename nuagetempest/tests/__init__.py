@@ -5,7 +5,6 @@ from nuagetempest.lib import topology
 import re
 import traceback
 from tempest import config
-from tempest import test
 
 conf = config.CONF
 LOG = logging.getLogger(__name__)

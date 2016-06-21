@@ -19,6 +19,7 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
     def resource_setup(self):
         super(VPNaaSScenarioTest, self).resource_setup()
         self.TB = nuage_ext.TB
+        nuage_ext._open_ssh()
         self.os_handle = self.TB.osc_1.api
         self.vsd_handle = self.TB.vsd_1
 

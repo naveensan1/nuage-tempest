@@ -18,7 +18,6 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
     @classmethod
     def resource_setup(self):
         super(VPNaaSScenarioTest, self).resource_setup()
-        import pdb;pdb.set_trace()
         self.TB = nuage_ext.TB
         self.os_handle = self.TB.osc_1.api
         self.vsd_handle = self.TB.vsd_1

@@ -21,7 +21,8 @@ class VPNaaSBase(VPNMixin):
     @classmethod
     def resource_setup(cls):
         super(VPNaaSBase, cls).resource_setup()
-        TB = nuage_ext.TB
+        cls.TB = nuage_ext.TB
+        nuage_ext._open_ssh()
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data_struct = openstackData()
         cls.os_data_struct.insert_resource(cls.def_net_partition,
@@ -88,8 +89,8 @@ class VPNaaSTest(VPNaaSBase):
         """ Create delete vpnservice with environment and also 
         verifies the dummy router and subnet created by plugin """
 
-        LOG.debug(dir(TB))
-        return True
+        LOG.warning("please look here")
+        LOG.debug(dir(self.TB))
         vpnservices = self.vpnservice_client.list_vpnservice()
         pre_ids = [vpnservice['id'] for vpnservice in vpnservices]
         routers = self.routers_client.list_routers()

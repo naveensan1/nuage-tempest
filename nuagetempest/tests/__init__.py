@@ -5,17 +5,24 @@ from nuagetempest.lib import topology
 import re
 import traceback
 from tempest import config
+from tempest import test
 
 conf = config.CONF
 LOG = logging.getLogger(__name__)
 
 class NuageExtensionInit():
 
-    def setupModule(self):
+    def __init__(self):
+        LOG.warning(("Look here i am in init setupmodule"))
+        LOG.debug(dir(self))
         self.nuage_extension = nuage_ext.NuageExtension()
         self.TB = topology.initialize_topology() 
+        LOG.warning(("Look here i am in init setupmodule"))
         LOG.debug(dir(self))
-        #self._open_ssh()
+
+    #@classmethod
+    #def setUpModule():
+    #    self._open_ssh()
 
     def _generate_tag(self, tag, class_name):
         tb = traceback.extract_stack()
@@ -30,6 +37,8 @@ class NuageExtensionInit():
 
     def _open_ssh(self):
         for dut in dir(self.TB):
+            LOG.warning("look here doing the ssh")
+            LOG.warning(dut)
             if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
                 if dut.split('_')[0] == 'vsd':
                     obj = getattr(self.TB, dut)

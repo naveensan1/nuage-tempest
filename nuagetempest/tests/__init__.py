@@ -35,9 +35,13 @@ class NuageExtensionInit():
                 return t_part1 + '.' + t_part2 + '.' + class_name + '.' + t_part4 + '.' + tag
 
     def _open_ssh(self):
+        LOG.warning("look here: infunction _open_ssh printint dir-self.TB")
+        LOG.warning(dir(self.TB))
         for dut in dir(self.TB):
-            LOG.warning("look here doing the ssh")
+            LOG.warning("look here doing the ssh printing dut")
             LOG.warning(dut)
+            LOG.warning(conf.nuagext.nuage_components)
+            LOG.warning(dut.split('_')[0])
             if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
                 if dut.split('_')[0] == 'vsd':
                     obj = getattr(self.TB, dut)

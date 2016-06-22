@@ -22,7 +22,7 @@ class VPNaaSBase(VPNMixin):
     def resource_setup(cls):
         super(VPNaaSBase, cls).resource_setup()
         cls.TB = nuage_ext.TB
-        nuage_ext._open_ssh()
+        nuage_ext._open_ssh(cls.TB)
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data_struct = openstackData()
         cls.os_data_struct.insert_resource(cls.def_net_partition,

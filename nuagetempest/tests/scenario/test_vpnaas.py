@@ -20,7 +20,7 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
         super(VPNaaSScenarioTest, self).resource_setup()
         LOG.debug('I am inside setup of VPNaaSScenarioTest : dir(self)')
         LOG.debug(dir(self))
-        self.TB = nuage_ext.TB
+        self.TB = topology.initialize_topology()
         nuage_ext._open_ssh(self.TB)
         self.os_handle = self.TB.osc_1.api
         self.vsd_handle = self.TB.vsd_1

@@ -1,48 +1,24 @@
-from oslo_log import log as logging
-from nuagetempest.lib import nuage_ext
-from nuagetempest.lib import nuage_tempest_test_loader
-from nuagetempest.lib import topology
-import re
-import traceback
-from tempest import config
+#from oslo_log import log as logging
+import unittest
+#from nuagetempest.lib import nuage_ext
+#from nuagetempest.lib import nuage_tempest_test_loader
+#from nuagetempest.lib import topology
+#import re
+#import traceback
+#from tempest import config
 
-conf = config.CONF
-LOG = logging.getLogger(__name__)
+#conf = config.CONF
+#LOG = logging.getLogger(__name__)
 
-class NuageExtensionInit():
+import inspect
 
-    def setupModule(self):
-        self.nuage_extension = nuage_ext.NuageExtension()
-        self.TB = topology.initialize_topology() 
-        LOG.debug(dir(self))
-        #self._open_ssh()
+#def setUpModule():
+    #print "inside setupModule"
+#    LOG.debug(("in setupmodule look here"))
 
-    def _generate_tag(self, tag, class_name):
-        tb = traceback.extract_stack()
-        for t in tb:
-            if re.search('_generate_tag\(', str(t)):
-                l = len(str.split(t[0], '/'))
-                t_part1 = str.split(t[0], '/')[l-2]
-                t_part2_1 = str.split(t[0], '/')[l-1]
-                t_part2 = str.split(t_part2_1, '.')[0]
-                t_part4 = str.split(t[2])[0][4:]
-                return t_part1 + '.' + t_part2 + '.' + class_name + '.' + t_part4 + '.' + tag
 
-    def _open_ssh(self):
-        for dut in dir(self.TB):
-            if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
-                if dut.split('_')[0] == 'vsd':
-                    obj = getattr(self.TB, dut)
-                    obj.api.new_session()
-                    obj.update_vsd_session()
-                else:
-                    obj = getattr(self.TB, dut)
-                    obj.ssh.open()
+def setup_package():
+    print(__name__, '__init__.py : setup_package() ========================================')
 
-nuage_ext = NuageExtensionInit()
-#nuage_ext.TB = topology.initialize_topology()
-#nuage_ext._open_ssh()
-LOG.debug(dir(nuage_ext))
-
-def load_tests(loader, tests, pattern):
-    return nuage_tempest_test_loader.nuage_load_tests(loader, pattern)
+def teardown_package():
+    print(__name__, '__init__.py : teardown_package() ========================================')

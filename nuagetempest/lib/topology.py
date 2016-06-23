@@ -23,6 +23,8 @@ class Topology(object):
         self.nuage_components = CONF.nuagext.nuage_components
         self.topologyfile = path_to_topologyfile
         self.duts_list = self.parse_topologyfile()
+        LOG.warning('I am in Init of Topology : self.duts_list')
+        LOG.debug(self.duts_list)
         self.make_testbed()
 
     @property
@@ -75,6 +77,8 @@ class Topology(object):
                             'username': username,
                             'password': password
                         })
+        LOG.warning('I am in Func parse_topologyfile : duts_list')
+        LOG.debug(duts_list)
         return duts_list
 
     def get_dut_from_topologyfile(self, name):
@@ -189,10 +193,17 @@ class Topology(object):
         osc_counter.next()
         testbed = CONF.nuagext.exec_server
         self.testbed = linux.Linux(testbed, id='testbed')
+        LOG.warning('Inside make_testbed')
+        LOG.debug('Before Loop dir(self)')
+        LOG.debug(dir(self))
         LOG.debug('testbed')
         LOG.debug(testbed)
+        LOG.debug('self.duts_list')
+        LOG.debug(self.duts_list)
         self.duts = {}
         for dut in self.duts_list:
+            LOG.debug('Inside ForLoopi : dut')
+            LOG.debug(dut)
             if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:
                 dutobjname = 'vrs_' + str(vrs_counter.next())
                 dutobj = self.make_dut(dut['name'])
@@ -213,6 +224,9 @@ class Topology(object):
                 dutobj = self.make_dut(dut['name'])
                 setattr(self, dutobjname, dutobj)
                 self.duts[dutobjname] = getattr(self, dutobjname)
+        LOG.debug('After For Loop dir(self)')
+        LOG.debug(dir(self))
+
 
     #def open_ssh_sessions(self, timeout=1):
 

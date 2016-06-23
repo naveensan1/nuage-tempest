@@ -17,6 +17,8 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
     @classmethod
     def resource_setup(self):
         super(VPNaaSScenarioTest, self).resource_setup()
+        LOG.debug('I am inside setup of VPNaaSScenarioTest : dir(self)')
+        LOG.debug(dir(self))
         self.os_handle = TB.osc_1.api
         self.vsd_handle = TB.vsd_1
 

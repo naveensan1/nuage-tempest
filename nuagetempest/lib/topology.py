@@ -42,10 +42,16 @@ class Topology(object):
                 if line[0] == 'None':
                     return (None, None, None, None, None, None)
                 elif '-component' in line and '-username' in line and '-password' in line:
+                    LOG.debug('Inside Parse line : Inside Component Check')
+                    LOG.debug(line)
                     idx = line.index('-component') + 1
                     idx_u = line.index('-username') + 1
                     idx_p = line.index('-password') + 1
+                    LOG.debug('Supposed to be in this return')
+                    LOG.debug(str(line[0])+","+ str(line[1])+","+ str(line[2])+","+ str(line[idx])+","+ str(line[idx_u])+","+ str(line[idx_p]))
                     return (line[0], line[1], line[2], line[idx], line[idx_u], line[idx_p])
+                LOG.debug('Not Supposed to be in this return')
+                LOG.debug(str(line[0])+","+ str(line[1])+","+ str(line[2])+","+ str(None)+","+ str(None)+","+ str(None))
                 return (line[0], line[1], line[2], None, None, None)
             except:
                 return (None, None, None, None, None, None)
@@ -66,6 +72,8 @@ class Topology(object):
                 raise Exception('Testbed topo file or exec server is not provided')
         else:
             with topo_file:
+                LOG.debug('Reading topo_file in parse_topology_file')
+                LOG.debug(topo_file.readlines())
                 for line in topo_file.readlines():
                     dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
                     if dut_type in ['LINUX', 'ESR']:

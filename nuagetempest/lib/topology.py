@@ -18,10 +18,12 @@ class Topology(object):
 
     def __init__(self):
         path_to_topologyfile = CONF.nuagext.topologyfile
+        LOG.warning('I am in Init of Topology : doing path_to_topologyfile')
         testbed = CONF.nuagext.exec_server
         testbed_user = CONF.nuagext.exec_server_user
         self.nuage_components = CONF.nuagext.nuage_components
         self.topologyfile = path_to_topologyfile
+        LOG.warning('I am in Init of Topology : before parse_topo will give duts_list now')
         self.duts_list = self.parse_topologyfile()
         LOG.warning('I am in Init of Topology : self.duts_list')
         LOG.debug(self.duts_list)
@@ -59,6 +61,8 @@ class Topology(object):
         duts_list = []
         try:
             topo_file = open(self.topologyfile, 'r')
+            LOG.warning('I am in Func parse_topology: will print topo_file')
+            LOG.debug(topo_file.readlines())
         except IOError:
             if any(comp in CONF.nuagext.nuage_components for comp in ('vsc', 'vrs')):
                 raise Exception('Testbed topo file or exec server is not provided')

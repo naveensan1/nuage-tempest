@@ -6,7 +6,7 @@ import sys
 from tempest import config
 from libduts import sros, linux
 from nuagetempest.lib.openstackcli import openstackcli_base
-#from nuagetempest.lib.openstackapi import openstackapi_base
+from nuagetempest.lib.openstackapi import openstackapi_base
 import re
 from oslo_log import log as logging
 
@@ -176,7 +176,7 @@ class Topology(object):
         if self._is_osc(component):
             osc = linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
             setattr(osc, 'cli', openstackcli_base.OpenstackCliClient(osc))
-            #setattr(osc, 'api', openstackapi_base.OpenstackAPIClient())
+            setattr(osc, 'api', openstackapi_base.OpenstackAPIClient())
             return osc
 
         err = 'Cannot find a class corresponding to {}'.format(name)

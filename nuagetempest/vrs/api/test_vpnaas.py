@@ -7,9 +7,12 @@ from tempest import test
 import re
 import unittest
 import sys
+from nuagetempest.tests import nuage_ext
+
 
 CONF = config.CONF
-TB = topology.testbed
+
+TB = nuage_ext.TB
 
 LOG = logging.getLogger(__name__)
 

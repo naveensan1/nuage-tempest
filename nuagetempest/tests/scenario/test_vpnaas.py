@@ -5,6 +5,7 @@ from tempest.api.compute import base as serv_base
 from nuagetempest.lib import topology
 from nuagetempest.lib import test_base
 from nuagetempest.tests.api import test_vpnaas
+from nuagetempest.tests import nuage_ext
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
@@ -19,8 +20,10 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
         super(VPNaaSScenarioTest, self).resource_setup()
         LOG.debug('I am inside setup of VPNaaSScenarioTest : dir(self)')
         LOG.debug(dir(self))
-        self.os_handle = TB.osc_1.api
-        self.vsd_handle = TB.vsd_1
+        self.TB = nuage_ext.TB
+        nuage_ext._open_ssh(self.TB)
+        self.os_handle = self.TB.osc_1.api
+        self.vsd_handle = self.TB.vsd_1
 
     @classmethod
     def resource_cleanup(self):
@@ -156,7 +159,7 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
                 router['router']['id'], **routernogwkwargs)
 
             # VM Booting
-            ovs = TB.vrs_2.cmd('hostname')
+            ovs = self.TB.vrs_2.cmd('hostname')
             vmname = 'VM-' + str(i)
             vmkwargs = {'name': vmname, 'flavorRef': '1',
                         'imageRef': CONF.compute.image_ref,
@@ -242,7 +245,7 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
         src = 'source admin_rc;'
         novacmd = 'nova show ' + vmuuid + \
             '| awk \'$2 == "OS-EXT-SRV-ATTR:instance_name" {print $4}\''
-        instance = TB.osc_1.cmd(src + novacmd)
+        instance = self.TB.osc_1.cmd(src + novacmd)
         instance = instance[0][0]
         instance_port = int(instance[-2::], 16)
         instance_port = instance_port + 2000
@@ -251,7 +254,7 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
     def _get_vm_handle(self, vm, username='cirros',
                        password='cubswin:)'):
         vm_port = self._calclulate_vm_port(vm)
-        vm_handle = TB.vrs_2.ssh.open_vm_console(
+        vm_handle = self.TB.vrs_2.ssh.open_vm_console(
             vm_port, username, password=password)
         return vm_handle
 

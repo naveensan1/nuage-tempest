@@ -1,22 +1,23 @@
 import itertools
 import libVSD
-import threading
 from tempest import config
 from libduts import sros, linux
 from nuagetempest.lib.openstackcli import openstackcli_base
 from nuagetempest.lib.openstackapi import openstackapi_base
 import re
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
 
 CONF = config.CONF
 
 class Topology(object):
 
     def __init__(self):
-        path_to_topologyfile = CONF.nuagext.topologyfile
         testbed = CONF.nuagext.exec_server
         testbed_user = CONF.nuagext.exec_server_user
         self.nuage_components = CONF.nuagext.nuage_components
-        self.topologyfile = path_to_topologyfile
+        self.topologyfile = CONF.nuagext.topologyfile
         self.duts_list = self.parse_topologyfile()
         self.make_testbed()
 
@@ -46,10 +47,11 @@ class Topology(object):
         duts_list = []
         try:
             topo_file = open(self.topologyfile, 'r')
+            content = topo_file.readlines()
         except IOError:
             if any(comp in CONF.nuagext.nuage_components for comp in ('vsc', 'vrs')):
                 raise Exception('Testbed topo file or exec server is not provided')
-            elif 'vsd' in CONF.nuagext.nuage_components: 
+            elif 'vsd' in CONF.nuagext.nuage_components:
                 vsd_dut = {}
                 vsd_dut['component'] = 'VSD'
                 vsd_dut['name'] = 'vsd-1'
@@ -59,7 +61,7 @@ class Topology(object):
                 raise Exception('Testbed topo file or exec server is not provided')
         else:
             with topo_file:
-                for line in topo_file.readlines():
+                for line in content:
                     dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
                     if dut_type in ['LINUX', 'ESR']:
                         duts_list.append({
@@ -76,7 +78,7 @@ class Topology(object):
         for d in self.duts_list:
             if d['name'] == name:
                 return d
-        raise Exception('{} not found in {}'.format(name, self.path_to_topologyfile))
+        raise Exception('{} not found in {}'.format(name, self.topologyfile))
 
     @staticmethod
     def _is_sros(component):
@@ -182,18 +184,41 @@ class Topology(object):
         vsd_counter.next()
         osc_counter = itertools.count()
         osc_counter.next()
+        testbed = CONF.nuagext.exec_server
+        self.testbed = linux.Linux(testbed, id='testbed')
+        self.duts = {}
         for dut in self.duts_list:
             if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:
-                dutobj = 'vrs_' + str(vrs_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'vrs_' + str(vrs_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
             elif dut['component'] == "VSC" and 'vsc' in CONF.nuagext.nuage_components:
-                dutobj = 'vsc_' + str(vsc_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'vsc_' + str(vsc_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
             elif dut['component'] == "VSD" and 'vsd' in CONF.nuagext.nuage_components:
-                dutobj = 'vsd_' + str(vsd_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'vsd_' + str(vsd_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
             elif dut['component'] == "OSC":
-                dutobj = 'osc_' + str(osc_counter.next())
-                setattr(self, dutobj, self.make_dut(dut['name']))
+                dutobjname = 'osc_' + str(osc_counter.next())
+                dutobj = self.make_dut(dut['name'])
+                setattr(self, dutobjname, dutobj)
+                self.duts[dutobjname] = getattr(self, dutobjname)
 
-testbed = Topology()
+def open_session(TB):
+    for dut in dir(TB):
+        if dut.split('_')[0] in CONF.nuagext.nuage_components + ['osc']:
+            if dut.split('_')[0] == 'vsd':
+                obj = getattr(TB, dut)
+                obj.api.new_session()
+                obj.update_vsd_session()
+            else:
+                obj = getattr(TB, dut)
+                obj.ssh.open()
+
+def initialize_topology():
+    return Topology()

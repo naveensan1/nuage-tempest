@@ -2,9 +2,6 @@ import time
 import re
 import logging
 from nuagetempest.tests import conf
-from nuagetempest.lib import topology
-
-TB = topology.testbed
 
 LOG = logging.getLogger(__name__)
 

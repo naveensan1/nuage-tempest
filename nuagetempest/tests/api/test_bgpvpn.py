@@ -32,7 +32,7 @@ import uuid
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-TB = topology.testbed
+#TB = topology.testbed
 
 
 class BgpvpnBase(BGPVPNMixin):

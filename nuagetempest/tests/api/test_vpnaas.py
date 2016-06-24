@@ -13,22 +13,22 @@ import netaddr
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-TB = topology.testbed
-
 
 class VPNaaSBase(VPNMixin):
 
     @classmethod
-    def resource_setup(cls):
-        super(VPNaaSBase, cls).resource_setup()
-        cls.def_net_partition = CONF.nuage.nuage_default_netpartition
-        cls.os_data_struct = openstackData()
-        cls.os_data_struct.insert_resource(cls.def_net_partition,
+    def resource_setup(self):
+        super(VPNaaSBase, self).resource_setup()
+        self.TB = topology.initialize_topology()
+        topology.open_session(self.TB)
+        self.def_net_partition = CONF.nuage.nuage_default_netpartition
+        self.os_data_struct = openstackData()
+        self.os_data_struct.insert_resource(self.def_net_partition,
                                            parent='CMS')
 
     @classmethod
-    def resource_cleanup(cls):
-        cls.os_data_struct.delete_resource(cls.def_net_partition)
+    def resource_cleanup(self):
+        self.os_data_struct.delete_resource(self.def_net_partition)
 
 
 class VPNaaSTest(VPNaaSBase):
@@ -226,13 +226,13 @@ class VPNaaSTest(VPNaaSBase):
         self.os_data_struct.delete_resource('router1')
 
 
-class VPNaaSCliTests(test.BaseTestCase):
+class VPNaaSCliTests(VPNaaSBase):
 
     @classmethod
     def resource_setup(self):
         super(VPNaaSCliTests, self).resource_setup()
         self.def_net_partition = CONF.nuage.nuage_default_netpartition
-        self.os_handle = TB.osc_1.cli
+        self.os_handle = self.TB.osc_1.cli
         self.os_data_struct = openstackData()
         self.os_data_struct.insert_resource(self.def_net_partition,
                                             parent='CMS')

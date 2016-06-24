@@ -1,15 +1,15 @@
 from tempest import config
 from oslo_log import log as logging
-from nuagetempest.lib import topology
 from nuagetempest.lib import base
 from nuagetempest.lib import test_base
 from tempest import test
 import re
 import unittest
 import sys
+from nuagetempest.tests import nuage_ext
+
 
 CONF = config.CONF
-TB = topology.testbed
 
 LOG = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class VPNaaSCliTests():
             os_vpnservice_ip2 = vpnservice2['external_v4_ip']
 
             # Checking on VRS
-            vms = TB.vrs_1.cmd.vmportshow()
+            vms = obj.TB.vrs_1.cmd.vmportshow()
             # VPN1 vminterface
             vpnvm1 = (
                 (vm for vm in vms if vm['ip'] == os_vpnservice_ip1).next()
@@ -101,7 +101,7 @@ class VPNaaSTest():
                 obj.os_data_struct.get_resource('vpnservice').os_data
             )
             os_vpnservice_ip = vpnservice['external_v4_ip']
-            vms = TB.vrs_1.cmd.vmportshow()
+            vms = obj.TB.vrs_1.cmd.vmportshow()
             vpnvm = (
                 (vm for vm in vms if vm['ip'] == os_vpnservice_ip).next()
             )

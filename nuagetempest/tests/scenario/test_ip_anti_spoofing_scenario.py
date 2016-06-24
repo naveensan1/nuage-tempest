@@ -11,7 +11,7 @@ from tempest.api.compute import base as serv_base
 from nuagetempest.lib import topology
 import time
 
-TB = topology.testbed
+#TB = topology.testbed
 
 import netaddr
 

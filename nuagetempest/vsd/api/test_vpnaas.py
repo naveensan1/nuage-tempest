@@ -1,6 +1,5 @@
 from tempest import config
 from oslo_log import log as logging
-from nuagetempest.lib import topology
 from nuagetempest.lib import base
 from nuagetempest.lib import test_base
 from tempest import test
@@ -11,7 +10,6 @@ from nuagetempest.tests import nuage_ext
 
 
 CONF = config.CONF
-TB = nuage_ext.TB 
 
 LOG = logging.getLogger(__name__)
 
@@ -27,7 +25,7 @@ class VPNaaSCliTests():
             obj.os_data_struct.get_resource(dummy_router_tag).os_data
         )
         l3domain_ext_id = test_base.get_external_id(dummy_router['id'])
-        vsd_l3dom = TB.vsd_1.get_domain(
+        vsd_l3dom = obj.TB.vsd_1.get_domain(
             filter=test_base.get_filter_str('externalID', l3domain_ext_id)
         )
         obj.os_data_struct.update_resource(dummy_router_tag, \
@@ -39,7 +37,7 @@ class VPNaaSCliTests():
             obj.os_data_struct.get_resource(dummy_subnet_tag).os_data
         )
         subnet_ext_id = test_base.get_external_id(dummy_subnet['id'])
-        vsd_subnet = TB.vsd_1.get_subnet(
+        vsd_subnet = obj.TB.vsd_1.get_subnet(
             filter=test_base.get_filter_str('externalID', subnet_ext_id)
         )
         obj.assertEqual(dummy_subnet['cidr'], vsd_subnet.address)
@@ -177,7 +175,7 @@ class VPNaaSTest():
         LOG.info("Verifying the dummy router")
         # Getting externalID for dummy router
         l3domain_ext_id = test_base.get_external_id(dummyrouter['id'])
-        vsd_l3dom = TB.vsd_1.get_domain(
+        vsd_l3dom = obj.TB.vsd_1.get_domain(
             filter=test_base.get_filter_str('externalID', l3domain_ext_id)
         )
         # Adding vsd info to os_data_struct
@@ -189,7 +187,7 @@ class VPNaaSTest():
         LOG.info("Verifying the dummy subnet")
         # Getting externalID for dummy subnet
         subnet_ext_id = test_base.get_external_id(dummysubnet['id'])
-        vsd_subnet = TB.vsd_1.get_subnet(
+        vsd_subnet = obj.TB.vsd_1.get_subnet(
             filter=test_base.get_filter_str('externalID', subnet_ext_id)
         )
         # Adding vsd info to os_data_struct
@@ -240,7 +238,7 @@ class VPNaaSTest():
             )
             pubsubextid = test_base.get_external_id(pubsub_id)
             # Comparing the dummy subnet cidr with public subnet cidr
-            vsd_pubsubnet = TB.vsd_1.get_subnet(
+            vsd_pubsubnet = obj.TB.vsd_1.get_subnet(
                     filter = \
                             test_base.get_filter_str('externalID', pubsubextid)
                     )
@@ -271,7 +269,7 @@ class VPNaaSTest():
             )
             pubsubextid = test_base.get_external_id(pubsub_id)
             # Comparing the dummy subnet cidr with public subnet cidr
-            vsd_pubsubnet = TB.vsd_1.get_subnet(
+            vsd_pubsubnet = obj.TB.vsd_1.get_subnet(
                     filter = \
                             test_base.get_filter_str('externalID', pubsubextid)
                     )

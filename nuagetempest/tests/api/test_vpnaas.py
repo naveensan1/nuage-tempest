@@ -17,18 +17,18 @@ CONF = config.CONF
 class VPNaaSBase(VPNMixin):
 
     @classmethod
-    def resource_setup(cls):
-        super(VPNaaSBase, cls).resource_setup()
-        cls.TB = topology.initialize_topology()
-        topology.open_session(cls.TB)
-        cls.def_net_partition = CONF.nuage.nuage_default_netpartition
-        cls.os_data_struct = openstackData()
-        cls.os_data_struct.insert_resource(cls.def_net_partition,
+    def resource_setup(self):
+        super(VPNaaSBase, self).resource_setup()
+        self.TB = topology.initialize_topology()
+        topology.open_session(self.TB)
+        self.def_net_partition = CONF.nuage.nuage_default_netpartition
+        self.os_data_struct = openstackData()
+        self.os_data_struct.insert_resource(self.def_net_partition,
                                            parent='CMS')
 
     @classmethod
-    def resource_cleanup(cls):
-        cls.os_data_struct.delete_resource(cls.def_net_partition)
+    def resource_cleanup(self):
+        self.os_data_struct.delete_resource(self.def_net_partition)
 
 
 class VPNaaSTest(VPNaaSBase):
@@ -87,8 +87,6 @@ class VPNaaSTest(VPNaaSBase):
         """ Create delete vpnservice with environment and also 
         verifies the dummy router and subnet created by plugin """
 
-        LOG.warning("please look here")
-        LOG.debug(dir(self.TB))
         vpnservices = self.vpnservice_client.list_vpnservice()
         pre_ids = [vpnservice['id'] for vpnservice in vpnservices]
         routers = self.routers_client.list_routers()
@@ -228,13 +226,13 @@ class VPNaaSTest(VPNaaSBase):
         self.os_data_struct.delete_resource('router1')
 
 
-class VPNaaSCliTests(test.BaseTestCase):
+class VPNaaSCliTests(VPNaaSBase):
 
     @classmethod
     def resource_setup(self):
         super(VPNaaSCliTests, self).resource_setup()
         self.def_net_partition = CONF.nuage.nuage_default_netpartition
-        self.os_handle = TB.osc_1.cli
+        self.os_handle = self.TB.osc_1.cli
         self.os_data_struct = openstackData()
         self.os_data_struct.insert_resource(self.def_net_partition,
                                             parent='CMS')

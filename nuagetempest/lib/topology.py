@@ -1,8 +1,5 @@
 import itertools
 import libVSD
-import threading
-import traceback
-import sys
 from tempest import config
 from libduts import sros, linux
 from nuagetempest.lib.openstackcli import openstackcli_base
@@ -17,16 +14,11 @@ CONF = config.CONF
 class Topology(object):
 
     def __init__(self):
-        path_to_topologyfile = CONF.nuagext.topologyfile
-        LOG.warning('I am in Init of Topology : doing path_to_topologyfile')
         testbed = CONF.nuagext.exec_server
         testbed_user = CONF.nuagext.exec_server_user
         self.nuage_components = CONF.nuagext.nuage_components
-        self.topologyfile = path_to_topologyfile
-        LOG.warning('I am in Init of Topology : before parse_topo will give duts_list now')
+        self.topologyfile = CONF.nuagext.topologyfile
         self.duts_list = self.parse_topologyfile()
-        LOG.warning('I am in Init of Topology : self.duts_list')
-        LOG.debug(self.duts_list)
         self.make_testbed()
 
     @property
@@ -44,16 +36,11 @@ class Topology(object):
                 if line[0] == 'None':
                     return (None, None, None, None, None, None)
                 elif '-component' in line and '-username' in line and '-password' in line:
-                    LOG.debug('Inside Parse line : Inside Component Check')
-                    LOG.debug(line)
                     idx = line.index('-component') + 1
                     idx_u = line.index('-username') + 1
                     idx_p = line.index('-password') + 1
                     LOG.debug('Supposed to be in this return')
-                    LOG.debug(str(line[0])+","+ str(line[1])+","+ str(line[2])+","+ str(line[idx])+","+ str(line[idx_u])+","+ str(line[idx_p]))
                     return (line[0], line[1], line[2], line[idx], line[idx_u], line[idx_p])
-                LOG.debug('Not Supposed to be in this return')
-                LOG.debug(str(line[0])+","+ str(line[1])+","+ str(line[2])+","+ str(None)+","+ str(None)+","+ str(None))
                 return (line[0], line[1], line[2], None, None, None)
             except:
                 return (None, None, None, None, None, None)
@@ -62,8 +49,6 @@ class Topology(object):
         try:
             topo_file = open(self.topologyfile, 'r')
             content = topo_file.readlines()
-            LOG.warning('I am in Func parse_topology: will print topo_file')
-            LOG.debug(content)
         except IOError:
             if any(comp in CONF.nuagext.nuage_components for comp in ('vsc', 'vrs')):
                 raise Exception('Testbed topo file or exec server is not provided')
@@ -77,8 +62,6 @@ class Topology(object):
                 raise Exception('Testbed topo file or exec server is not provided')
         else:
             with topo_file:
-                LOG.debug('Reading topo_file in parse_topology_file')
-                LOG.debug(content)
                 for line in content:
                     dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
                     if dut_type in ['LINUX', 'ESR']:
@@ -90,15 +73,13 @@ class Topology(object):
                             'username': username,
                             'password': password
                         })
-        LOG.warning('I am in Func parse_topologyfile : duts_list')
-        LOG.debug(duts_list)
         return duts_list
 
     def get_dut_from_topologyfile(self, name):
         for d in self.duts_list:
             if d['name'] == name:
                 return d
-        raise Exception('{} not found in {}'.format(name, self.path_to_topologyfile))
+        raise Exception('{} not found in {}'.format(name, self.topologyfile))
 
     @staticmethod
     def _is_sros(component):
@@ -206,13 +187,6 @@ class Topology(object):
         osc_counter.next()
         testbed = CONF.nuagext.exec_server
         self.testbed = linux.Linux(testbed, id='testbed')
-        LOG.warning('Inside make_testbed')
-        LOG.debug('Before Loop dir(self)')
-        LOG.debug(dir(self))
-        LOG.debug('testbed')
-        LOG.debug(testbed)
-        LOG.debug('self.duts_list')
-        LOG.debug(self.duts_list)
         self.duts = {}
         for dut in self.duts_list:
             LOG.debug('Inside ForLoopi : dut')
@@ -237,49 +211,17 @@ class Topology(object):
                 dutobj = self.make_dut(dut['name'])
                 setattr(self, dutobjname, dutobj)
                 self.duts[dutobjname] = getattr(self, dutobjname)
-        LOG.debug('After For Loop dir(self)')
-        LOG.debug(dir(self))
 
-
-    #def open_ssh_sessions(self, timeout=1):
-
-    #    def _open_ssh_session(dut):
-    #        try:
-    #            dut.ssh.open()
-    #        except:
-    #            exc = ''.join(traceback.format_exception(*sys.exc_info()))
-    #            dut.ssh.log.error(exc)
-    #            failed.append(dut)
-#
-#        threads = []
-#        failed = []
-#        for dut in self.duts.values():
-#            t = threading.Thread(target=_open_ssh_session, args=(dut,))
-#            t.is_daemon = True
-#            t.start()
-#            threads.append(t)
-#
-#        [thread.join() for thread in threads]
-#    
-#
-#    def open_ssh(self):
-#        for dut in self.duts.values():
-#            LOG.debug(dut)
-#            #try:
-#            #    dut.ssh.open()
-#            #except:
-#            #    exc = ''.join(traceback.format_exception(*sys.exc_info()))
-#            #    dut.ssh.log.error(exc)
-#            #    failed.append(dut)
-#
-#            if type(dut) == 'libVSD':
-#                LOG.debug('I am Inside VSD')
-#                dut.api.new_session()
-#                dut.update_vsd_session()
-#            else:
-#                dut.ssh.open()
+    def open_session(self, TB):
+        for dut in dir(TB):
+            if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
+                if dut.split('_')[0] == 'vsd':
+                    obj = getattr(TB, dut)
+                    obj.api.new_session()
+                    obj.update_vsd_session()
+                else:
+                    obj = getattr(TB, dut)
+                    obj.ssh.open()
 
 def initialize_topology():
-    x = Topology()
-    #x.testbed = linux.Linux(testbed, id='testbed')
     return Topology()

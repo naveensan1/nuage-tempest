@@ -13,17 +13,14 @@ import netaddr
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-#TB = nuage_ext.TB
-
 
 class VPNaaSBase(VPNMixin):
 
     @classmethod
     def resource_setup(cls):
         super(VPNaaSBase, cls).resource_setup()
-        LOG.warning("look here under vpnaasbase setup")
         cls.TB = topology.initialize_topology()
-        nuage_ext._open_ssh(cls.TB)
+        topology.open_session(cls.TB)
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data_struct = openstackData()
         cls.os_data_struct.insert_resource(cls.def_net_partition,

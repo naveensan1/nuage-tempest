@@ -1,4 +1,3 @@
-from nuagetempest.lib import topology
 from nuagetempest.lib import test_base as base
 import re
 import unittest
@@ -6,8 +5,6 @@ import sys
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
-
-TB = topology.testbed
 
 class IpAntiSpoofingTestScenarioBase():
     def __init__(self):
@@ -33,7 +30,7 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             vm_osc = obj.os_data.get_resource('scn-port1-vm-1').os_data
             # get the address details of to compare
             vm_address = vm_osc['addresses'].values()[0][0]['addr']
-            vm_vrs = base.poll_for_vm_boot(TB.vrs_1.cmd, vm_address, 30)
+            vm_vrs = base.poll_for_vm_boot(obj.TB.vrs_1.cmd, vm_address, 30)
             obj.assertEqual(vm_vrs['ant_spoof'], 'Disabled')
             obj.assertEqual(vm_vrs['ip'], vm_address)
             obj.assertNotEqual(vm_vrs['evpn_id'], 0)
@@ -46,7 +43,7 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             vm_osc = obj.os_data.get_resource('scn-port11-vm-1').os_data
             # get the address details of to compare
             vm_address = vm_osc['addresses'].values()[0][0]['addr']
-            vm_vrs = base.poll_for_vm_boot(TB.vrs_1.cmd, vm_address, 30)
+            vm_vrs = base.poll_for_vm_boot(obj.TB.vrs_1.cmd, vm_address, 30)
             obj.assertEqual(vm_vrs['anti_spoof'], 'Disabled')
             obj.assertEqual(vm_vrs['ip'], vm_address)
             obj.assertNotEqual(vm_vrs['evpn_id'], 0)
@@ -58,13 +55,13 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
         def verify_vm_vip_and_anit_spoof_l3domain(self, obj):
             vm_osc = obj.os_data.get_resource('scn-port12-vm-1').os_data
             vm_address = vm_osc['addresses'].values()[0][0]['addr']
-            vm_vrs = base.poll_for_vm_boot(TB.vrs_1.cmd, vm_address, 30)
+            vm_vrs = base.poll_for_vm_boot(obj.TB.vrs_1.cmd, vm_address, 30)
             #vm_vrs = TB.vrs_1.cmd.vmportshow()[0]
             obj.assertEqual(vm_vrs['anti_spoof'], 'Enabled')
             obj.assertEqual(vm_vrs['ip'], vm_address)
             obj.assertNotEqual(vm_vrs['evpn_id'], 0)
             obj.assertNotEqual(vm_vrs['vrf_id'], 0)
-            table_entries = TB.vrs_1.cmd(
+            table_entries = obj.TB.vrs_1.cmd(
                 'ovs-appctl bridge/dump-flows alubr0 | grep table_id=60')
             table_entry = self.ip_anti_spoof._get_table_entry(table_entries,
                                                               '30.30.30.100')

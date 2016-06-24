@@ -11,8 +11,6 @@ from collections import namedtuple
 from enum import Enum
 from netaddr import IPNetwork
 
-#TB = topology.testbed
-
 CONF = config.CONF
 
 # Enum for the IP MAC anti spoofing or VIP creation actions
@@ -26,6 +24,8 @@ class IpAntiSpoofingTestBase(base.BaseNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(IpAntiSpoofingTestBase, cls).resource_setup()
+        self.TB = topology.initialize_topology()
+        topology.open_session(self.TB)
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data = openstackData()
         cls.os_data.insert_resource(cls.def_net_partition, parent='CMS',
@@ -1218,7 +1218,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
         cls.os_data = openstackData()
         cls.os_data.insert_resource(cls.def_net_partition,
                                     parent='CMS')
-        cls.os = TB.osc_1.cli
+        cls.os = self.TB.osc_1.cli
 
     @classmethod
     def setup_client(self):

@@ -212,16 +212,16 @@ class Topology(object):
                 setattr(self, dutobjname, dutobj)
                 self.duts[dutobjname] = getattr(self, dutobjname)
 
-    def open_session(self, TB):
-        for dut in dir(TB):
-            if dut.split('_')[0] in conf.nuagext.nuage_components + ['osc']:
-                if dut.split('_')[0] == 'vsd':
-                    obj = getattr(TB, dut)
-                    obj.api.new_session()
-                    obj.update_vsd_session()
-                else:
-                    obj = getattr(TB, dut)
-                    obj.ssh.open()
+def open_session(TB):
+    for dut in dir(TB):
+        if dut.split('_')[0] in CONF.nuagext.nuage_components + ['osc']:
+            if dut.split('_')[0] == 'vsd':
+                obj = getattr(TB, dut)
+                obj.api.new_session()
+                obj.update_vsd_session()
+            else:
+                obj = getattr(TB, dut)
+                obj.ssh.open()
 
 def initialize_topology():
     return Topology()

@@ -15,7 +15,7 @@ class NuageExtensionInit():
         LOG.warning(("Look here i am in init setupmodule"))
         LOG.debug(dir(self))
         self.nuage_extension = nuage_ext.NuageExtension()
-        #self.TB = topology.initialize_topology() 
+        self.TB = topology.initialize_topology() 
         LOG.warning(("Look here i am in init setupmodule"))
         LOG.debug(dir(self))
 

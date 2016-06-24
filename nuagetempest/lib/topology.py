@@ -61,8 +61,9 @@ class Topology(object):
         duts_list = []
         try:
             topo_file = open(self.topologyfile, 'r')
+            content = topo_file.readlines()
             LOG.warning('I am in Func parse_topology: will print topo_file')
-            LOG.debug(topo_file.readlines())
+            LOG.debug(content)
         except IOError:
             if any(comp in CONF.nuagext.nuage_components for comp in ('vsc', 'vrs')):
                 raise Exception('Testbed topo file or exec server is not provided')
@@ -77,8 +78,8 @@ class Topology(object):
         else:
             with topo_file:
                 LOG.debug('Reading topo_file in parse_topology_file')
-                LOG.debug(topo_file.readlines())
-                for line in topo_file.readlines():
+                LOG.debug(content)
+                for line in content:
                     dut_type, dut_name, dut_ip, component, username, password = parse_line(line)
                     if dut_type in ['LINUX', 'ESR']:
                         duts_list.append({

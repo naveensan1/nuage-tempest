@@ -1,7 +1,7 @@
 from oslo_log import log as logging
 from tempest import config
 from nuagetempest.services.vpnaas.vpnaas_mixins import VPNMixin
-#from nuagetempest.lib import topology
+from nuagetempest.lib import topology
 from tempest import test
 from tempest.common.utils import data_utils
 from nuagetempest.lib.test import nuage_test
@@ -22,7 +22,7 @@ class VPNaaSBase(VPNMixin):
     def resource_setup(cls):
         super(VPNaaSBase, cls).resource_setup()
         LOG.warning("look here under vpnaasbase setup")
-        cls.TB = nuage_ext.TB
+        cls.TB = topology.initialize_topology()
         nuage_ext._open_ssh(cls.TB)
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data_struct = openstackData()

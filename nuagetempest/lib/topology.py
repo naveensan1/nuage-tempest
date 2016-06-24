@@ -39,7 +39,6 @@ class Topology(object):
                     idx = line.index('-component') + 1
                     idx_u = line.index('-username') + 1
                     idx_p = line.index('-password') + 1
-                    LOG.debug('Supposed to be in this return')
                     return (line[0], line[1], line[2], line[idx], line[idx_u], line[idx_p])
                 return (line[0], line[1], line[2], None, None, None)
             except:
@@ -189,8 +188,6 @@ class Topology(object):
         self.testbed = linux.Linux(testbed, id='testbed')
         self.duts = {}
         for dut in self.duts_list:
-            LOG.debug('Inside ForLoopi : dut')
-            LOG.debug(dut)
             if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:
                 dutobjname = 'vrs_' + str(vrs_counter.next())
                 dutobj = self.make_dut(dut['name'])

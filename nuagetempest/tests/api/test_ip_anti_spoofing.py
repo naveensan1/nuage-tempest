@@ -24,8 +24,8 @@ class IpAntiSpoofingTestBase(base.BaseNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(IpAntiSpoofingTestBase, cls).resource_setup()
-        self.TB = topology.initialize_topology()
-        topology.open_session(self.TB)
+        cls.TB = topology.initialize_topology()
+        topology.open_session(cls.TB)
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
         cls.os_data = openstackData()
         cls.os_data.insert_resource(cls.def_net_partition, parent='CMS',
@@ -1218,7 +1218,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
         cls.os_data = openstackData()
         cls.os_data.insert_resource(cls.def_net_partition,
                                     parent='CMS')
-        cls.os = self.TB.osc_1.cli
+        cls.os = cls.TB.osc_1.cli
 
     @classmethod
     def setup_client(self):

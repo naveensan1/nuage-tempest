@@ -13,7 +13,6 @@
 #    under the License.
 
 from oslo_log import log as logging
-
 from tempest import config
 from nuagetempest.services.bgpvpn.mixins import BGPVPNMixin
 from nuagetempest.services.bgpvpn.mixins import L3Mixin
@@ -32,8 +31,6 @@ import uuid
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
-#TB = topology.testbed
-
 
 class BgpvpnBase(BGPVPNMixin):
 
@@ -357,8 +354,10 @@ class BgpvpnCliTests(test.BaseTestCase):
     @classmethod
     def setUpClass(self):
         super(BgpvpnCliTests, self).setUpClass()
+        self.TB = topology.initialize_topology()
+        topology.open_session(self.TB)
         self.def_net_partition = CONF.nuage.nuage_default_netpartition
-        self.os_cli = TB.osc_1.cli 
+        self.os_cli = self.TB.osc_1.cli 
         self.os_data = openstackData()
         self.os_data.insert_resource(self.def_net_partition,
                                     parent='CMS')

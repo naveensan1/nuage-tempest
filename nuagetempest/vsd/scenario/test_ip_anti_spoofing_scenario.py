@@ -1,12 +1,9 @@
-from nuagetempest.lib import topology
 from nuagetempest.lib import test_base as base
 from nuagetempest.vsd.api import test_ip_anti_spoofing as antispoof
 from tempest import test
 import re
 import unittest
 import sys
-
-TB = topology.testbed
 
 class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
 

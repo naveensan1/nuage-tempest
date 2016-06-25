@@ -1,6 +1,5 @@
 from tempest import config
 from oslo_log import log as logging
-from nuagetempest.lib import topology
 from nuagetempest.lib import base
 from tempest import test
 import re
@@ -8,8 +7,6 @@ import unittest
 import sys
 
 CONF = config.CONF
-TB = topology.testbed
-
 LOG = logging.getLogger(__name__)
 
 class RouterAssociationTest():
@@ -32,7 +29,7 @@ class RouterAssociationTest():
         def verify_l3domain_rt_rd(self, obj):
             os_router = obj.os_data.get_resource('os-router-ra-1').os_data
             l3domain_ext_id = base.get_external_id(os_router['id'])
-            vsd_l3dom = TB.vsd_1.get_domain(
+            vsd_l3dom = obj.TB.vsd_1.get_domain(
                 filter=base.get_filter_str('externalID', l3domain_ext_id))
             obj.os_data.update_resource('os-router-ra-1', vsd_data=vsd_l3dom)
             self.router_associate_test._verify_rt_rd_on_neutron_vsd(obj,
@@ -46,7 +43,7 @@ class RouterAssociationTest():
         def verify_l3domain_rt_rd(self, obj):
             os_router = obj.os_data.get_resource('os-router-ra-2').os_data
             l3domain_ext_id = base.get_external_id(os_router['id'])
-            vsd_l3dom = TB.vsd_1.get_domain(
+            vsd_l3dom = obj.TB.vsd_1.get_domain(
                 filter=base.get_filter_str('externalID', l3domain_ext_id))
             obj.os_data.update_resource('os-router-ra-2', vsd_data=vsd_l3dom)
             self.router_associate_test._verify_rt_rd_on_neutron_vsd(obj,
@@ -60,7 +57,7 @@ class RouterAssociationTest():
         def verify_l3domain_rt_rd(self, obj):
             os_router = obj.os_data.get_resource('os-router-ra-3').os_data
             l3domain_ext_id = base.get_external_id(os_router['id'])
-            vsd_l3dom = TB.vsd_1.get_domain(
+            vsd_l3dom = obj.TB.vsd_1.get_domain(
                 filter=base.get_filter_str('externalID', l3domain_ext_id))
             obj.os_data.update_resource('os-router-ra-3', vsd_data=vsd_l3dom)
             self.router_associate_test._verify_rt_rd_on_neutron_vsd(obj,

@@ -213,7 +213,7 @@ class RouterAssociationTest(BgpvpnBase, L3Mixin):
             self.assertRaisesRegexp(lib_exc.NotFound,
                 "could not be found",
                 self.rtr_assoc_client.create_router_assocation,
-                bgpvpn['id'], router_id=uuid.uuid4())
+                bgpvpn['id'], router_id=str(uuid.uuid4()))
 
     def test_router_association_multiplerouters_singlebgpvpn(self):
         with self.bgpvpn(tenant_id=self.tenant_id,

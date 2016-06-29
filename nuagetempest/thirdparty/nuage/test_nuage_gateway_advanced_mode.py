@@ -333,7 +333,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
         cls.create_test_gateway_redundancy_topology()
 
     @classmethod
-    def tearDownClass(cls):
+    def resource_cleanup(cls):
         has_exception = False
 
         for vport in cls.gatewayvports:
@@ -389,7 +389,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
 
         cls.delete_test_gateway_redundancy_topology()
 
-        super(NuageGatewayTestJSON, cls).tearDownClass()
+        super(NuageGatewayTestJSON, cls).resource_cleanup()
         cls.delete_domain_subnet_resources()
         cls.client.delete_netpartition(cls.nondef_netpart['id'])
 

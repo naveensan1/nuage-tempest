@@ -2,6 +2,7 @@ import logging
 from tempest import test
 
 from tempest.lib.common.utils import data_utils
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 
 import nuage_base
@@ -12,6 +13,7 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
+@nuage_test.header(until="4.0r3")
 class NeutronAppDesignerResourcesTest(nuage_base.NuageBaseOrchestrationTest):
     """Basic APPDesigner Heat test"""
     @classmethod

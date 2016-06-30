@@ -23,12 +23,14 @@ from tempest.lib import exceptions as lib_exceptions
 from tempest import test
 import test_netpartitions
 
+from nuagetempest.lib.test import nuage_test
 
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 
 
+@nuage_test.header(until="4.0r3")
 class NuageAppdTestJSON(test_netpartitions.NetPartitionTestJSON):
     _interface = 'json'
 

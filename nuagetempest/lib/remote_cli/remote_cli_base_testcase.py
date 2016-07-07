@@ -7,6 +7,8 @@ import netaddr
 from enum import Enum
 
 from tempest import config
+from tempest import exceptions
+
 from oslo_log import log as logging
 from tempest.lib.common.utils import data_utils
 
@@ -104,8 +106,10 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
 
         cls.uri_1 = cls.os.identity_client.base_url
         ip_osc_1 = netaddr.IPAddress(re.findall(r'[0-9]+(?:\.[0-9]+){3}', cls.uri_1)[0])
+#        ip_osc_1 = netaddr.IPAddress(re.findall(r'[0-9]+(?:\.[0-9]+){3}', str(CONF.identity.uri))[0])
         ip_osc_2 = ip_osc_1 + 1
         cls.uri_2 = re.sub(str(ip_osc_1), str(ip_osc_2), cls.uri_1)
+
         # make the uri point to the one of osc-1
         cls.uri = cls.uri_1
         cls.admin_cli = ssh_cli.CLIClient(

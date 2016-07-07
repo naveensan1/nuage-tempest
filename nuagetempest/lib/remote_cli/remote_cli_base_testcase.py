@@ -101,8 +101,9 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         # tricky stuff to work with 2 OS controllers on Nuage testbed
         # the IP adress of osc-2 is always osc-1 + 1
         # work with these 2 uri's
-        cls.uri_1 = CONF.identity.uri
-        ip_osc_1 = netaddr.IPAddress(re.findall(r'[0-9]+(?:\.[0-9]+){3}', str(CONF.identity.uri))[0])
+
+        cls.uri_1 = cls.os.identity_client.base_url
+        ip_osc_1 = netaddr.IPAddress(re.findall(r'[0-9]+(?:\.[0-9]+){3}', cls.uri_1)[0])
         ip_osc_2 = ip_osc_1 + 1
         cls.uri_2 = re.sub(str(ip_osc_1), str(ip_osc_2), cls.uri_1)
         # make the uri point to the one of osc-1

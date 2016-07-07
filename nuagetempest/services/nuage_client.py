@@ -926,7 +926,7 @@ class NuageRestClient(object):
     def get_permissions(self, parent, parent_id, filters=None,
                         filter_value=None):
         return self.get_child_resource(parent, parent_id,
-                                       constants.PERMIT_ACTION, None, None)
+                                       constants.PERMIT_ACTION, filters, filter_value)
 
     # VM Interface
     def get_vm_iface(self, parent, parent_id, filters=None, filter_value=None):

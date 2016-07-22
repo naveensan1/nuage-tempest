@@ -97,11 +97,11 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
         if positive:
             self.assertFirstLineStartsWith(vpnservice.split('\n'),
                                        'Created a new vpnservice:')
+            vpnservice = self.parser.details(vpnservice)
+            response = {'vpnservice': vpnservice}
         else:
-            self.assertFirstLineStartsWith(vpnservice.split('\n'),
-                                       'One VPN service per router:')
-        vpnservice = self.parser.details(vpnservice)
-        response = {'vpnservice': vpnservice}
+            self.assertFirstLineStartsWith(vpnservice,'')
+            response = ''
         return response
 
     def delete_vpnservice(self, id):

@@ -591,7 +591,7 @@ class VPNaaSCliTests(VPNaaSBase):
             parent = 'testtags'
         )
         self.os_data_struct.insert_resource(
-            'publicsubnettag', user_data={'name': pubnet['network']['name']},
+            'publicnettag', user_data={'name': pubnet['network']['name']},
             parent = 'testtags'
         )
         # Create First Verify VPNService
@@ -614,10 +614,11 @@ class VPNaaSCliTests(VPNaaSBase):
             'dummysubnettag', user_data={'name': dummy_subnet['name']},
             parent = 'testtags'
         )
+        import pdb;pdb.set_trace()
         # Create Duplicate VPNService
         vpnservice2 = (
             self.os_handle.vpnaas_client.create_vpnservice(
-                router['id'], subnet['id'], name, False,
+                router['id'], subnet['id'], name, positive=False
             )
         )
 

@@ -614,7 +614,6 @@ class VPNaaSCliTests(VPNaaSBase):
             'dummysubnettag', user_data={'name': dummy_subnet['name']},
             parent = 'testtags'
         )
-        import pdb;pdb.set_trace()
         # Create Duplicate VPNService
         vpnservice2 = (
             self.os_handle.vpnaas_client.create_vpnservice(

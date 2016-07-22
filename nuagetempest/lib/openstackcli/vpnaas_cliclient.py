@@ -100,7 +100,8 @@ class VPNaaSClient(openstack_cliclient.ClientTestBase):
             vpnservice = self.parser.details(vpnservice)
             response = {'vpnservice': vpnservice}
         else:
-            self.assertFirstLineStartsWith(vpnservice,'')
+            if vpnservice != '':
+                LOG.error('DUPLICATE VPNSERVCICE CREATED')
             response = ''
         return response
 

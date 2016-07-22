@@ -32,6 +32,14 @@ class VPNaaSCliTests():
         def verify_vpn_dummy_router(self, obj):
             pass
 
+    class _create_duplicate_vpnservice():
+        def __init__(self):
+            self.vpnaas_cli_test = VPNaaSCliTests()
+            pass
+
+        def verify_vpn_dummy_router(self, obj):
+            pass
+
     class _create_delete_ipsecsiteconnection():
         def __init__(self):
             self.vpnaas_cli_test = VPNaaSCliTests()

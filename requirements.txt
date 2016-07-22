@@ -1,4 +1,3 @@
-jira
 tempest>0
 vspk
 configparser

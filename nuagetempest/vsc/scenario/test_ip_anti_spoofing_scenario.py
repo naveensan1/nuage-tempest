@@ -1,10 +1,7 @@
-from nuagetempest.lib import topology
 from nuagetempest.lib import base
 import re
 import unittest
 import sys
-
-TB = topology.testbed
 
 class IpAntiSpoofingTestScenarioBase():
     def __init__(self):
@@ -36,7 +33,7 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             self.ip_anti_spoof = IpAntiSpoofingTestScenario()
         def verify_vm_in_sec_disabled_port_l2domain(self, obj):
             vm_osc = obj.os_data.get_resource('scn-port1-vm-1').os_data
-            vm_vsc = TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
+            vm_vsc = obj.TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
             vm_dict = self.ip_anti_spoof._get_vm_details_in_vsc(vm_vsc)
             obj.assertEqual(vm_dict['Anti Spoof Enabled'], 'false')
 
@@ -45,7 +42,7 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             self.ip_anti_spoof = IpAntiSpoofingTestScenario()
         def verify_vm_in_sec_disabled_port_l3domain(self, obj):
             vm_osc = obj.os_data.get_resource('scn-port11-vm-1').os_data
-            vm_vsc = TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
+            vm_vsc = obj.TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
             vm_dict = self.ip_anti_spoof._get_vm_details_in_vsc(vm_vsc)
             obj.assertEqual(vm_dict['Anti Spoof Enabled'], 'false')
 
@@ -55,7 +52,7 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             pass
         def verify_vm_vip_and_anit_spoof_l3domain(self, obj):
             vm_osc = obj.os_data.get_resource('scn-port12-vm-1').os_data
-            vm_vsc = TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
+            vm_vsc = obj.TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
             vm_dict = self.ip_anti_spoof._get_vm_details_in_vsc(vm_vsc)
             obj.assertEqual(vm_dict['Anti Spoof Enabled'], 'true')
             obj.assertEqual(vm_dict['No. of Virtual IP'], '1')

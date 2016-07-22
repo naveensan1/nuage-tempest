@@ -8,10 +8,7 @@ from nuagetempest.lib.openstackData import openstackData
 from nuagetempest.tests.api import test_ip_anti_spoofing as antispoof
 from tempest.scenario import manager
 from tempest.api.compute import base as serv_base
-from nuagetempest.lib import topology
 import time
-
-#TB = topology.testbed
 
 import netaddr
 
@@ -34,7 +31,7 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingTestBase,
         self.assertEqual(port['port_security_enabled'], False)
         ntw = {'uuid': network['id'], 'port': port['id']}
         # Get the first available VRS hostname to spawn VM
-        ovs = TB.vrs_1.cmd('hostname')
+        ovs = self.TB.vrs_1.cmd('hostname')
         kwargs = {'availability_zone': 'nova:'+ovs[0][0]}
         vm = self.create_server(name='scn-port1-vm-1', networks=[ntw], 
                                 wait_until='ACTIVE', **kwargs)
@@ -61,7 +58,7 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingTestBase,
         self.assertEqual(port['port_security_enabled'], False)
         ntw = {'uuid': network['id'], 'port': port['id']}
         # Get the first available VRS hostname to spawn VM
-        ovs = TB.vrs_1.cmd('hostname')
+        ovs = self.TB.vrs_1.cmd('hostname')
         kwargs = {'availability_zone': 'nova:'+ovs[0][0]}
         vm = self.create_server(name='scn-port11-vm-1', networks=[ntw],
                                 wait_until='ACTIVE', **kwargs)
@@ -93,7 +90,7 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingTestBase,
                          allowed_address_pairs[0]['ip_address'])
         ntw = {'uuid': network['id'], 'port': port['id']}
         # Get the first available VRS hostname to spawn VM
-        ovs = TB.vrs_1.cmd('hostname')
+        ovs = self.TB.vrs_1.cmd('hostname')
         kwargs = {'availability_zone': 'nova:'+ovs[0][0]}
         vm = self.create_server(name='scn-port12-vm-1', networks=[ntw], 
                                 wait_until='ACTIVE', **kwargs)

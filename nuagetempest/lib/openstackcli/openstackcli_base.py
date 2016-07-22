@@ -227,7 +227,7 @@ class RouterClient(openstack_cliclient.ClientTestBase):
             fixed_ips = i['fixed_ips']
             fixed_ips_dict = json.loads(fixed_ips)
             subnet_id = fixed_ips_dict['subnet_id']
-            self._remove_router_interface_with_subnet_id(router_id, subnet_id)
+            self.remove_router_interface(router_id, subnet_id)
         self._delete_router(router_id)
     
     def _clear_router_gateway(cls, router_id):

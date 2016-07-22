@@ -42,23 +42,23 @@ class VPNaaSCliTests():
             VM interface on the VRS1 - network node """
             # VPNservice 1
             tag_vpnservice1 = (
-                obj.os_data_struct.get_resource('vpnservice1').user_data
+                obj.os_data_struct.get_resource('vpnservicetag1').user_data
             )
             vpnservice1 = (
                 obj.os_data_struct.get_resource(\
                         tag_vpnservice1['name']).os_data
             )
-            os_vpnservice_ip1 = vpnservice1['external_v4_ip']
+            os_vpnservice_ip1 = vpnservice1['vpnservice']['external_v4_ip']
 
             # VPNservice 2
             tag_vpnservice2 = (
-                obj.os_data_struct.get_resource('vpnservice2').user_data
+                obj.os_data_struct.get_resource('vpnservicetag2').user_data
             )
             vpnservice2 = (
                 obj.os_data_struct.get_resource(\
                         tag_vpnservice2['name']).os_data
             )
-            os_vpnservice_ip2 = vpnservice2['external_v4_ip']
+            os_vpnservice_ip2 = vpnservice2['vpnservice']['external_v4_ip']
 
             # Checking on VRS
             vms = obj.TB.vrs_1.cmd.vmportshow()

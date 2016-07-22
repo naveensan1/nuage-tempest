@@ -40,8 +40,8 @@ class VPNaaSCliTests():
         vsd_subnet = obj.TB.vsd_1.get_subnet(
             filter=test_base.get_filter_str('externalID', subnet_ext_id)
         )
-        obj.assertEqual(dummy_subnet['cidr'], vsd_subnet.address)
-        obj.assertEqual(cidr, vsd_subnet.address)
+        obj.assertEqual(dummy_subnet['cidr'].split("/")[0], vsd_subnet.address)
+        obj.assertEqual(cidr.split("/")[0], vsd_subnet.address)
         obj.os_data_struct.update_resource(dummy_subnet_tag, \
             vsd_data=vsd_subnet)
 
@@ -103,33 +103,33 @@ class VPNaaSCliTests():
         def verify_ipsec_vminterface(self, obj):
             """ Verifies VM interface for ipsecsiteconnection """
             # Verifying vm interface for vpn1
-            tag_subnet1 = obj.os_data_struct.get_resource('dummysubnet1').user_data
+            tag_subnet1 = obj.os_data_struct.get_resource('dummysubnettag1').user_data
             vsd_subnet1 = (
                 obj.os_data_struct.get_resource(tag_subnet1['name']).vsd_data
             )
             vpnservice_ip1 = (
                 vsd_subnet1.vm_interfaces.fetch()[0][0].ip_address
             )
-            tag_vpnservice1 = obj.os_data_struct.get_resource('vpnservice1').user_data
+            tag_vpnservice1 = obj.os_data_struct.get_resource('vpnservicetag1').user_data
             vpnservice1 = (
                 obj.os_data_struct.get_resource(tag_vpnservice1['name']).os_data
             )
-            os_vpnservice_ip1 = vpnservice1['external_v4_ip']
+            os_vpnservice_ip1 = vpnservice1['vpnservice']['external_v4_ip']
             obj.assertEqual(vpnservice_ip1, os_vpnservice_ip1)
 
             # Verifying vm interface for vpn2
-            tag_subnet2 = obj.os_data_struct.get_resource('dummysubnet2').user_data
+            tag_subnet2 = obj.os_data_struct.get_resource('dummysubnettag2').user_data
             vsd_subnet2 = (
                 obj.os_data_struct.get_resource(tag_subnet2['name']).vsd_data
             )
             vpnservice_ip2 = (
                 vsd_subnet2.vm_interfaces.fetch()[0][0].ip_address
             )
-            tag_vpnservice2 = obj.os_data_struct.get_resource('vpnservice2').user_data
+            tag_vpnservice2 = obj.os_data_struct.get_resource('vpnservicetag2').user_data
             vpnservice2 = (
                 obj.os_data_struct.get_resource(tag_vpnservice2['name']).os_data
             )
-            os_vpnservice_ip2 = vpnservice2['external_v4_ip']
+            os_vpnservice_ip2 = vpnservice2['vpnservice']['external_v4_ip']
             obj.assertEqual(vpnservice_ip2, os_vpnservice_ip2)
 
         def verify_vpn_dummy_router(self, obj):

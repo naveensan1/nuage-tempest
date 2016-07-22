@@ -348,9 +348,11 @@ class VPNaaSCliTests(VPNaaSBase):
             self.os_handle.subnets_client.show_subnet(\
                 public['network']['subnets'])
         )
-        self.os_data_struct.insert_resource(public['network']['name'],
-                                            os_data=publicsub['subnet'],
-                                            parent='CMS')
+        if not self.os_data_struct.is_resource_present(\
+                public['network']['name']):
+            self.os_data_struct.insert_resource(public['network']['name'],
+                                                os_data=publicsub['subnet'],
+                                                parent='CMS')
         return subnet, router
 
     def _delete_verify_vpn_environment(self, router, subnet):
@@ -511,6 +513,10 @@ class VPNaaSCliTests(VPNaaSBase):
         self.os_data_struct.insert_resource(
             'testtags', parent='CMS'
         )
+        self.os_data_struct.insert_resource(
+            'publicnettag', user_data={'name': pubnet['network']['name']},
+            parent = 'testtags'
+        )
         # Creating Site for VPN Service
         subnet, router = (
             self._create_verify_vpn_environment(
@@ -524,10 +530,6 @@ class VPNaaSCliTests(VPNaaSBase):
         )
         self.os_data_struct.insert_resource(
             'subnettag', user_data={'name': subnet['name']},
-            parent = 'testtags'
-        )
-        self.os_data_struct.insert_resource(
-            'publicsubnettag', user_data={'name': pubnet['network']['name']},
             parent = 'testtags'
         )
         # Create Verify VPNService
@@ -641,6 +643,11 @@ class VPNaaSCliTests(VPNaaSBase):
         self.os_data_struct.insert_resource(
             'testtags', parent='CMS'
         )
+        self.os_data_struct.insert_resource(
+            'publicnettag', user_data={'name': pubnet['network']['name']},
+            parent = 'testtags'
+        )
+
         # Creating Site1
         name1 = 'vpn1'
         cidr1 = '10.20.0.0/24'
@@ -649,6 +656,7 @@ class VPNaaSCliTests(VPNaaSBase):
                 name1, cidr1, pubnet
             )
         )
+
         # Storing Site1 info in os_data_struct
         self.os_data_struct.insert_resource(
             'routertag1', user_data={'name': router1['name']},
@@ -658,10 +666,6 @@ class VPNaaSCliTests(VPNaaSBase):
             'subnettag1', user_data={'name': subnet1['name']},
             parent = 'testtags'
         )
-        self.os_data_struct.insert_resource(
-            'publicsubnettag', user_data={'name': pubnet['network']['name']},
-            parent = 'testtags'
-        )
 
         # Creating VPN1
         vpnservice1, dummy_router1, dummy_subnet1 = (
@@ -669,6 +673,7 @@ class VPNaaSCliTests(VPNaaSBase):
                name1, router1, subnet1
            )
         )
+
         # Storing VPN1 info in os_data_struct
         self.os_data_struct.insert_resource(
             'vpnservicetag1', user_data={'name': vpnservice1['name']},
@@ -683,6 +688,7 @@ class VPNaaSCliTests(VPNaaSBase):
             parent = 'testtags'
         )
 
+
         # Creating Site2
         name2 = 'vpn2'
         cidr2 = '10.30.0.0/24'
@@ -691,6 +697,7 @@ class VPNaaSCliTests(VPNaaSBase):
                 name2, cidr2, pubnet
             )
         )
+
         # Storing Site2 info in os_data_struct
         self.os_data_struct.insert_resource(
             'routertag2', user_data={'name': router2['name']},
@@ -707,6 +714,7 @@ class VPNaaSCliTests(VPNaaSBase):
                 name2, router2, subnet2
             )
         )
+
         # Storing VPN2 info in os_data_struct
         self.os_data_struct.insert_resource(
             'vpnservicetag2', user_data={'name': vpnservice2['name']},
@@ -716,8 +724,10 @@ class VPNaaSCliTests(VPNaaSBase):
             'dummyroutertag2', user_data={'name': dummy_router2['name']},
             parent = 'testtags'
         )
-        self.os_data_struct.insert_resource(
 
+        self.os_data_struct.insert_resource(
+            'dummysubnettag2', user_data={'name': dummy_subnet2['name']},
+            parent = 'testtags'
         )
 
         tag_name = 'verify_vpn_dummy_router'

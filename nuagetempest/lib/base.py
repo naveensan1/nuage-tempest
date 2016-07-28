@@ -83,6 +83,37 @@ def setup_tempest_tenant_user(osc, tenant, user, password, role):
     LOG.info('Role: {} ID: {}'.format(role, roleid))
 
 
+def setup_tempest_tenant_user_v3(osc, tenant, user, password, role):
+
+    def ks_cmd(cmd):
+        ks_base_cmd = 'source ~/admin_rc ; openstack'
+        awk_cmd = 'awk "/ id / {print $4}"'
+        command = '{} {} | {}'.format(ks_base_cmd, cmd, awk_cmd)
+        return osc.cmd(command, timeout=30, strict=False)
+
+    tenantid = ks_cmd('project show {}'.format(tenant))
+    if not tenantid[0]:
+        tenantid = ks_cmd('project create {} --domain default'.format(tenant))
+    tenantid = tenantid[0][0]
+    LOG.info('Project: {}  ID: {}'.format(tenant, tenantid))
+
+    userid = ks_cmd('user show {}'.format(user))
+    if not userid[0]:
+        cmd = 'user create {} --password {} --project {} --domain default'
+        userid = ks_cmd(cmd.format(user, password, tenant))
+    userid = userid[0][0]
+    LOG.info('User: {} ID: {}'.format(user, userid))
+
+    roleid = ks_cmd('role show {}'.format(role))
+    if not roleid[0]:
+        cmd = 'role create {}'
+        roleid = ks_cmd(cmd.format(role))
+        cmd = 'role add --user {} --project {} {}'
+        ks_cmd(cmd.format(user, tenant, role))
+    roleid = userid[0][0]
+    LOG.info('Role: {} ID: {}'.format(role, roleid))
+
+
 def setup_cmsid(osc):
     plugin_file = "/etc/neutron/plugins/nuage/plugin.ini"
     audit_cmd = ('python set_and_audit_cms.py '

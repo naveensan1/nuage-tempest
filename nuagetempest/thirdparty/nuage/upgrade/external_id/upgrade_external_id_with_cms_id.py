@@ -2,7 +2,7 @@
 # All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
+# not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
 #         http://www.apache.org/licenses/LICENSE-2.0
@@ -18,9 +18,7 @@ import urlparse
 from oslo_log import log as logging
 from tempest.lib.common import ssh
 from tempest.lib import exceptions
-import tempest.test
 from tempest import config
-from nuagetempest.lib.nuage_tempest_test_loader import Release
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -54,15 +52,14 @@ def execute(cmd):
 
     return response
 
+
 def do_run_upgrade_script():
     script_cmd = SCRIPT_PATH + SET_EXTERNAL_ID_UPGRADE_SCRIPT
     script_args = "--config-file /etc/neutron/neutron.conf /etc/neutron/plugin.ini"
-    response = ""
 
     try:
         response = execute("python " + script_cmd + " " + script_args)
+        return response
     except exceptions.SSHExecCommandFailed as e:
         LOG.error("Failed. Exception %s", e)
         raise e
-
-    return response

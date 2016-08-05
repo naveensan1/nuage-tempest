@@ -1,6 +1,6 @@
 from tempest import config
 from oslo_log import log as logging
-from nuagetempest.lib import base
+from nuagetempest.lib import test_base as base
 from tempest import test
 import re
 import unittest

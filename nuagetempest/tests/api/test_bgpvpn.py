@@ -37,6 +37,8 @@ class BgpvpnBase(BGPVPNMixin):
     @classmethod
     def resource_setup(cls):
         super(BgpvpnBase, cls).resource_setup()
+        cls.TB = topology.initialize_topology()
+        topology.open_session(cls.TB)
         cls.tenant_id = cls.bgpvpn_client.tenant_id
         cls.admin_tenant_id = cls.bgpvpn_client_admin.tenant_id
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition

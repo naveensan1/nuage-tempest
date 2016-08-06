@@ -573,7 +573,7 @@ class VPNaaSCliTests(VPNaaSBase):
         pubnetid = CONF.network.public_network_id
         pubnet = self.os_handle.networks_client.show_network(pubnetid)
         self.os_data_struct.insert_resource(
-            'testtags', parent='CMS'
+            'testtags2', parent='CMS'
         )
         # Creating Site for VPN Service
         subnet, router = (
@@ -584,15 +584,15 @@ class VPNaaSCliTests(VPNaaSBase):
         # Storing router/subnet tagname to os_data_struct
         self.os_data_struct.insert_resource(
             'routertag', user_data={'name': router['name']},
-            parent = 'testtags'
+            parent = 'testtags2'
         )
         self.os_data_struct.insert_resource(
             'subnettag', user_data={'name': subnet['name']},
-            parent = 'testtags'
+            parent = 'testtags2'
         )
         self.os_data_struct.insert_resource(
             'publicnettag', user_data={'name': pubnet['network']['name']},
-            parent = 'testtags'
+            parent = 'testtags2'
         )
         # Create First Verify VPNService
         vpnservice, dummy_router, dummy_subnet = (
@@ -603,16 +603,16 @@ class VPNaaSCliTests(VPNaaSBase):
         # Storing vpnservice tagname to os_data_struct
         self.os_data_struct.insert_resource(
             'vpnservicetag', user_data={'name': vpnservice['name']},
-            parent = 'testtags'
+            parent = 'testtags2'
         )
         # Storing dummy router/subnet tagname to os_data_struct
         self.os_data_struct.insert_resource(
             'dummyroutertag', user_data={'name': dummy_router['name']},
-            parent = 'testtags'
+            parent = 'testtags2'
         )
         self.os_data_struct.insert_resource(
             'dummysubnettag', user_data={'name': dummy_subnet['name']},
-            parent = 'testtags'
+            parent = 'testtags2'
         )
         # Create Duplicate VPNService
         vpnservice2 = (
@@ -633,7 +633,7 @@ class VPNaaSCliTests(VPNaaSBase):
         self._delete_verify_vpn_environment(
             router, subnet
         )
-        self.os_data_struct.delete_resource('testtags')
+        self.os_data_struct.delete_resource('testtags2')
 
     def test_create_delete_ipsecsiteconnection(self):
         """ Tests create/show/list/delete of two ipsecsiteconnection
@@ -641,11 +641,11 @@ class VPNaaSCliTests(VPNaaSBase):
         pubnetid = CONF.network.public_network_id
         pubnet = self.os_handle.networks_client.show_network(pubnetid)
         self.os_data_struct.insert_resource(
-            'testtags', parent='CMS'
+            'testtags3', parent='CMS'
         )
         self.os_data_struct.insert_resource(
             'publicnettag', user_data={'name': pubnet['network']['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         # Creating Site1
@@ -660,11 +660,11 @@ class VPNaaSCliTests(VPNaaSBase):
         # Storing Site1 info in os_data_struct
         self.os_data_struct.insert_resource(
             'routertag1', user_data={'name': router1['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
         self.os_data_struct.insert_resource(
             'subnettag1', user_data={'name': subnet1['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         # Creating VPN1
@@ -677,15 +677,15 @@ class VPNaaSCliTests(VPNaaSBase):
         # Storing VPN1 info in os_data_struct
         self.os_data_struct.insert_resource(
             'vpnservicetag1', user_data={'name': vpnservice1['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
         self.os_data_struct.insert_resource(
             'dummyroutertag1', user_data={'name': dummy_router1['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
         self.os_data_struct.insert_resource(
             'dummysubnettag1', user_data={'name': dummy_subnet1['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
 
@@ -701,11 +701,11 @@ class VPNaaSCliTests(VPNaaSBase):
         # Storing Site2 info in os_data_struct
         self.os_data_struct.insert_resource(
             'routertag2', user_data={'name': router2['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
         self.os_data_struct.insert_resource(
             'subnettag2', user_data={'name': subnet2['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         # Creating VPN2
@@ -718,16 +718,16 @@ class VPNaaSCliTests(VPNaaSBase):
         # Storing VPN2 info in os_data_struct
         self.os_data_struct.insert_resource(
             'vpnservicetag2', user_data={'name': vpnservice2['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
         self.os_data_struct.insert_resource(
             'dummyroutertag2', user_data={'name': dummy_router2['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         self.os_data_struct.insert_resource(
             'dummysubnettag2', user_data={'name': dummy_subnet2['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         tag_name = 'verify_vpn_dummy_router'
@@ -757,7 +757,7 @@ class VPNaaSCliTests(VPNaaSBase):
         self.os_data_struct.insert_resource(
             'ipsecsiteconnection1',
             user_data={'name': ipsecsiteconnection1['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         # Creating IPSecSiteConnection2
@@ -773,7 +773,7 @@ class VPNaaSCliTests(VPNaaSBase):
         self.os_data_struct.insert_resource(
             'ipsecsiteconnection2',
             user_data={'name': ipsecsiteconnection2['name']},
-            parent = 'testtags'
+            parent = 'testtags3'
         )
 
         tag_name = 'verify_ipsec_vminterface'
@@ -811,5 +811,5 @@ class VPNaaSCliTests(VPNaaSBase):
         self._delete_verify_vpn_environment(
             router2, subnet2
         )
-        # Delete all the testtags
-        self.os_data_struct.delete_resource('testtags')
+        # Delete all the testtags3
+        self.os_data_struct.delete_resource('testtags3')

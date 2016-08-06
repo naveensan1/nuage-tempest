@@ -7,6 +7,8 @@ from nuagetempest.lib import test_base
 from nuagetempest.tests.api import test_vpnaas
 from nuagetempest.tests import nuage_ext
 
+import time
+
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
 #TB = topology.testbed
@@ -310,6 +312,9 @@ class VPNaaSScenarioTest(test_vpnaas.VPNaaSBase,
 
         VM1_handle = self._get_vm_handle(VM1)
         VM2 = self.os_handle.servers_client.show_server(VM2['server']['id'])
+
+        # 10 second sleep for interfaces to come up
+        time.sleep(10)
         self._check_vm_ping('ping -c 4 ', VM1_handle,
                             VM2, network2['network']['name'])
 

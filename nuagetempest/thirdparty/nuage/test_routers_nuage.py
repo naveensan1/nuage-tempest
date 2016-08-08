@@ -1,7 +1,7 @@
 # Copyright 2013 OpenStack Foundation
 # All Rights Reserved.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
@@ -12,18 +12,19 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from random import randint
+import uuid
+
 import netaddr
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
-from random import randint
 from tempest.api.network import test_routers
 from tempest.common.utils import data_utils
+from tempest.lib.common.utils import data_utils as lib_data_utils
 from tempest import config
 from tempest import test
 from tempest.lib import exceptions
-import testtools
-import uuid
 
 
 CONF = config.CONF
@@ -96,7 +97,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         # Update the name of router and verify if it is updated
         updated_name = 'updated ' + name
         update_body = self.routers_client.update_router(create_body['router']['id'],
-                                                name=updated_name)
+                                                        name=updated_name)
         self.assertEqual(update_body['router']['name'], updated_name)
         show_body = self.routers_client.show_router(
             create_body['router']['id'])
@@ -138,46 +139,42 @@ class RoutersTestNuage(test_routers.RoutersTest):
 
         self.assertEqual(nuage_domain_subnet[0][u'name'], subnet['id'])
 
-    # Router interface by port_id is not supported by Nuage
-    # See OPENSTACK-759 Known Neutron incompatibility in Nuage
-    #
-    # @testtools.skip("Removed this user case for now")
-    # @test.attr(type='smoke')
-    # def test_add_remove_router_interface_with_port_id(self):
-    #     network = self.create_network()
-    #     subnet = self.create_subnet(network)
-    #     # Validate that an L2Domain is created on VSD for the subnet creation
-    #     nuage_l2dom = self.nuage_vsd_client.get_l2domain(
-    #         filters='externalID',
-    #         filter_value=subnet['id'])
-    #     self.assertEqual(nuage_l2dom[0][u'name'], subnet['id'])
-    #
-    #     router = self._create_router(data_utils.rand_name('router-'))
-    #     nuage_domain = self.nuage_vsd_client.get_l3domain(
-    #         filters='externalID', filter_value=router['id'])
-    #     port_body = self.ports_client.create_port(
-    #         network_id=network['id'])
-    #     # add router interface to port created above
-    #     interface = self.routers_client.add_router_interface(
-    #         router['id'], port_id=port_body['port']['id'])
-    #     self.addCleanup(self._remove_router_interface_with_port_id,
-    #                     router['id'], port_id=port_body['port']['id'])
-    #     self.assertIn('subnet_id', interface.keys())
-    #     self.assertIn('port_id', interface.keys())
-    #     # Verify router id is equal to device id in port details
-    #     show_port_body = self.ports_client.show_port(
-    #         interface['port_id'])
-    #     self.assertEqual(show_port_body['port']['device_id'],
-    #                      router['id'])
-    #     # Validate L2 Domain created above is deleted and added as a L3Domain
-    #     # subnet
-    #     nuage_l2dom = self.nuage_vsd_client.get_l2domain(
-    #         filters='externalID', filter_value=subnet['id'])
-    #     self.assertEqual(
-    #         nuage_l2dom, '', "L2 domain is not deleted in VSD")
-    #     nuage_domain_subnet = self.nuage_vsd_client.get_domain_subnet(
-    #         n_constants.DOMAIN, nuage_domain[0]['ID'])
-    #     self.assertEqual(nuage_domain_subnet[0][u'name'], subnet['id'])
+    @test.attr(type='smoke')
+    def test_add_remove_router_interface_with_port_id(self):
+        network = self.create_network()
+        subnet = self.create_subnet(network)
+        # Validate that an L2Domain is created on VSD for the subnet creation
+        nuage_l2dom = self.nuage_vsd_client.get_l2domain(
+            filters='externalID',
+            filter_value=subnet['id'])
+        self.assertEqual(nuage_l2dom[0][u'name'], subnet['id'])
+
+        router = self._create_router(data_utils.rand_name('router-'))
+        nuage_domain = self.nuage_vsd_client.get_l3domain(
+            filters='externalID', filter_value=router['id'])
+        port_body = self.ports_client.create_port(
+            network_id=network['id'])
+        # add router interface to port created above
+        interface = self.routers_client.add_router_interface(
+            router['id'], port_id=port_body['port']['id'])
+        self.addCleanup(self._remove_router_interface_with_port_id,
+                        router['id'], port_id=port_body['port']['id'])
+        self.assertIn('subnet_id', interface.keys())
+        self.assertIn('port_id', interface.keys())
+        # Verify router id is equal to device id in port details
+        show_port_body = self.ports_client.show_port(
+            interface['port_id'])
+        self.assertEqual(show_port_body['port']['device_id'],
+                         router['id'])
+        # Validate L2 Domain created above is deleted and added as a L3Domain
+        # subnet
+        nuage_l2dom = self.nuage_vsd_client.get_l2domain(
+            filters='externalID', filter_value=subnet['id'])
+        self.assertEqual(
+            nuage_l2dom, '', "L2 domain is not deleted in VSD")
+        nuage_domain_subnet = self.nuage_vsd_client.get_domain_subnet(
+            n_constants.DOMAIN, nuage_domain[0]['ID'])
+        self.assertEqual(nuage_domain_subnet[0][u'name'], subnet['id'])
 
     @test.requires_ext(extension='extraroute', service='network')
     @test.attr(type='smoke')
@@ -629,10 +626,10 @@ class RoutersTestNuage(test_routers.RoutersTest):
             filters='externalID', filter_value=router['id'])
         self.assertEqual(nuage_domain[0]['PATEnabled'], NUAGE_PAT_DISABLED)
 
-# TODO: waelj: submit an upstream pull request on tempest.services.network.json.network_client to process
-# all attributes in kwargs (to support extended attribute updates)
+    # TODO: waelj: submit an upstream pull request on tempest.services.network.json.network_client to process
+    # all attributes in kwargs (to support extended attribute updates)
 
-# overrule the parent class in order to allow update of tunnel_type
+    # overrule the parent class in order to allow update of tunnel_type
     def _patch_update_router(self, router_id, set_enable_snat, **kwargs):
         uri = '/routers/%s' % router_id
         body = self.admin_client.show_resource(uri)
@@ -640,10 +637,10 @@ class RoutersTestNuage(test_routers.RoutersTest):
         # patch for tunnel_type, and backhaul-attributes
         update_body = {'name': kwargs.get('name', body['router']['name']), 'admin_state_up': kwargs.get(
             'admin_state_up', body['router']['admin_state_up']),
-            'tunnel_type': kwargs.get('tunnel_type', body['router']['tunnel_type']),
-            'nuage_backhaul_vnid': kwargs.get('nuage_backhaul_vnid', body['router']['nuage_backhaul_vnid']),
-            'nuage_backhaul_rt': kwargs.get('nuage_backhaul_rt', body['router']['nuage_backhaul_rt']),
-            'nuage_backhaul_rd': kwargs.get('nuage_backhaul_rd', body['router']['nuage_backhaul_rd'])
+                       'tunnel_type': kwargs.get('tunnel_type', body['router']['tunnel_type']),
+                       'nuage_backhaul_vnid': kwargs.get('nuage_backhaul_vnid', body['router']['nuage_backhaul_vnid']),
+                       'nuage_backhaul_rt': kwargs.get('nuage_backhaul_rt', body['router']['nuage_backhaul_rt']),
+                       'nuage_backhaul_rd': kwargs.get('nuage_backhaul_rd', body['router']['nuage_backhaul_rd'])
         }
         # end of patch for tunnel_type
 
@@ -677,7 +674,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     @test.attr(type='smoke')
     def test_router_create_update_show_delete_with_backhaul_vnid_rt_rd(self):
         name = data_utils.rand_name('router-')
-        bkhaul_vnid = 81
+        bkhaul_vnid = lib_data_utils.rand_int_id()
         bkhaul_rt = "1:1"
         bkhaul_rd = "2:2"
         create_body = self.admin_routers_client.create_router(
@@ -711,14 +708,15 @@ class RoutersTestNuage(test_routers.RoutersTest):
                          bkhaul_vnid)
         self.assertEqual(show_body['router']['nuage_backhaul_rt'], bkhaul_rt)
         self.assertEqual(show_body['router']['nuage_backhaul_rd'], bkhaul_rd)
+
         # Update the backhaul rt:rd to new values
-        updated_bkhaul_vnid = 91
+        updated_bkhaul_vnid = lib_data_utils.rand_int_id()
         updated_bkhaul_rt = "3:3"
         updated_bkhaul_rd = "4:4"
         update_body = self.patch_update_router(create_body['router']['id'],
-                                                nuage_backhaul_vnid=str(updated_bkhaul_vnid),
-                                                nuage_backhaul_rt=updated_bkhaul_rt,
-                                                nuage_backhaul_rd=updated_bkhaul_rd)
+                                               nuage_backhaul_vnid=str(updated_bkhaul_vnid),
+                                               nuage_backhaul_rt=updated_bkhaul_rt,
+                                               nuage_backhaul_rd=updated_bkhaul_rd)
         show_body = self.admin_routers_client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['nuage_backhaul_vnid'],
                          updated_bkhaul_vnid)

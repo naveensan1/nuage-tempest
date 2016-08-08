@@ -69,6 +69,8 @@ class NuageRestClient(object):
 
     @staticmethod
     def _error_checker(resp):
+        if resp.status == 300:
+            raise n_exceptions.MultipleChoices
 
         # It is not an error response
         if resp.status < 400:

@@ -13,6 +13,7 @@
 #    under the License.
 
 from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from oslo_log import log as logging
@@ -21,11 +22,12 @@ from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
+
 import netaddr
 
 
 CONF = config.CONF
-external_id_release = Release('4.0r4')
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
 conf_release = CONF.nuage_sut.release
 current_release = Release(conf_release)
 

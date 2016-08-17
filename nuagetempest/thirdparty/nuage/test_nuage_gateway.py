@@ -174,7 +174,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
         body = (self.admin_client.show_gateway_vlan(gw_vlan[0]['ID']))
 
         vlan = body['nuage_gateway_vlan']
-        self.verify_vlan_properties(gw_vlan[0], vlan)
+        self.verify_vlan_properties(gw_vlan[0], vlan, False)
 
     @test.attr(type='smoke')
     def test_show_vlan_by_admin_tenant_by_name(self):
@@ -189,7 +189,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             gateway[0]['name']))
 
         vlan = body['nuage_gateway_vlan']
-        self.verify_vlan_properties(gw_vlan[0], vlan)
+        self.verify_vlan_properties(gw_vlan[0], vlan, False)
 
     @test.attr(type='smoke')
     def test_list_vlan_by_admin_tenant(self):
@@ -202,7 +202,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             for gw_vlan in self.gatewayvlans:
                 if gw_vlan[0]['ID'] == vlan['id']:
                     found_vlan = True
-                    self.verify_vlan_properties(gw_vlan[0], vlan)
+                    self.verify_vlan_properties(gw_vlan[0], vlan, False)
             if not found_vlan:
                 assert False, "Vlan not found"
 
@@ -221,7 +221,7 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             for gw_vlan in self.gatewayvlans:
                 if gw_vlan[0]['ID'] == vlan['id']:
                     found_vlan = True
-                    self.verify_vlan_properties(gw_vlan[0], vlan)
+                    self.verify_vlan_properties(gw_vlan[0], vlan, False)
             if not found_vlan:
                 assert False, "Vlan not found"
 

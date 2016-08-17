@@ -33,7 +33,7 @@ from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from tempest import test
 
 CONF = config.CONF
-external_id_release = Release('4.0r4')
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
 conf_release = CONF.nuage_sut.release
 current_release = Release(conf_release)
 

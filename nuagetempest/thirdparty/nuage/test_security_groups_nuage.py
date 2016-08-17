@@ -24,7 +24,7 @@ from tempest import test
 import uuid
 
 CONF = config.CONF
-external_id_release = Release('4.0r4')
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
 conf_release = CONF.nuage_sut.release
 current_release = Release(conf_release)
 

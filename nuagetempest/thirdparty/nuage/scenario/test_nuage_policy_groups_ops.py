@@ -78,6 +78,10 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
                                                                 name='myVSD-l2-pg',
                                                                 type='SOFTWARE',
                                                                 extra_params=None)
+        self.addCleanup(self.nuage_vsd_client.delete_resource, constants.POLICYGROUP,
+                        policy_group[0]['ID'],
+                        responseChoice=True) # enforce deletion of underlying ACL rules/vPorts
+
         # And the policy group has and ingress/egress policy with rules allowing PING
         self._prepare_l2_security_group_entries(policy_group[0]['ID'], vsd_l2_subnet[0]['ID'])
         # When I retrieve the VSD-L2-Managed-Subnet
@@ -202,6 +206,10 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
                                                                 name='myVSD-l3-policygrp',
                                                                 type='SOFTWARE',
                                                                 extra_params=None)
+        self.addCleanup(self.nuage_vsd_client.delete_resource, constants.POLICYGROUP,
+                        policy_group[0]['ID'],
+                        responseChoice=True) # enforce deletion of underlying ACL rules/vPorts
+
         # And the policy group has and ingress/egress policy with rules allowing PING
         self._prepare_l3_security_group_entries(policy_group[0]['ID'],
                                                 vsd_l3_domain[0]['ID'],

@@ -502,6 +502,7 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                         "flowLoggingEnabled": False,
                         "defaultAllowNonIP": True,
                         "defaultAllowIP": False,
+                        "policyState":"DRAFT",
                         "active":True}
         iacl_template =  self.nuage_vsd_client.create_ingress_acl_template(name, constants.L2_DOMAIN,domain_id, extra_params=extra_params)
         return iacl_template
@@ -515,6 +516,7 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                         "flowLoggingEnabled": False,
                         "defaultAllowNonIP": True,
                         "defaultAllowIP": defaultAllowIP,
+                        "policyState":"DRAFT",
                         "active":True}
         iacl_template =  self.nuage_vsd_client.create_ingress_acl_template(name, constants.DOMAIN, domain_id, extra_params=extra_params)
         return iacl_template

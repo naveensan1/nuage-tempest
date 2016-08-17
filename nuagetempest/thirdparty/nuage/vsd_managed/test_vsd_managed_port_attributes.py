@@ -993,6 +993,13 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
                 self.assertFalse(port_present, 'disassociated port (%s) still present in policy group(%s)' %
                                  (ports[i]['id'], policy_groups[j][0]['ID']))
 
+    def _delete_advfwd_entrytemplate(self, l2domain_id, template_id):
+        # Can't use the job BEGIN-APPLY as the ID of the object changes
+        # The DRAFT object gets a new ID, with reference to the LIVE object
+        #self.nuage_vsd_client.begin_l2_policy_changes(l2domain_id)
+        self.nuage_vsd_client.delete_resource(constants.INGRESS_ADV_FWD_TEMPLATE, template_id, responseChoice=True)
+        #self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
+
     @nuage_test.header()
     def test_l2_list_policy_group_no_security_group_neg(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD created policy group
@@ -1003,19 +1010,26 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
                                                                 name='myVSDpg-1',
                                                                 type='SOFTWARE',
                                                                 extra_params=None)
+        self.addCleanup(self.nuage_vsd_client.delete_policygroup, policy_group[0]['ID'])
+
         # And I have created a security group on the OS subnet
         security_group = self._create_security_group()
+
         # And I have a redirect target
         os_redirect_target = self._create_redirect_target_in_l2_subnet(subnet)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target,os_redirect_target['nuage_redirect_target']['id'])
+
         advfw_template = self.nuage_vsd_client.create_advfwd_entrytemplate(
             constants.L2_DOMAIN,
             vsd_l2_subnet[0]['ID']
         )
+        self.addCleanup(self._delete_advfwd_entrytemplate, vsd_l2_subnet[0]['ID'], advfw_template[0]['ID'])
+
         # When I try to use this security group in a redirect-target-rule-creation
-        # rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
-        #                                             security_groups['id'])
         rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
-                                                    policy_group[0]['ID'])
+                                                    security_group['id'])
+        self.addCleanup(self.nuage_network_client.delete_redirection_target_rule,rt_rule['nuage_redirect_target_rule']['id'])
+
         # When I retrieve the VSD-L2-Managed-Subnet
         policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
         # I expect the only the policyGroup in my list: length may not be greater than one

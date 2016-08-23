@@ -435,7 +435,9 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         }
         ping8 = self.nuage_vsd_client.create_ingress_security_group_entry(name_description='ping8',
                                                                       iacl_template_id=iacl_template_id,
-                                                                      extra_params=extra_params)
+                                                                      extra_params=extra_params,
+                                                                      responseChoice=True)
+
         # create second entry
         extra_params = {
             "networkType":"POLICYGROUP",
@@ -453,7 +455,8 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         }
         ping0 = self.nuage_vsd_client.create_ingress_security_group_entry(name_description='ping0',
                                                                           iacl_template_id=iacl_template_id,
-                                                                          extra_params=extra_params)
+                                                                          extra_params=extra_params,
+                                                                          responseChoice=True)
         pass
 
     def _prepare_l2_security_group_entries(self, policy_group_id, l2domain_id):
@@ -502,7 +505,6 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                         "flowLoggingEnabled": False,
                         "defaultAllowNonIP": True,
                         "defaultAllowIP": False,
-                        "policyState":"DRAFT",
                         "active":True}
         iacl_template =  self.nuage_vsd_client.create_ingress_acl_template(name, constants.L2_DOMAIN,domain_id, extra_params=extra_params)
         return iacl_template
@@ -516,7 +518,6 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
                         "flowLoggingEnabled": False,
                         "defaultAllowNonIP": True,
                         "defaultAllowIP": defaultAllowIP,
-                        "policyState":"DRAFT",
                         "active":True}
         iacl_template =  self.nuage_vsd_client.create_ingress_acl_template(name, constants.DOMAIN, domain_id, extra_params=extra_params)
         return iacl_template

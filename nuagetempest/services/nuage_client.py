@@ -871,7 +871,8 @@ class NuageRestClient(object):
         result = self.post(res_path, data)
         return result
 
-    def create_ingress_security_group_entry(self, name_description, iacl_template_id, extra_params=None):
+    def create_ingress_security_group_entry(self, name_description, iacl_template_id, extra_params=None,
+                                            responseChoice=False):
         data = {
             "description": name_description
         }
@@ -882,6 +883,10 @@ class NuageRestClient(object):
             resource=constants.INGRESS_ACL_TEMPLATE,
             resource_id=iacl_template_id,
             child_resource=constants.INGRESS_ACL_ENTRY_TEMPLATE)
+
+        if responseChoice:
+            res_path = res_path + RESPONSECHOICE
+
         result = self.post(res_path, data)
         return result
 

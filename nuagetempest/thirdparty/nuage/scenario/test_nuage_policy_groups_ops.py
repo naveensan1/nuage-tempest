@@ -125,6 +125,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
         # These Vm's have connectivity
         # for i in range(5):
+        time.sleep(3) # add a delay
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
         # When I disassociate all ports from the policy group
@@ -135,6 +136,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
         time.sleep(3) # add a delay to allow propagation of the rules
+
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (1)")
@@ -145,6 +147,8 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
+
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (2)")
@@ -154,8 +158,9 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
             'name': 'port-without-vsd-pg-2nd'
         }
         self.update_port(port1, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
         # self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
+
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (2)")
@@ -166,6 +171,8 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         # self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
+
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
@@ -187,6 +194,8 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         # self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+        time.sleep(5) # add a delay to allow propagation of the rules
+
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
@@ -199,6 +208,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         # self.servers_client.delete_server(vm1['id'])
         self._clear_connectivity_vm_interfaces(self.conn_router_id, self.conn_subnet_id, self.conn_port_id)
 
+    @nuage_test.header()
     def test_e2e_l3_vm_connectivity_port_to_policygroup(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l3_subnet, vsd_l3_domain = self._create_vsd_l3_managed_subnet()

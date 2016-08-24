@@ -467,14 +467,14 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # Create ingress security policy entry for ICMP-Type0-Code0 (echo reply) in pg
         # =? ping works in this pg, can be switched off/on via associating ports to the pg
         #
-        # start policy group changes
-        self.nuage_vsd_client.begin_l2_policy_changes(l2domain_id)
+        # # start policy group changes
+        # self.nuage_vsd_client.begin_l2_policy_changes(l2domain_id)
         # create ingress policy
         self.iacl_template = self._create_l2_ingress_acl_template(data_utils.rand_name("iacl_policy"), l2domain_id)
         self._create_ping_security_group_entries(policy_group_id, self.iacl_template[0]['ID'])
         self.eacl_templace = self._create_l2_egress_acl_template(data_utils.rand_name("eacl_policy"), l2domain_id)
-        # Apply the policy changes
-        self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
+        # # Apply the policy changes
+        # self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
         pass
 
     def _prepare_l3_security_group_entries(self, policy_group_id, l3domain_id, defaultAllowIP=False):
@@ -485,16 +485,16 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # Create ingress security policy entry for ICMP-Type0-Code0 (echo reply) in pg
         # =? ping works in this pg, can be switched off/on via associating ports to the pg
         #
-        # start policy group changes
-        self.nuage_vsd_client.begin_l3_policy_changes(l3domain_id)
+        # # start policy group changes
+        # self.nuage_vsd_client.begin_l3_policy_changes(l3domain_id)
         # create ingress policy
         self.iacl_template = self._create_l3_ingress_acl_template(data_utils.rand_name("iacl_policy"),
                                                                   l3domain_id,
                                                                   defaultAllowIP=defaultAllowIP)
         self._create_ping_security_group_entries(policy_group_id, self.iacl_template[0]['ID'])
         self.eacl_templace = self._create_l3_egress_acl_template(data_utils.rand_name("eacl_policy"), l3domain_id)
-        # Apply the policy changes
-        self.nuage_vsd_client.apply_l3_policy_changes(l3domain_id)
+        # # Apply the policy changes
+        # self.nuage_vsd_client.apply_l3_policy_changes(l3domain_id)
         pass
 
     def _create_l2_ingress_acl_template(self, name, domain_id):

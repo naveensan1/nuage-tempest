@@ -134,6 +134,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (1)")
@@ -153,6 +154,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
             'name': 'port-without-vsd-pg-2nd'
         }
         self.update_port(port1, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
         # self.update_port(port2, **kwargs)
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
@@ -175,7 +177,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         # self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
         # Then these VM's have no more connectivity
-        # time.sleep(5)
+        time.sleep(3) # add a delay to allow propagation of the rules
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
         # When I re-associate that port with the policy group
@@ -239,6 +241,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
         # Then I expext the port in the show policy group response
+        time.sleep(3) # add a delay to allow propagation of the rules
 
         if CONF.nuage_sut.nuage_plugin_mode != 'ml2' :
 
@@ -273,6 +276,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
@@ -297,6 +301,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
@@ -309,6 +314,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+        time.sleep(3) # add a delay to allow propagation of the rules
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
@@ -321,6 +327,8 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
+
+        time.sleep(3) # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)

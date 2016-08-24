@@ -18,6 +18,8 @@ import collections
 import time
 import json
 
+from oslo_log import log as logging
+
 from tempest import config
 from tempest import test
 from tempest.lib.common.utils import data_utils
@@ -29,6 +31,8 @@ from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 #from nuagetempest.thirdparty.nuage.scenario.test_nuage_fip_server_basic_ops import NuageNetworkScenarioTest
 
 CONF = config.CONF
+LOG = logging.getLogger(__name__)
+
 
 # Stuff for the interconnectivity VM
 OS_CONNECTING_NW_CIDR = IPNetwork('33.33.33.0/24')
@@ -712,7 +716,9 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         create_kwargs['networks'][0]['port'] = port_1['id']
         create_kwargs['networks'][1]['port'] = port_2['id']
 
-        server = self.create_server(name=name, **create_kwargs)
+        server = self.create_server(name=name,
+                                    wait_until='ACTIVE',
+                                    **create_kwargs)
         # self.servers.append(server)
         return server
 
@@ -993,13 +999,22 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # if result.__contains__("0"): connectivity = True
         # else: connectivity = False
 
+        #command = "ping -c1 -w" + str(wait_time) + " -q " + ping_vm_ipaddress
+        command = "ping -c20 -W" + str(wait_time) + " -v " + ping_vm_ipaddress
+        connectivity = False
+        result = None
 
-        command = "ping -c1 -w" + str(wait_time) + " -q " + ping_vm_ipaddress
         try:
-            ssh_client.exec_command(command)
+            result = ssh_client.exec_command(command)
             connectivity = True
         except (exceptions.SSHExecCommandFailed) as e:
+            LOG.warn("Fails to ping with exception %s", e)
             connectivity = False
+        except:
+            LOG.warn("Fails to ping with result %s", result)
+            connectivity = False
+        else:
+            LOG.info("Ping with result %s", result)
 
         return connectivity
 

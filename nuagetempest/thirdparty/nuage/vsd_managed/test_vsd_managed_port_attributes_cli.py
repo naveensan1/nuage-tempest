@@ -354,11 +354,15 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
         #  And I have created a redirection-target in the VSD-L2-Managed-Subnet-x
         name = data_utils.rand_name("rt-same-name")
         os_redirect_target_x = self._cli_create_nuage_redirect_target_in_l2_subnet(cli_subnet_x, name)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target, os_redirect_target_x['id'])
+
         # When I have a VSD-L2-Managed-Subnet-y in openstack
         vsd_l2_subnet_y, l2dom_template_y = self._create_vsd_l2_managed_subnet()
         cli_network_y, cli_subnet_y = self._cli_create_os_l2_vsd_managed_subnet(vsd_l2_subnet_y)
         #  When I create in VSD-L2-Managed-Subnet-y a redirect--target with the same name as in subnet_x
         os_redirect_target_y = self._cli_create_nuage_redirect_target_in_l2_subnet(cli_subnet_y, name)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target, os_redirect_target_y['id'])
+
         # I expect rt-y  to be in my list-y
         my_rt_found_y = self._cli_find_redirect_target_in_list(os_redirect_target_y['id'], cli_subnet_y)
         self.assertTrue(my_rt_found_y, "Did not find my redirect-target in the list")

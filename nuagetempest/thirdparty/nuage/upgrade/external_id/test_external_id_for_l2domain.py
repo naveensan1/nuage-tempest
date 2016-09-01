@@ -21,6 +21,7 @@ from tempest.common.utils import data_utils
 from tempest import config
 
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.utils import exceptions as n_exceptions
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
@@ -251,8 +252,10 @@ class ExternalIdForL2domainTest(base.BaseNetworkTest):
 
         def verify_cannot_delete(self):
             # Can't delete l2 domain in VSD
-            response = self.test.nuage_vsd_client.delete_l2domain(self.vsd_l2domain['ID'])
-            self.test.assertEqual(300, response.status)
+            self.test.assertRaisesRegexp(n_exceptions.MultipleChoices,
+                                         "Multiple choices",
+                                         self.test.nuage_vsd_client.delete_l2domain,
+                                         self.vsd_l2domain['ID'])
 
     @classmethod
     def resource_setup(cls):

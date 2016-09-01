@@ -24,6 +24,8 @@ from tempest.common.utils import data_utils
 
 from tempest.api.network import base
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.utils import exceptions as n_exceptions
+
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.vpnaas.vpnaas_mixins import VPNMixin
@@ -77,8 +79,10 @@ class ExternalIdForVpnServiceTest(VPNMixin, base.BaseNetworkTest):
 
         def verify_cannot_delete(self):
             # Can't delete floating IP in VSD
-            response = self.test.nuage_vsd_client.delete_resource(n_constants.FLOATINGIP, self.vsd_floating_ip['ID'])
-            self.test.assertEqual(300, response.status)
+            self.test.assertRaisesRegexp(n_exceptions.MultipleChoices,
+                                         "Multiple choices",
+                                         self.test.nuage_vsd_client.delete_resource,
+                                         n_constants.FLOATINGIP, self.vsd_floating_ip['ID'])
 
     @classmethod
     def setUpClass(cls):
@@ -118,8 +122,12 @@ class ExternalIdForVpnServiceTest(VPNMixin, base.BaseNetworkTest):
             ipnkwargs = {'name': 'ipsecconn'}
             with self.ipsecsiteconnection(
                     created_vpnservice['id'], created_ikepolicy['id'],
-                    created_ipsecpolicy['id'], '10.30.36.2',
-                    '10.30.36.2', '2.0.0.0/24', 'secret',
+                    created_ipsecpolicy['id'],
+                    peer_address='10.30.35.2',
+                    peer_id='10.30.35.2',
+                    #peer_cidrs='2.0.0.0/24',
+                    peer_cidrs=CONF.network.tenant_network_cidr,
+                    psk='secret',
                     **ipnkwargs) as created_ipsecsiteconnection:
 
                 self.assertIsNotNone(created_ipsecsiteconnection)

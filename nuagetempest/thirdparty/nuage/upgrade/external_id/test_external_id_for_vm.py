@@ -20,6 +20,8 @@ from tempest import config
 from tempest.common.utils import data_utils
 
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.utils import exceptions as n_exceptions
+
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
@@ -80,8 +82,10 @@ class ExternalIdForVmTest(base_nuage_network_scenario_test.NuageNetworkScenarioT
 
         def verify_cannot_delete(self):
             # Can't delete vport in VSD
-            response = self.test.nuage_vsd_client.delete_resource(n_constants.VM, self.vsd_vm['ID'])
-            self.test.assertEqual(300, response.status)
+            self.test.assertRaisesRegexp(n_exceptions.MultipleChoices,
+                                         "Multiple choices",
+                                         self.test.nuage_vsd_client.delete_resource,
+                                         n_constants.VM, self.vsd_vm['ID'])
 
     def setUp(self):
         super(ExternalIdForVmTest, self).setUp()

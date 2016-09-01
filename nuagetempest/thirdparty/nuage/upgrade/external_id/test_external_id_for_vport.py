@@ -21,6 +21,8 @@ from tempest.common.utils import data_utils
 from tempest.api.network import base as base
 
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.utils import exceptions as n_exceptions
+
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.thirdparty.nuage.upgrade.external_id import upgrade_external_id_with_cms_id as upgrade_script
@@ -198,8 +200,11 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
 
         def verify_cannot_delete(self):
             # Can't delete vport in VSD
-            response = self.test.nuage_vsd_client.delete_resource(n_constants.VPORT, self.vsd_vport['ID'])
-            self.test.assertEqual(300, response.status)
+            self.test.assertRaisesRegexp(n_exceptions.MultipleChoices,
+                                         "Multiple choices",
+                                         self.test.nuage_vsd_client.delete_resource,
+                                         n_constants.VPORT,
+                                         self.vsd_vport['ID'])
 
     @classmethod
     def setUpClass(cls):

@@ -98,7 +98,7 @@ class ExternalIdForNetworkMacroTest(base.BaseAdminNetworkTest):
                 self.subnets.remove(subnet)
 
     @testtools.skipUnless(Release('4.0R4') <= Release(CONF.nuage_sut.release),
-                          'No upgrade testing on vport')
+                          'No upgrade testing on network macro')
     def test_network_macro_matches_to_enterprise(self):
         # Create a dedicated netpartition
         netpartition_b = self._create_netpartition()

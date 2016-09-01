@@ -17,6 +17,10 @@ class NuageRestClientException(exceptions.TempestException,
     pass
 
 
+class MultipleChoices(NuageRestClientException):
+    message = "Multiple choices"
+
+
 class InvalidHttpSuccessCode(NuageRestClientException):
     message = "The success code is different than the expected one"
 

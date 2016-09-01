@@ -18,6 +18,8 @@ import collections
 import time
 import json
 
+from oslo_log import log as logging
+
 from tempest import config
 from tempest import test
 from tempest.lib.common.utils import data_utils
@@ -28,6 +30,8 @@ from nuagetempest.lib.utils import constants
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 
 CONF = config.CONF
+LOG = logging.getLogger(__name__)
+
 
 # Stuff for the interconnectivity VM
 OS_CONNECTING_NW_CIDR = IPNetwork('33.33.33.0/24')
@@ -434,7 +438,9 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         }
         ping8 = self.nuage_vsd_client.create_ingress_security_group_entry(name_description='ping8',
                                                                       iacl_template_id=iacl_template_id,
-                                                                      extra_params=extra_params)
+                                                                      extra_params=extra_params,
+                                                                      responseChoice=True)
+
         # create second entry
         extra_params = {
             "networkType":"POLICYGROUP",
@@ -452,7 +458,8 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         }
         ping0 = self.nuage_vsd_client.create_ingress_security_group_entry(name_description='ping0',
                                                                           iacl_template_id=iacl_template_id,
-                                                                          extra_params=extra_params)
+                                                                          extra_params=extra_params,
+                                                                          responseChoice=True)
         pass
 
     def _prepare_l2_security_group_entries(self, policy_group_id, l2domain_id):
@@ -463,14 +470,14 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # Create ingress security policy entry for ICMP-Type0-Code0 (echo reply) in pg
         # =? ping works in this pg, can be switched off/on via associating ports to the pg
         #
-        # start policy group changes
-        self.nuage_vsd_client.begin_l2_policy_changes(l2domain_id)
+        # # start policy group changes
+        # self.nuage_vsd_client.begin_l2_policy_changes(l2domain_id)
         # create ingress policy
         self.iacl_template = self._create_l2_ingress_acl_template(data_utils.rand_name("iacl_policy"), l2domain_id)
         self._create_ping_security_group_entries(policy_group_id, self.iacl_template[0]['ID'])
         self.eacl_templace = self._create_l2_egress_acl_template(data_utils.rand_name("eacl_policy"), l2domain_id)
-        # Apply the policy changes
-        self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
+        # # Apply the policy changes
+        # self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
         pass
 
     def _prepare_l3_security_group_entries(self, policy_group_id, l3domain_id, defaultAllowIP=False):
@@ -481,16 +488,16 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # Create ingress security policy entry for ICMP-Type0-Code0 (echo reply) in pg
         # =? ping works in this pg, can be switched off/on via associating ports to the pg
         #
-        # start policy group changes
-        self.nuage_vsd_client.begin_l3_policy_changes(l3domain_id)
+        # # start policy group changes
+        # self.nuage_vsd_client.begin_l3_policy_changes(l3domain_id)
         # create ingress policy
         self.iacl_template = self._create_l3_ingress_acl_template(data_utils.rand_name("iacl_policy"),
                                                                   l3domain_id,
                                                                   defaultAllowIP=defaultAllowIP)
         self._create_ping_security_group_entries(policy_group_id, self.iacl_template[0]['ID'])
         self.eacl_templace = self._create_l3_egress_acl_template(data_utils.rand_name("eacl_policy"), l3domain_id)
-        # Apply the policy changes
-        self.nuage_vsd_client.apply_l3_policy_changes(l3domain_id)
+        # # Apply the policy changes
+        # self.nuage_vsd_client.apply_l3_policy_changes(l3domain_id)
         pass
 
     def _create_l2_ingress_acl_template(self, name, domain_id):
@@ -708,7 +715,9 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         create_kwargs['networks'][0]['port'] = port_1['id']
         create_kwargs['networks'][1]['port'] = port_2['id']
 
-        server = self.create_server(name=name, **create_kwargs)
+        server = self.create_server(name=name,
+                                    wait_until='ACTIVE',
+                                    **create_kwargs)
         # self.servers.append(server)
         return server
 
@@ -989,13 +998,22 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         # if result.__contains__("0"): connectivity = True
         # else: connectivity = False
 
+        #command = "ping -c1 -w" + str(wait_time) + " -q " + ping_vm_ipaddress
+        command = "ping -c20 -W" + str(wait_time) + " -v " + ping_vm_ipaddress
+        connectivity = False
+        result = None
 
-        command = "ping -c1 -w" + str(wait_time) + " -q " + ping_vm_ipaddress
         try:
-            ssh_client.exec_command(command)
+            result = ssh_client.exec_command(command)
             connectivity = True
         except (exceptions.SSHExecCommandFailed) as e:
+            LOG.warn("Fails to ping with exception %s", e)
             connectivity = False
+        except:
+            LOG.warn("Fails to ping with result %s", result)
+            connectivity = False
+        else:
+            LOG.info("Ping with result %s", result)
 
         return connectivity
 

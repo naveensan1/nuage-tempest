@@ -285,6 +285,16 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         #                          cls.router['id'])
         # cls._try_delete_resource(cls.client.delete_network,
         #                          cls.osmgd_l3_network['id'])
+
+        # delete VSD managed OpenStack resources BEFORE deletion of the VSD resources
+        # Otherwise, VSD resource will not be able to remove all child resources
+        # when these are CMS managed. (e.g. permissions, groups and users)
+        cls._try_delete_resource(cls.networks_client.delete_network,
+                                 cls.vsdmgd_l2_network['id'])
+
+        cls._try_delete_resource(cls.networks_client.delete_network,
+                                 cls.vsdmgd_l3_network['id'])
+
         for vsd_l2domain in cls.vsd_l2domain:
             cls.nuage_vsd_client.delete_l2domain(vsd_l2domain[0]['ID'])
 

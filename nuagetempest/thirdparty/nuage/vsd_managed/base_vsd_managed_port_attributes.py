@@ -26,7 +26,6 @@ from tempest.services.network import resources as net_resources
 
 from nuagetempest.lib.utils import constants
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
-#from nuagetempest.thirdparty.nuage.scenario.test_nuage_fip_server_basic_ops import NuageNetworkScenarioTest
 
 CONF = config.CONF
 
@@ -1029,50 +1028,20 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         self.update_port(port,**kwargs)
 
     @classmethod
-    def _create_vsd_floatingip_pool(self):
-        # Create a VSD floatingip
-        # data = {"vnID":None,
-        #         "uplinkGWVlanAttachmentID":None,
-        #         "sharedResourceParentID":None,
-        #         "underlay": True,
-        #         "uplinkVPortName":None,
-        #         "uplinkInterfaceMAC":None,
-        #         "uplinkInterfaceIP":None,
-        #         "type":"FLOATING",
-        #         "netmask":"255.255.255.0",
-        #         "name":"myFIPnet",
-        #         "gateway":"10.20.30.1",
-        #         "ECMPCount":None,
-        #         "domainRouteTarget":None,
-        #         "domainRouteDistinguisher":None,
-        #         "DHCPManaged":False,
-        #         "description":"",
-        #         "backHaulVNID":None,
-        #         "backHaulRouteTarget":None,
-        #         "backHaulRouteDistinguisher":None,
-        #         "address":"10.20.30.0",
-        #         "accessRestrictionEnabled":False,
-        #         "entityScope":None,
-        #         "parentType":None,
-        #         "parentID":None,
-        #         "owner":None,
-        #         "lastUpdatedBy":None,
-        #         "ID":None,
-        #         "externalID":None
-        #         }
+    def _create_vsd_floatingip_pool(cls, fip_pool_cidr=VSD_FIP_POOL_CIDR):
         name = data_utils.rand_name('fip-pool')
-        address = IPAddress(VSD_FIP_POOL_CIDR.first )
-        netmask = VSD_FIP_POOL_CIDR.netmask
-        gateway = VSD_FIP_POOL_GW
+        address = IPAddress(fip_pool_cidr.first)
+        netmask = fip_pool_cidr.netmask
+        gateway = address + 1
         extra_params = {
             "underlay": True
         }
-        vsd_fip_pool = self.nuage_vsd_client.create_floatingip_pool(name=name,
-                                                                    address=str(address),
-                                                                    gateway=gateway,
-                                                                    netmask=str(netmask),
-                                                                    extra_params=extra_params)
-        self.vsd_shared_domains.append(vsd_fip_pool)
+        vsd_fip_pool = cls.nuage_vsd_client.create_floatingip_pool(name=name,
+                                                                   address=str(address),
+                                                                   gateway=str(gateway),
+                                                                   netmask=str(netmask),
+                                                                   extra_params=extra_params)
+        cls.vsd_shared_domains.append(vsd_fip_pool)
         return vsd_fip_pool
 
     def _claim_vsd_floating_ip(self, l3domain_id, vsd_fip_pool_id):

@@ -1234,7 +1234,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
     @classmethod
     def resource_setup(cls):
         super(VSDManagedAssociateFIPTest, cls).resource_setup()
-        cls.vsd_fip_pool = cls._create_vsd_floatingip_pool()
+        cls.vsd_fip_pool = cls._create_vsd_floatingip_pool(fip_pool_cidr=IPNetwork('120.120.10.0/24'))
 
     @nuage_test.header()
     def test_create_port_with_vsd_floatingip(self):

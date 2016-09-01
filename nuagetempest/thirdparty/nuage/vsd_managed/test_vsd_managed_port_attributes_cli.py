@@ -376,6 +376,8 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
         #  And I have created a redirection-target in the VSD-L2-Managed-Subnet
         name = data_utils.rand_name("rt-same-name")
         os_redirect_target = self._cli_create_nuage_redirect_target_in_l2_subnet(cli_subnet, name)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target, os_redirect_target['id'])
+
         #  When I try to create a redirect target with the same name,
         # I expect this to fail
         msg = "Bad request: A Nuage redirect target with name '" + name + "' already exists"
@@ -395,6 +397,8 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
         cli_network, cli_subnet = self._cli_create_os_l2_vsd_managed_subnet(vsd_l2_subnet)
         #  And I have created a redirection-target in the VSD-L2-Managed-Subnet
         os_redirect_target = self._cli_create_nuage_redirect_target_in_l2_subnet(cli_subnet)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target, os_redirect_target['id'])
+
         # And this rt is associated to a port
         rtport_1 = self.create_port(cli_network)
         self._cli_associate_rt_port(rtport_1, os_redirect_target)
@@ -420,6 +424,7 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
             os_redirect_target)
 
     @test.attr(type=['negative'])
+    @nuage_test.header()
     def test_cli_create_os_l2_redirection_target_redundancy_enabled_neg(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack
         vsd_l2_subnet, l2dom_template = self._create_vsd_l2_managed_subnet()
@@ -435,7 +440,6 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
             cli_subnet['name'],
             'cli-nuage-rt-l2-red-enabled-neg'
         )
-        # Todo: uncomment when OPENSTACK-1361 is solved
         self.assertRaisesRegex(
             exceptions.SSHExecCommandFailed,
             msg,
@@ -654,6 +658,7 @@ class VSDManagedPolicyGroupsCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
                          (policy_group_x[0]['ID'],  cli_subnet_x['id'], cli_subnet_y['id']))
         pass
 
+    @nuage_test.header()
     def test_cli_list_l3_policy_groups_subnet_only(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l3_subnet_x, vsd_l3_domain_x = self._create_vsd_l3_managed_subnet()
@@ -693,6 +698,7 @@ class VSDManagedPolicyGroupsCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
         self.assertFalse(pg_present, "Found policgroup (%s) of another subnet (%s) in this subnet (%s)" %
                          (policy_group_x[0]['ID'],  cli_subnet_x['id'], cli_subnet_y['id']))
 
+    @nuage_test.header()
     def test_cli_l3_associate_multiple_ports_to_policygroups(self):
         policy_groups = []
         ports = []
@@ -797,6 +803,7 @@ class VSDManagedAllowedAddresPairsCLITest(remote_cli_base_testcase.RemoteCliBase
         # cls.iacl_template = ''
         # cls.eacl_templace = ''
 
+    @nuage_test.header()
     def test_cli_create_address_pair_l2domain_no_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -840,6 +847,7 @@ class VSDManagedAllowedAddresPairsCLITest(remote_cli_base_testcase.RemoteCliBase
         #                  "Removed allowed-address-pair still present in port (%s)" % addrpair_port['id'])
         pass
 
+    @nuage_test.header()
     def test_cli_create_address_pair_l2domain_with_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -881,6 +889,7 @@ class VSDManagedAllowedAddresPairsCLITest(remote_cli_base_testcase.RemoteCliBase
         #                  "Removed allowed-address-pair stil present in port (%s)" % addrpair_port['id'])
         pass
 
+    @nuage_test.header()
     def test_cli_create_address_pair_l3_subnet_no_mac(self):
         # Given I have a VSD-L3-Managed subnet
         vsd_l3_subnet, l3_domain = self._create_vsd_l3_managed_subnet()
@@ -922,6 +931,7 @@ class VSDManagedAllowedAddresPairsCLITest(remote_cli_base_testcase.RemoteCliBase
         #                  "Removed allowed-address-pair stil present in port (%s)" % addrpair_port['id'])
         pass
 
+    @nuage_test.header()
     def test_cli_create_address_pair_l3domain_with_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l3_subnet, l3_domain = self._create_vsd_l3_managed_subnet()
@@ -976,8 +986,7 @@ class VSDManagedAssociateFIPCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
     @classmethod
     def resource_setup(cls):
         super(VSDManagedAssociateFIPCLITest, cls).resource_setup()
-        super(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes, cls).resource_setup()
-        cls.vsd_fip_pool = cls._create_vsd_floatingip_pool()
+        cls.vsd_fip_pool = cls._create_vsd_floatingip_pool(fip_pool_cidr=IPNetwork('110.110.10.0/24'))
 
     @classmethod
     def resource_cleanup(cls):
@@ -1068,6 +1077,7 @@ class VSDManagedAssociateFIPCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
                                  msg="disassociated VSD claimed FIP (%s) still found in port (%s)" %
                                      (claimed_fips[i][0]['ID'], ports[i]['id']))
 
+    @nuage_test.header()
     def test_cli_subnets_same_domain_associate_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
         vsd_fip_pool = self.vsd_fip_pool
@@ -1147,6 +1157,7 @@ class VSDManagedAssociateFIPCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
         self.assertTrue(fip_present_y, msg="nuage floatingip not present in list, while expected to be")
         pass
 
+    @nuage_test.header()
     def test_cli_subnets_other_domain_associate_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
         vsd_fip_pool = self.vsd_fip_pool

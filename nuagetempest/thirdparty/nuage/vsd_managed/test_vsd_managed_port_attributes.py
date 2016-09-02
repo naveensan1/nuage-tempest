@@ -359,11 +359,15 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         #  And I have created a redirection-target in the VSD-L2-Managed-Subnet-x
         name = data_utils.rand_name("rt-same-name")
         os_redirect_target_x = self._create_redirect_target_in_l2_subnet(subnet_x, name)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target,os_redirect_target_x['nuage_redirect_target']['id'])
+
         # When I have a VSD-L2-Managed-Subnet-y in openstack
         vsd_l2_subnet_y, l2dom_template_y = self._create_vsd_l2_managed_subnet()
         network_y, subnet_y = self._create_os_l2_vsd_managed_subnet(vsd_l2_subnet_y)
         #  When I create in VSD-L2-Managed-Subnet-y a redirect--target with the same name as in subnet_x
         os_redirect_target_y = self._create_redirect_target_in_l2_subnet(subnet_y, name)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target,os_redirect_target_y['nuage_redirect_target']['id'])
+
         # I expect rt-y  to be in my list-y
         my_rt_found_y = self._find_redirect_target_in_list(os_redirect_target_y['nuage_redirect_target']['id'],
                                                            subnet_y)
@@ -383,6 +387,8 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         #  And I have created a redirection-target in the VSD-L2-Managed-Subnet
         name = data_utils.rand_name("rt-same-name")
         os_redirect_target_x1 = self._create_redirect_target_in_l2_subnet(subnet, name)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target,os_redirect_target_x1['nuage_redirect_target']['id'])
+
         #  When I try to create a redirect target with the same name,
         # I expect this to fail
         msg = "Bad request: A Nuage redirect target with name '%s' already exists" % name
@@ -402,6 +408,8 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         network, subnet = self._create_os_l2_vsd_managed_subnet(vsd_l2_subnet)
         #  And I have created a redirection-target in the VSD-L2-Managed-Subnet
         os_redirect_target = self._create_redirect_target_in_l2_subnet(subnet)
+        self.addCleanup(self.nuage_network_client.delete_redirection_target,os_redirect_target['nuage_redirect_target']['id'])
+
         # And this rt is associated to a port
         rtport_1 = self.create_port(network)
         self._associate_rt_port(rtport_1, os_redirect_target)
@@ -893,6 +901,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
                          (port['id'], policy_group[0]['ID']))
         pass
 
+    @nuage_test.header()
     def test_list_l3_policy_groups_subnet_only(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD creeated policy group
         vsd_l3_subnet_x, vsd_l3_domain_x = self._create_vsd_l3_managed_subnet()
@@ -933,6 +942,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
                          (policy_group_x[0]['ID'],  subnet_x['id'], subnet_y['id']))
         pass
 
+    @nuage_test.header()
     def test_l3_associate_multiple_ports_to_policygroups(self):
         policy_groups = []
         ports = []
@@ -1052,6 +1062,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
         # cls.iacl_template = ''
         # cls.eacl_templace = ''
 
+    @nuage_test.header()
     def test_create_address_pair_l2domain_no_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -1097,6 +1108,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
                          "Removed allowed-address-pair stil present in port (%s)" % addrpair_port['id'])
         pass
 
+    @nuage_test.header()
     def test_create_address_pair_l2domain_with_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -1143,6 +1155,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
                          "Removed allowed-address-pair stil present in port (%s)" % addrpair_port['id'])
         pass
 
+    @nuage_test.header()
     def test_create_address_pair_l3_subnet_no_mac(self):
         # Given I have a VSD-L3-Managed subnet
         vsd_l3_subnet, l3_domain = self._create_vsd_l3_managed_subnet()
@@ -1189,6 +1202,7 @@ class VSDManagedAllowedAddresPairssTest(base_vsd_managed_port_attributes.BaseVSD
         pass
 
     @test.attr(type='smoke')
+    @nuage_test.header()
     def test_create_address_pair_l3domain_with_mac(self):
         # Given I have a VSD-L2-Managed subnet
         vsd_l3_subnet, l3_domain = self._create_vsd_l3_managed_subnet()
@@ -1366,6 +1380,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
                                  msg="disassociated VSD claimed FIP (%s) still found in port (%s)" %
                                      (claimed_fips[i][0]['ID'], ports[i]['id']))
 
+    @nuage_test.header()
     def test_subnets_same_domain_associate_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
         vsd_fip_pool = self.vsd_fip_pool
@@ -1445,6 +1460,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
         self.assertTrue(fip_present_y, msg="nuage floatingip not present in list, while expected to be")
         pass
 
+    @nuage_test.header()
     def test_subnets_other_domain_associate_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
         vsd_fip_pool = self.vsd_fip_pool

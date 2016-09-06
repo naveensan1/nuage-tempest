@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from tempest.api.network import base
@@ -25,6 +26,9 @@ from tempest.lib import exceptions
 
 
 CONF = config.CONF
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 
 class NetworksTestJSONNuage(test_networks.NetworksTest):
@@ -52,6 +56,10 @@ class NetworksTestJSONNuage(test_networks.NetworksTest):
             self.assertEqual(self.convert_dec_hex(
                 subnet['gateway_ip'])[2:], nuage_dhcpopt[0]['value'])
             self.assertEqual(nuage_dhcpopt[0]['type'], "03")
+            if external_id_release <= current_release:
+                self.assertEqual(nuage_dhcpopt[0]['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     subnet.get('id')))
         if subnet.get('dns_nameservers'):
             self.assertEqual(nuage_dhcpopt[1]['type'],
                              "06")
@@ -67,11 +75,19 @@ class NetworksTestJSONNuage(test_networks.NetworksTest):
 
             self.assertEqual(nuage_dhcpopt[2]['type'],
                              "79")
+            if external_id_release <= current_release:
+                self.assertEqual(nuage_dhcpopt[2]['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     subnet.get('id')))
         if subnet.get('host_routes'):
             self.assertEqual(
                 self.convert_dec_hex(
                     subnet['host_routes'][0]['nexthop'])[2:],
                 nuage_dhcpopt[2]['value'][-8:])
+            if external_id_release <= current_release:
+                self.assertEqual(nuage_dhcpopt[2]['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     subnet.get('id')))
 
     def _create_verify_delete_subnet(self, cidr=None, mask_bits=None,
                                      **kwargs):
@@ -90,12 +106,78 @@ class NetworksTestJSONNuage(test_networks.NetworksTest):
         nuage_dhcpopt = self.nuage_vsd_client.get_dhcpoption(
             n_constants.L2_DOMAIN, nuage_l2dom[0]['ID'])
 
+        permissions = self.nuage_vsd_client.get_permissions(
+                parent=n_constants.L2_DOMAIN,
+                parent_id=nuage_l2dom[0]['ID'])
+
         if 'dns_nameservers' in set(subnet).intersection(compare_args):
             self.assertEqual(sorted(compare_args['dns_nameservers']),
                              sorted(subnet['dns_nameservers']))
             del subnet['dns_nameservers'], compare_args['dns_nameservers']
         # VSD validation
         self._verify_vsd_dhcp_options(nuage_dhcpopt, subnet)
+        if external_id_release <= current_release:
+            self.assertEqual(len(permissions), 1)
+            self.assertEqual(permissions[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 subnet['tenant_id']))
+            if network['shared']:
+                    self.assertEqual(permissions[0]['permittedEntityName'],
+                                     "Everybody")
+            else:
+                self.assertEqual(permissions[0]['permittedEntityName'],
+                                 self.subnets_client.tenant_id)
+                group_resp = self.nuage_vsd_client.get_resource(
+                    resource=n_constants.GROUP,
+                    filters='externalID',
+                    filter_value=self.subnets_client.tenant_id + '@openstack',
+                    netpart_name=self.nuage_vsd_client.def_netpart_name)
+                self.assertIsNot(group_resp, "", "User Group on VSD for the"
+                                                 " user who created the Subnet"
+                                                 " was not Found")
+                self.assertEqual(group_resp[0]['name'],
+                                 self.subnets_client.tenant_id)
+            user_resp = self.nuage_vsd_client.get_user(
+                filters='externalID',
+                filter_value=self.subnets_client.tenant_id + '@openstack',
+                netpart_name=self.nuage_vsd_client.def_netpart_name)
+            self.assertIsNot(user_resp, "", "Corresponding user on VSD who "
+                                            "created the Subnet was not Found")
+            self.assertEqual(user_resp[0]['userName'],
+                             self.subnets_client.tenant_id)
+            default_egress_tmpl = self.nuage_vsd_client.get_child_resource(
+                resource=n_constants.L2_DOMAIN,
+                resource_id=nuage_l2dom[0]['ID'],
+                child_resource=n_constants.EGRESS_ACL_TEMPLATE,
+                filters='externalID',
+                filter_value=self.nuage_vsd_client.get_vsd_external_id(
+                    subnet['id']))
+            self.assertIsNot(default_egress_tmpl,
+                             "",
+                             "Could not Find Default EGRESS Template on VSD "
+                             "For Subnet")
+            default_ingress_tmpl = self.nuage_vsd_client.get_child_resource(
+                resource=n_constants.L2_DOMAIN,
+                resource_id=nuage_l2dom[0]['ID'],
+                child_resource=n_constants.INGRESS_ACL_TEMPLATE,
+                filters='externalID',
+                filter_value=self.nuage_vsd_client.get_vsd_external_id(
+                    subnet['id']))
+            self.assertIsNot(default_ingress_tmpl,
+                             "",
+                             "Could not Find Default INGRESS Template on VSD"
+                             " For Subnet")
+            default_ingress_awd_tmpl = self.nuage_vsd_client.get_child_resource(
+                resource=n_constants.L2_DOMAIN,
+                resource_id=nuage_l2dom[0]['ID'],
+                child_resource=n_constants.INGRESS_ADV_FWD_TEMPLATE,
+                filters='externalID',
+                filter_value=self.nuage_vsd_client.get_vsd_external_id(
+                    subnet['id']))
+            self.assertIsNot(default_ingress_awd_tmpl,
+                             "",
+                             "Could not Find Default Forward INGRESS"
+                             " Template on VSD For Subnet")
         self._compare_resource_attrs(subnet, compare_args)
         self.networks_client.delete_network(net_id)
         self.networks.pop()

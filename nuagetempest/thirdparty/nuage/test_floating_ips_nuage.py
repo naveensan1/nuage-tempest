@@ -334,6 +334,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         self.assertEqual(1, len(qos))
         self.assertEqual(str(rate_limit), qos[0]['FIPPeakInformationRate'])
         self.assertEqual(True, qos[0]['FIPRateLimitingActive'])
+        self.assertEqual(self.nuage_vsd_client.get_vsd_external_id(fip_id), qos[0]['externalID'])
 
     @test.attr(type='smoke')
     def test_create_floatingip_without_rate_limiting(self):
@@ -374,3 +375,4 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         vsd_limit = os_fip_rate if os_fip_rate != -1 else 'INFINITY'
         self.assertEqual(vsd_limit, qos[0]['FIPPeakInformationRate'])
         self.assertEqual(True, qos[0]['FIPRateLimitingActive'])
+        self.assertEqual(self.nuage_vsd_client.get_vsd_external_id(fip_id), qos[0]['externalID'])

@@ -445,7 +445,6 @@ class NuageGatewayTestRedundancy(base.BaseNuageGatewayTest,
                              "Bridge Vport not found in gateway-vport-show")
         self.verify_vport_properties(gw_vport[0], vport)
 
-
     @test.attr(type='smoke')
     def test_vport_l3_vsd_managed(self):
         name = data_utils.rand_name('l3domain-')

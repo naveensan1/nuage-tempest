@@ -25,6 +25,7 @@ from tempest.api.network import base
 from tempest.lib.common.utils import data_utils
 from tempest.lib.common.utils.data_utils import rand_name
 from tempest.lib import exceptions as lib_exec
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.lib.utils import constants as n_constants
 from oslo_log import log as logging
 from nuagetempest.services.nuage_client import NuageRestClient
@@ -32,6 +33,9 @@ from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from tempest import test
 
 CONF = config.CONF
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 LOG = logging.getLogger(__name__)
 
@@ -367,16 +371,32 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
         self.assertEqual(actual_port['name'], expected_port['name'])
         self.assertEqual(actual_port['ID'], expected_port['id'])
 
-    def verify_vlan_properties(self, actual_vlan, expected_vlan):
+    def verify_vlan_properties(self, actual_vlan, expected_vlan,
+                               verify_ext=True):
         self.assertEqual(actual_vlan['ID'], expected_vlan['id'])
         self.assertEqual(actual_vlan['userMnemonic'],
                          expected_vlan['usermnemonic'])
         self.assertEqual(actual_vlan['value'], expected_vlan['value'])
+        if external_id_release <= current_release and verify_ext:
+            external_id = (expected_vlan['gatewayport'] + "." +
+                           str(expected_vlan['value']))
+            self.assertEqual(actual_vlan['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 external_id))
 
     def verify_vport_properties(self, actual_vport, expected_vport):
         self.assertEqual(actual_vport['ID'], expected_vport['id'])
         self.assertEqual(actual_vport['type'], expected_vport['type'])
         self.assertEqual(actual_vport['name'], expected_vport['name'])
+        if external_id_release <= current_release:
+            if expected_vport['type'] == n_constants.BRIDGE_VPORT:
+                self.assertEqual(actual_vport['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     expected_vport['subnet']))
+            else:
+                self.assertEqual(actual_vport['externalID'],
+                                 self.nuage_vsd_client.get_vsd_external_id(
+                                     expected_vport['port']))
 
     @test.attr(type='smoke')
     def test_list_gateway(self):
@@ -586,7 +606,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
         body = (self.admin_client.show_gateway_vlan(gw_vlan[0]['ID']))
 
         vlan = body['nuage_gateway_vlan']
-        self.verify_vlan_properties(gw_vlan[0], vlan)
+        self.verify_vlan_properties(gw_vlan[0], vlan, verify_ext=False)
 
     @test.attr(type='smoke')
     def test_show_vlan_by_admin_tenant(self):
@@ -610,7 +630,7 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
                                                             gateway[0]['name']))
 
         vlan = body['nuage_gateway_vlan']
-        self.verify_vlan_properties(gw_vlan[0], vlan)
+        self.verify_vlan_properties(gw_vlan[0], vlan, verify_ext=False)
 
     @test.attr(type='smoke')
     def test_list_vlan_by_admin_tenant(self):
@@ -623,7 +643,8 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
             for gw_vlan in self.gatewayvlans:
                 if gw_vlan[0]['ID'] == vlan['id']:
                     found_vlan = True
-                    self.verify_vlan_properties(gw_vlan[0], vlan)
+                    self.verify_vlan_properties(gw_vlan[0], vlan,
+                                                verify_ext=False)
             if not found_vlan:
                 assert False, "Vlan not found"
 
@@ -642,7 +663,8 @@ class NuageGatewayTestJSON(base.BaseAdminNetworkTest, test_vsd_managed_network.V
             for gw_vlan in self.gatewayvlans:
                 if gw_vlan[0]['ID'] == vlan['id']:
                     found_vlan = True
-                    self.verify_vlan_properties(gw_vlan[0], vlan)
+                    self.verify_vlan_properties(gw_vlan[0], vlan,
+                                                verify_ext=False)
             if not found_vlan:
                 assert False, "Vlan not found"
 

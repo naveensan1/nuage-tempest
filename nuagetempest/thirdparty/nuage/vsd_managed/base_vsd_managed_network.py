@@ -29,6 +29,14 @@ class BaseVSDManagedNetworksTest(base.BaseNetworkTest):
 
     @classmethod
     def resource_setup(cls):
+        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+            # create default netpartition if it is not there
+            netpartition_name = cls.nuageclient.def_netpart_name
+            net_partition = cls.nuageclient.get_net_partition(netpartition_name)
+            if not net_partition:
+                net_partition = cls.nuageclient.create_net_partition(netpartition_name,
+                                                                          fip_quota=100,
+                                                                          extra_params=None)
         super(BaseVSDManagedNetworksTest, cls).resource_setup()
         cls.vsd_l2dom_template = []
         cls.vsd_l2domain = []

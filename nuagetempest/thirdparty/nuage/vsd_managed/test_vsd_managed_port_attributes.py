@@ -1038,7 +1038,8 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         # When I try to use this security group in a redirect-target-rule-creation
         rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
                                                     security_group['id'])
-        self.addCleanup(self.nuage_network_client.delete_redirection_target_rule,rt_rule['nuage_redirect_target_rule']['id'])
+        self.addCleanup(self.nuage_network_client.delete_redirection_target_rule,
+                        rt_rule['nuage_redirect_target_rule']['id'])
 
         # When I retrieve the VSD-L2-Managed-Subnet
         policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])

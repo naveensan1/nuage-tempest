@@ -157,6 +157,7 @@ class NuageFipRateLimitBase(base.BaseNetworkTest):
 
         self.LOG.info("FIP Rate limit %s", qos[0]['FIPPeakInformationRate'])
         self.assertEqual(default_rate_limit, qos[0]['FIPPeakInformationRate'])
+        self.assertEqual(self.nuage_vsd_client.get_vsd_external_id(created_floating_ip['id']), qos[0]['externalID'])
 
     def _create_fip_with_fip_rate_limit(self, port, fip_rate_limit):
         # When I create a fip with default rate limit

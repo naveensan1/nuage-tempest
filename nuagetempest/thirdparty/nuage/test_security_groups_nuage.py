@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 import six
@@ -23,6 +24,9 @@ from tempest import test
 import uuid
 
 CONF = config.CONF
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 
 class SecGroupTestNuage(test_security_groups.SecGroupTest):
@@ -73,6 +77,9 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
         ent_net_macro = self.nuage_vsd_client.get_enterprise_net_macro(
             filters='address', filter_value=net_addr[0])
         self.assertNotEqual(ent_net_macro, '', msg='Macro not found')
+        if external_id_release <= current_release:
+            self.assertEqual(ent_net_macro[0]['externalID'],
+                             ent_net_macro[0]['parentID'] + '@openstack')
 
     def _get_nuage_acl_entry_template(self, sec_group_rule):
         if sec_group_rule['direction'] == 'ingress':

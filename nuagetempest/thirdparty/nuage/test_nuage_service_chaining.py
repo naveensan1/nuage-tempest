@@ -204,6 +204,8 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[0])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
+
         self._assign_unassign_rt_port(
             rtport, rt, 'l2domains', vsd_subnet[0])
 
@@ -277,6 +279,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
         self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
 
         # Put in lines to delete the RT from the l3domain and verify on VSD
@@ -344,6 +347,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
         self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
 
         # Delete the RT from the l3domain and verify on VSD
@@ -421,6 +425,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
         self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
 
         # Delete the RT from the l3domain and verify on VSD

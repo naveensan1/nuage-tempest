@@ -63,6 +63,8 @@ class NuageBaseOrchestrationTest(base.BaseOrchestrationTest):
 
     @classmethod
     def resource_cleanup(cls):
+        super(NuageBaseOrchestrationTest, cls).resource_cleanup()
+
         for vsd_l2domain in cls.vsd_l2domain:
             cls.vsd_client.delete_l2domain(vsd_l2domain[0]['ID'])
 
@@ -80,8 +82,6 @@ class NuageBaseOrchestrationTest(base.BaseOrchestrationTest):
 
         for vsd_l3domain_template in cls.vsd_l3domain_template:
             cls.vsd_client.delete_l3domaintemplate(vsd_l3domain_template[0]['ID'])
-
-        super(NuageBaseOrchestrationTest, cls).resource_cleanup()
 
     @classmethod
     def create_vsd_dhcp_managed_l2domain_template(cls, **kwargs):

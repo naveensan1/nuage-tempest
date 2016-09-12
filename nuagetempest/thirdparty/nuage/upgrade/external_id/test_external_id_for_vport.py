@@ -25,8 +25,8 @@ from nuagetempest.lib.utils import exceptions as n_exceptions
 
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
-from nuagetempest.thirdparty.nuage.upgrade.external_id import upgrade_external_id_with_cms_id as upgrade_script
-from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
+import upgrade_external_id_with_cms_id as upgrade_script
+from external_id import ExternalId
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -279,7 +279,7 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
 
     # see OPENSTACK-1451
     # after updating the port security enabled, multiple default rules are created
-    @testtools.skipUnless(Release('4.0R4') > Release(CONF.nuage_sut.release),
+    @testtools.skipUnless(Release('4.0R5') > Release(CONF.nuage_sut.release),
                           'No upgrade testing on vport')
     def test_port_security_fix_openstack_1451_false(self):
         # Create a network

@@ -12,7 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from nuagetempest.thirdparty.nuage.upgrade.external_id import upgrade_external_id_with_cms_id as upgrade_script
+
 
 from oslo_log import log as logging
 
@@ -25,7 +25,9 @@ from nuagetempest.lib.utils import exceptions as n_exceptions
 
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
-from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
+
+from external_id import ExternalId
+import upgrade_external_id_with_cms_id as upgrade_script
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -258,7 +260,7 @@ class ExternalIdForL3domainTest(base.BaseRouterTest):
     def skip_checks(cls):
         super(ExternalIdForL3domainTest, cls).skip_checks()
 
-        external_id_release = Release('4.0R4')
+        external_id_release = Release('4.0R5')
         current_release = Release(CONF.nuage_sut.release)
         cls.test_upgrade = external_id_release > current_release
 

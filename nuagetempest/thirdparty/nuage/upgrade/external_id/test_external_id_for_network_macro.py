@@ -24,7 +24,7 @@ from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
-from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
+from external_id import ExternalId
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ class ExternalIdForNetworkMacroTest(base.BaseAdminNetworkTest):
             if subnet['network_id'] == network['id']:
                 self.subnets.remove(subnet)
 
-    @testtools.skipUnless(Release('4.0R4') <= Release(CONF.nuage_sut.release),
+    @testtools.skipUnless(Release('4.0R5') <= Release(CONF.nuage_sut.release),
                           'No upgrade testing on network macro')
     def test_network_macro_matches_to_enterprise(self):
         # Create a dedicated netpartition

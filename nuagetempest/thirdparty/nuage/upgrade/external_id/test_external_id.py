@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
+from external_id import ExternalId
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 
 import tempest.test

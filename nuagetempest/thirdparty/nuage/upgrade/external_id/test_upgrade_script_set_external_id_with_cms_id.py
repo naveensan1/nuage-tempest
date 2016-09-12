@@ -12,14 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from nuagetempest.thirdparty.nuage.upgrade.external_id import upgrade_external_id_with_cms_id as upgrade_script
-
 from oslo_log import log as logging
 from tempest.lib import exceptions
 
 import tempest.test
 from tempest import config
 from nuagetempest.lib.nuage_tempest_test_loader import Release
+import upgrade_external_id_with_cms_id as upgrade_script
+
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)

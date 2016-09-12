@@ -52,17 +52,6 @@ class NuageExtraDHCPOptionsBaseL2(base_nuage_extra_dhcp_options.NuageExtraDHCPOp
                                                  enable_dhcp=True)
 
     @classmethod
-    def _create_network(cls, external=True):
-        if external:
-            post_body = {'name': data_utils.rand_name('ext-network'), 'router:external': external}
-        else:
-            post_body = {'name': data_utils.rand_name('network')}
-        body = cls.admin_networks_client.create_network(**post_body)
-        network = body['network']
-        cls.addCleanup(cls.admin_networks_client.delete_network, network['id'])
-        return network
-
-    @classmethod
     def create_vsd_dhcpmanaged_l2dom_template(cls, **kwargs):
         params = {
             'DHCPManaged': True,

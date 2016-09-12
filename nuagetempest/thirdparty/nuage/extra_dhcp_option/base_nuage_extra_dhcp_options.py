@@ -13,20 +13,6 @@ from nuagetempest.services import nuage_client
 
 CONF = config.CONF
 
-VERY_LONG_STRING = '\
-kljflkajdfkadjflakfjaklfjadkfkjhfkjdhjklhfjhfnkljfhkjfh,kjhkvjhuhkjhfkjfhkldjfhkljfhaklfhadjklfhakrqrqerqwerqerqerqerq\
-lfjhadkljfhfjhadklfjhadklfhafhaklfhfadkjfhadjkfhakljfhakljfhkadjfhkadjfhakdjfhadjkfhakdjfhkadjfhakldjfhakjfhkadjfhkadj\
-fhadjklfhakljfhakldjfhakljfhakldjfhakjfhakldhfadjkhfkadjfhdjkfhdjkjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj\
-jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj'
-
-# 300 characters in the very big number
-VERY_BIG_NUMBER = '\
-12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\
-12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\
-12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\
-12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\
-1234567890123456789012345678901234567890'
-
 #
 # See http://tools.ietf.org/html/rfc2132
 #
@@ -136,32 +122,6 @@ TREAT_DHCP_OPTION_AS_RAW_HEX = [
 # For easier vsd dhcp options comparison
 TREAT_DHCP_OPTION_NETBIOS_NODETYPE = [
     'netbios-nodetype'
-]
-
-# Use these values for negative tests on ip addresses
-BAD_IPV4_ADDRESSES = [
-    '10.20.30.400',
-    '-1.20.30.40',
-    '255.0.0.351',
-    'a.b.c.d',
-    'we.want.you.now',
-    'rubbish',
-    VERY_LONG_STRING,
-    '10.20.30.40;400.300.200.100'
-]
-
-# Bad values for those options treated as string
-# numbers will be treated as strings, so no need to specify them here ...
-BAD_STRING_TYPE_VALUES = [
-    VERY_LONG_STRING,
-    ''
-]
-
-# Upstream does only type checking, use these 'bad' integer values for all options that are int
-BAD_INTEGER_TYPE_VALUES = [
-    VERY_LONG_STRING,
-    VERY_BIG_NUMBER,
-    'some_small string'
 ]
 
 # Distinghuih the 4 different cases

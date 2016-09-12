@@ -1057,7 +1057,8 @@ class NuageRestClient(object):
         return self.post(res_path, data)
 
     def delete_gateway_vlan(self, vlan_id):
-        return self.delete_resource(constants.VLAN, vlan_id)
+        return self.delete_resource(constants.VLAN, vlan_id,
+                                    responseChoice=True)
 
     def get_gateway_vlan(self, parent, parent_id, filters=None,
                          filter_value=None):

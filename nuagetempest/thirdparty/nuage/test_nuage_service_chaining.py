@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from oslo_log import log as logging
@@ -20,10 +22,14 @@ from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
+
 import netaddr
 
 
 CONF = config.CONF
+external_id_release = Release(n_constants.EXTERNALID_RELEASE)
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 LOG = logging.getLogger(__name__)
 
@@ -87,6 +93,10 @@ class NuageServiceChaining(base.BaseNetworkTest):
         self.assertEqual(
             str(redirect_target_rule[0]['ID']),
             rtrule['nuage_redirect_target_rule']['id'])
+        if external_id_release <= current_release:
+            self.assertEqual(
+                str(redirect_target_rule[0]['externalID']),
+                parentinfo['externalID'])
         if not (str(ruleinfo['protocol']) == str(1)):
             pmin = str(ruleinfo['port_range_min'])
             pmax = str(ruleinfo['port_range_max'])
@@ -136,6 +146,18 @@ class NuageServiceChaining(base.BaseNetworkTest):
         )
         self.assertEqual(
             redirect_vip[0]['virtualIP'], vipinfo['virtual_ip_address'])
+        if external_id_release <= current_release:
+            self.assertIsNotNone(redirect_vip[0]['externalID'],
+                                 message="External ID is not set for"
+                                         " Redirect VIP")
+            external_id = str(redirect_vip[0]['externalID']).split("@")
+            vip_port = self.ports_client.show_port(
+                port_id=external_id[0]).get('port')
+            self.assertIsNotNone(vip_port, message="Cannot find nuage:vip port"
+                                                   " for Redirect VIP")
+            self.assertEqual(vip_port['device_owner'], 'nuage:vip',
+                             message="Port was not created with device_owner"
+                                     " as nuage:vip for Redirect VIP")
 
     @test.attr(type='smoke')
     def test_create_delete_redirection_target_l2domain(self):
@@ -159,7 +181,8 @@ class NuageServiceChaining(base.BaseNetworkTest):
         # Verifying Redirect Target on VSD
         redirect_target = self._verify_redirect_target(
             rt, 'l2domains', vsd_subnet[0], post_body)
-
+        if external_id_release <= current_release:
+            self.assertEqual(redirect_target[0]['externalID'], subnet_ext_id)
         body = self.security_groups_client.list_security_groups()
         security_group_id = body['security_groups'][0]['id']
 
@@ -181,6 +204,8 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[0])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
+
         self._assign_unassign_rt_port(
             rtport, rt, 'l2domains', vsd_subnet[0])
 
@@ -229,6 +254,8 @@ class NuageServiceChaining(base.BaseNetworkTest):
         # Verifying Redirect Target on VSD
         redirect_target = self._verify_redirect_target(
             rt, 'domains', domain[0], post_body)
+        if external_id_release <= current_release:
+            self.assertEqual(redirect_target[0]['externalID'], router_ext_id)
 
         body = self.security_groups_client.list_security_groups()
         security_group_id = body['security_groups'][0]['id']
@@ -252,6 +279,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
         self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
 
         # Put in lines to delete the RT from the l3domain and verify on VSD
@@ -297,6 +325,8 @@ class NuageServiceChaining(base.BaseNetworkTest):
         # Verifying Redirect Target on VSD
         redirect_target = self._verify_redirect_target(
             rt, 'domains', domain[0], post_body)
+        if external_id_release <= current_release:
+            self.assertEqual(redirect_target[0]['externalID'], router_ext_id)
         body = self.security_groups_client.list_security_groups()
         security_group_id = body['security_groups'][0]['id']
 
@@ -317,6 +347,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
         self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
 
         # Delete the RT from the l3domain and verify on VSD
@@ -394,6 +425,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
         self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
 
         # Delete the RT from the l3domain and verify on VSD

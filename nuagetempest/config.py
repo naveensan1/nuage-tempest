@@ -61,7 +61,7 @@ NuageSutGroup = [
                help="Full path for the Nuage plugin configuration file."),
     cfg.StrOpt('openstack_version',
                default='kilo',
-               choices=['kilo', 'liberty', 'mitaka'],
+               choices=['juno', 'kilo', 'liberty', 'mitaka'],
                help="The mode for controlling services on controller node."),
     cfg.StrOpt('nuage_plugin_mode',
                default='monolytic',

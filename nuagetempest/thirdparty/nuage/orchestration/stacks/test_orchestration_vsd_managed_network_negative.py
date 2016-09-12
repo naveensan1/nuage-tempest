@@ -42,12 +42,17 @@ class VsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
             'private_net_name': self.private_net_name,
             'private_net_cidr': str(cidr)}
 
+        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+            msg = "is in CREATE_FAILED status due to 'Resource CREATE failed: InternalServerError: resources.private_subnet: create_subnet_postcommit failed.'"
+        else:
+            msg = "Bad subnet request: In advance mode, net-partition name must be provided"
+
         # Small difference between El7 and Ubuntu heat results in different output: check the neutron output only
         self.assertRaisesRegexp(exceptions.StackBuildErrorException,
                                 # "Resource CREATE failed: BadRequest: resources.private_subnet: Bad subnet request:
                                 # In advance mode, net-partition name must be provided",
                                 # "Bad subnet request: In advance mode, net-partition name must be provided",
-                                "Bad subnet request: In advance mode, net-partition name must be provided",
+                                msg,
                                 self.launch_stack,
                                 stack_file_name,
                                 stack_parameters)

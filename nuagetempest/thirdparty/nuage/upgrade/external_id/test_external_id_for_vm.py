@@ -1,0 +1,171 @@
+# Copyright 2015 OpenStack Foundation
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+from oslo_log import log as logging
+
+from tempest import config
+from tempest.common.utils import data_utils
+
+from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.utils import exceptions as n_exceptions
+
+from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.services.nuage_client import NuageRestClient
+from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
+from nuagetempest.thirdparty.nuage.scenario import base_nuage_network_scenario_test
+import upgrade_external_id_with_cms_id as upgrade_script
+
+CONF = config.CONF
+LOG = logging.getLogger(__name__)
+
+
+class ExternalIdForVmTest(base_nuage_network_scenario_test.NuageNetworkScenarioTest):
+    class MatchingVsdVm():
+        def __init__(self, outer, vm):
+            self.test = outer
+            self.vm = vm
+
+            self.vsd_vm = None
+
+        def get_by_external_id(self):
+            vsd_vms = self.test.nuage_vsd_client.get_vm(
+                parent=None, parent_id='',
+                filters='externalID', filter_value=self.vm['id'])
+
+            # should have exact 1 match
+            self.test.assertEqual(len(vsd_vms), 1)
+            self.vsd_vm = vsd_vms[0]
+
+            # VSD UUID is the Openstack VM ID
+            self.test.assertEqual(self.vsd_vm['UUID'], self.vm['id'])
+            self.test.assertEqual(self.vsd_vm['externalID'], ExternalId(self.vm['id']).at_cms_id())
+
+            return self
+
+        def get_by_uuid(self):
+            vsd_vms = self.test.nuage_vsd_client.get_vm(
+                parent=None, parent_id='',
+                filters='UUID', filter_value=self.vm['id'])
+
+            # should have exact 1 match
+            self.test.assertEqual(len(vsd_vms), 1)
+            self.vsd_vm = vsd_vms[0]
+
+            # VSD UUID is the Openstack VM ID
+            self.test.assertEqual(self.vsd_vm['UUID'], self.vm['id'])
+
+            return self
+
+        def has_parent_vm_interface(self, with_external_id=None):
+            # vsd vm interface object has external ID
+            vsd_vm_interfaces = self.vsd_vm['interfaces']
+            self.test.assertEqual(1, len(vsd_vm_interfaces), "interface not found")
+
+            vsd_vm_interface = vsd_vm_interfaces[0]
+
+            if with_external_id is None:
+                self.test.assertIsNone(vsd_vm_interface['externalID'])
+            else:
+                self.test.assertEqual(with_external_id, vsd_vm_interface['externalID'])
+
+        def verify_cannot_delete(self):
+            # Can't delete vport in VSD
+            self.test.assertRaisesRegexp(n_exceptions.MultipleChoices,
+                                         "Multiple choices",
+                                         self.test.nuage_vsd_client.delete_resource,
+                                         n_constants.VM, self.vsd_vm['ID'])
+
+    def setUp(self):
+        super(ExternalIdForVmTest, self).setUp()
+        self.keypairs = {}
+        self.servers = []
+
+    @classmethod
+    def skip_checks(cls):
+        super(ExternalIdForVmTest, cls).skip_checks()
+
+        external_id_release = Release('4.0R5')
+        current_release = Release(CONF.nuage_sut.release)
+        cls.test_upgrade = external_id_release > current_release
+
+    @classmethod
+    def setup_clients(cls):
+        super(ExternalIdForVmTest, cls).setup_clients()
+        cls.nuage_vsd_client = NuageRestClient()
+
+    def _create_server(self, name, network, port_id=None):
+        keypair = self.create_keypair()
+        self.keypairs[keypair['name']] = keypair
+        network = {'uuid': network.id}
+        if port_id is not None:
+            network['port'] = port_id
+
+        server = self.create_server(
+            name=name,
+            networks=[network],
+            key_name=keypair['name'],
+            wait_until='ACTIVE')
+        self.servers.append(server)
+        return server
+
+    def test_server_on_neutron_port_matching_vsd_vm(self):
+        # Create a network
+        network = self._create_network(namestart='network-')
+        subnet = self._create_subnet(network, namestart='subnet-')
+        self.assertIsNotNone(subnet)  # dummy check to use local variable
+
+        port = self._create_port(
+            namestart='port',
+            network_id=network['id'])
+
+        name = data_utils.rand_name('server-smoke')
+        server = self._create_server(name, network, port['id'])
+
+        if self.test_upgrade:
+            vsd_vm = self.MatchingVsdVm(self, server).get_by_uuid()
+            vsd_vm.has_parent_vm_interface(ExternalId(port['id']).at_cms_id())
+
+            upgrade_script.do_run_upgrade_script()
+
+        vsd_vm = self.MatchingVsdVm(self, server).get_by_external_id()
+        vsd_vm.has_parent_vm_interface(ExternalId(port['id']).at_cms_id())
+
+        # Delete
+        vsd_vm.verify_cannot_delete()
+
+    def test_server_on_neutron_network_matching_vsd_vm(self):
+        # Create a network
+        network = self._create_network(namestart='network-')
+        subnet = self._create_subnet(network, namestart='subnet-')
+        self.assertIsNotNone(subnet)  # dummy check to use local variable
+
+        name = data_utils.rand_name('server-smoke')
+        server = self._create_server(name, network)
+
+        # get the neutron port, based on the servers MAC address (expect only 1 interface)
+        port_mac = server['addresses'][network['name']][0]['OS-EXT-IPS-MAC:mac_addr']
+        ports_response = self.ports_client.list_ports(mac_address=port_mac)
+        port = ports_response['ports'][0]
+
+        if self.test_upgrade:
+            vsd_vm = self.MatchingVsdVm(self, server).get_by_uuid()
+            vsd_vm.has_parent_vm_interface(with_external_id=ExternalId(port['id']).at_cms_id())
+
+            upgrade_script.do_run_upgrade_script()
+
+        vsd_vm = self.MatchingVsdVm(self, server).get_by_external_id()
+        vsd_vm.has_parent_vm_interface(ExternalId(port['id']).at_cms_id())
+
+        # Delete
+        vsd_vm.verify_cannot_delete()

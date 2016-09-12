@@ -148,177 +148,177 @@ class NuageExtraDHCPOptionsOSManagedL3Test(NuageExtraDHCPOptionsBaseL3):
     def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_002_time_offset(self):
         self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_002_time_offset()
 
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_003_routers(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_003_routers()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_004_time_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_004_time_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_006_dns_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_006_dns_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_007_log_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_007_log_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_009_lpr_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_009_lpr_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_012_hostname(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_012_hostname()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_013_boot_file_size(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_013_boot_file_size()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_015_domain_name(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_015_domain_name()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_016_swap_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_016_swap_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_017_root_path(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_017_root_path()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_018_extension_path(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_018_extension_path()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_019_ip_forward_enable(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_019_ip_forward_enable()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_020_non_local_source_routing(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_020_non_local_source_routing()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_021_policy_filter(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_021_policy_filter()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_022_max_datagram_reassembly(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_022_max_datagram_reassembly()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_023_default_ttl(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_023_default_ttl()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_026_mtu(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_026_mtu()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_027_all_subnets_local(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_027_all_subnets_local()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_028_broadcast(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_028_broadcast()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_031_router_discovery(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_031_router_discovery()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_032_router_solicitation(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_032_router_solicitation()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_033_static_route(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_033_static_route()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_034_trailer_encapsulation(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_034_trailer_encapsulation()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_035_arp_timeout(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_035_arp_timeout()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_036_ethernet_encap(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_036_ethernet_encap()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_037_tcp_ttl(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_037_tcp_ttl()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_038_tcp_keepalive(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_038_tcp_keepalive()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_040_nis_domain(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_040_nis_domain()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_041_nis_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_041_nis_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_042_ntp_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_042_ntp_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_044_netbios_ns(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_044_netbios_ns()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_045_netbios_dd(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_045_netbios_dd()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_046_netbios_nodetype(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_046_netbios_nodetype()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_047_netbios_scope(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_047_netbios_scope()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_048_x_windows_fs(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_048_x_windows_fs()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_049_x_windows_dm(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_049_x_windows_dm()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_050_requested_address(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_050_requested_address()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_060_vendor_class(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_060_vendor_class()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_064_nisplus_domain(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_064_nisplus_domain()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_065_nisplus_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_065_nisplus_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_066_tftp_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_066_tftp_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_067_bootfile_name(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_067_bootfile_name()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_068_mobile_ip_home(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_068_mobile_ip_home()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_069_smtp_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_069_smtp_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_070_pop3_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_070_pop3_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_071_nntp_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_071_nntp_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_074_irc_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_074_irc_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_077_user_class(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_077_user_class()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_093_client_arch(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_093_client_arch()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_094_client_interface_id(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_094_client_interface_id()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_097_client_machine_id(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_097_client_machine_id()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_119_domain_search(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_119_domain_search()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_120_sip_server(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_120_sip_server()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_121_classless_static_route(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_121_classless_static_route()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_125_vendor_id_encap(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_255_server_ip_address(self):
-    #     self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address()
-    #
-    # def test_nuage_openstack_managed_layer3_port_with_16_extra_dhcp_options(self):
-    #     self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options()
-    #
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_003_routers(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_003_routers()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_004_time_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_004_time_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_006_dns_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_006_dns_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_007_log_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_007_log_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_009_lpr_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_009_lpr_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_012_hostname(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_012_hostname()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_013_boot_file_size(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_013_boot_file_size()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_015_domain_name(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_015_domain_name()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_016_swap_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_016_swap_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_017_root_path(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_017_root_path()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_018_extension_path(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_018_extension_path()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_019_ip_forward_enable(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_019_ip_forward_enable()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_020_non_local_source_routing(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_020_non_local_source_routing()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_021_policy_filter(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_021_policy_filter()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_022_max_datagram_reassembly(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_022_max_datagram_reassembly()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_023_default_ttl(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_023_default_ttl()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_026_mtu(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_026_mtu()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_027_all_subnets_local(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_027_all_subnets_local()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_028_broadcast(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_028_broadcast()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_031_router_discovery(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_031_router_discovery()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_032_router_solicitation(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_032_router_solicitation()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_033_static_route(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_033_static_route()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_034_trailer_encapsulation(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_034_trailer_encapsulation()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_035_arp_timeout(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_035_arp_timeout()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_036_ethernet_encap(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_036_ethernet_encap()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_037_tcp_ttl(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_037_tcp_ttl()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_038_tcp_keepalive(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_038_tcp_keepalive()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_040_nis_domain(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_040_nis_domain()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_041_nis_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_041_nis_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_042_ntp_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_042_ntp_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_044_netbios_ns(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_044_netbios_ns()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_045_netbios_dd(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_045_netbios_dd()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_046_netbios_nodetype(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_046_netbios_nodetype()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_047_netbios_scope(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_047_netbios_scope()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_048_x_windows_fs(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_048_x_windows_fs()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_049_x_windows_dm(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_049_x_windows_dm()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_050_requested_address(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_050_requested_address()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_060_vendor_class(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_060_vendor_class()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_064_nisplus_domain(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_064_nisplus_domain()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_065_nisplus_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_065_nisplus_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_066_tftp_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_066_tftp_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_067_bootfile_name(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_067_bootfile_name()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_068_mobile_ip_home(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_068_mobile_ip_home()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_069_smtp_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_069_smtp_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_070_pop3_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_070_pop3_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_071_nntp_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_071_nntp_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_074_irc_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_074_irc_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_077_user_class(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_077_user_class()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_093_client_arch(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_093_client_arch()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_094_client_interface_id(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_094_client_interface_id()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_097_client_machine_id(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_097_client_machine_id()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_119_domain_search(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_119_domain_search()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_120_sip_server(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_120_sip_server()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_121_classless_static_route(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_121_classless_static_route()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_125_vendor_id_encap(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_125_vendor_id_encap()
+
+    def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_255_server_ip_address(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_255_server_ip_address()
+
+    def test_nuage_openstack_managed_layer3_port_with_16_extra_dhcp_options(self):
+        self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options()
+
 
 class NuageExtraDHCPOptionsVsdManagedL3Test(NuageExtraDHCPOptionsOSManagedL3Test):
     #

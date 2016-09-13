@@ -621,12 +621,10 @@ class RoutersTestNuage(test_routers.RoutersTest):
         # Verify that the subnet is created with everybody permissions
         nuage_l2dom = self.nuage_vsd_client.get_l2domain(
             filters='externalID', filter_value=subn_body['subnet']['id'])
-        nuage_perm_all = self.nuage_vsd_client.get_permissions(
-            n_constants.L2_DOMAIN, nuage_l2dom[0]['ID'])
         nuage_perm = self.nuage_vsd_client.get_permissions(
-            n_constants.L2_DOMAIN, nuage_l2dom[0]['ID'], filters=u'permittedEntityName',
-            filter_value=u'Everybody')
+            n_constants.L2_DOMAIN, nuage_l2dom[0]['ID'])
         self.assertIsNotNone(nuage_perm[0])
+        self.assertEquals(nuage_perm[0]['permittedEntityName'], u'Everybody')
 
     def _delete_extra_routes(self, router_id):
         self.routers_client.delete_extra_routes(router_id)

@@ -22,6 +22,7 @@ from tempest.api.network import base as base
 
 from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.utils import exceptions as n_exceptions
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
@@ -64,9 +65,11 @@ class ExternalIdForNetworkMacroTest(base.BaseAdminNetworkTest):
 
         def verify_cannot_delete(self):
             # Can't delete NetworkMacro in VSD
-            response = self.test.nuage_vsd_client.delete_resource(
-                n_constants.ENTERPRISE_NET_MACRO, self.vsd_network_macro['ID'])
-            self.test.assertEqual(300, response.status)
+            self.test.assertRaisesRegexp(n_exceptions.MultipleChoices,
+                                         "Multiple choices",
+                                         self.test.nuage_vsd_client.delete_resource,
+                                         n_constants.ENTERPRISE_NET_MACRO,
+                                         self.vsd_network_macro['ID'])
 
     @classmethod
     def setup_clients(cls):
@@ -100,6 +103,7 @@ class ExternalIdForNetworkMacroTest(base.BaseAdminNetworkTest):
 
     @testtools.skipUnless(Release('4.0R5') <= Release(CONF.nuage_sut.release),
                           'No upgrade testing on network macro')
+    @nuage_test.header()
     def test_network_macro_matches_to_enterprise(self):
         # Create a dedicated netpartition
         netpartition_b = self._create_netpartition()

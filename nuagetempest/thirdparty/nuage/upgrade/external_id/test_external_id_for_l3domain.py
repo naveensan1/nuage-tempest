@@ -20,6 +20,7 @@ from tempest import config
 from tempest.common.utils import data_utils
 from tempest.api.network import base_routers as base
 
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.utils import exceptions as n_exceptions
 
@@ -278,6 +279,7 @@ class ExternalIdForL3domainTest(base.BaseRouterTest):
             if subnet['network_id'] == network['id']:
                 self.subnets.remove(subnet)
 
+    @nuage_test.header()
     def test_router_matches_to_l3domain(self):
         # Create a router
         name = data_utils.rand_name('router-')
@@ -310,6 +312,7 @@ class ExternalIdForL3domainTest(base.BaseRouterTest):
         # Delete
         vsd_l3domain.verify_cannot_delete()
 
+    @nuage_test.header()
     def test_subnet_attached_to_router_matches_to_l3domain(self):
         # Create a network
         name = data_utils.rand_name('network-')

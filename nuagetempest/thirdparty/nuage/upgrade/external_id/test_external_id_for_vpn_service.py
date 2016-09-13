@@ -23,6 +23,8 @@ from tempest import config
 from tempest.common.utils import data_utils
 
 from tempest.api.network import base
+
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.utils import exceptions as n_exceptions
 
@@ -96,6 +98,7 @@ class ExternalIdForVpnServiceTest(VPNMixin, base.BaseNetworkTest):
         super(ExternalIdForVpnServiceTest, cls).setup_clients()
         cls.nuage_vsd_client = NuageRestClient()
 
+    @nuage_test.header()
     def test_vpn_service_floating_ips(self):
         """ Create delete vpnservice with environment and also
         verifies the dummy router and subnet created by plugin """

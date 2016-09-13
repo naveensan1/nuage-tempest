@@ -17,6 +17,7 @@ from oslo_log import log as logging
 from tempest import config
 from tempest.common.utils import data_utils
 
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.utils import exceptions as n_exceptions
 
@@ -119,6 +120,7 @@ class ExternalIdForVmTest(base_nuage_network_scenario_test.NuageNetworkScenarioT
         self.servers.append(server)
         return server
 
+    @nuage_test.header()
     def test_server_on_neutron_port_matching_vsd_vm(self):
         # Create a network
         network = self._create_network(namestart='network-')
@@ -144,6 +146,7 @@ class ExternalIdForVmTest(base_nuage_network_scenario_test.NuageNetworkScenarioT
         # Delete
         vsd_vm.verify_cannot_delete()
 
+    @nuage_test.header()
     def test_server_on_neutron_network_matching_vsd_vm(self):
         # Create a network
         network = self._create_network(namestart='network-')

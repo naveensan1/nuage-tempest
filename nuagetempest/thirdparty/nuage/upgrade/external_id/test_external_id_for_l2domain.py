@@ -25,6 +25,7 @@ from nuagetempest.lib.utils import exceptions as n_exceptions
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
+from nuagetempest.lib.test import nuage_test
 
 from external_id import ExternalId
 
@@ -291,6 +292,7 @@ class ExternalIdForL2domainTest(base.BaseNetworkTest):
             if subnet['network_id'] == network['id']:
                 self.subnets.remove(subnet)
 
+    @nuage_test.header()
     def test_neutron_isolated_subnet_matches_to_l2domain(self):
         # Create a network
         name = data_utils.rand_name('network-')
@@ -340,6 +342,7 @@ class ExternalIdForL2domainTest(base.BaseNetworkTest):
         netpartition = body['net_partition']
         return netpartition
 
+    @nuage_test.header()
     def test_neutron_isolated_subnet_in_netpartition(self):
         # Create a dedicated netpartition
         netpartition_a = self._create_netpartition()
@@ -414,6 +417,7 @@ class ExternalIdForL2domainAdminTest(ExternalIdForL2domainTest):
             if subnet['network_id'] == network['id']:
                 self.subnets.remove(subnet)
 
+    @nuage_test.header()
     def test_neutron_isolated_shared_subnet_matches_to_l2domain(self):
         # Create a network
         name = data_utils.rand_name('network-')

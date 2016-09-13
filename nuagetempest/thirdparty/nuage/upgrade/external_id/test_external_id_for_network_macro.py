@@ -20,6 +20,7 @@ from tempest import config
 from tempest.common.utils import data_utils
 from tempest.api.network import base as base
 
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient

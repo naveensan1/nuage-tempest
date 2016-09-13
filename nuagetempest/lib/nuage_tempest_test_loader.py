@@ -111,7 +111,7 @@ class Release(object):
                 self.openstack_release[0] > other.openstack_release[0]:
             return False
         if self.major_release == '0.0':
-            return True
+            return False
         if other.major_list and self.major_list:
             comparison = cmp(other.major_list, self.major_list)
             if comparison == 0:

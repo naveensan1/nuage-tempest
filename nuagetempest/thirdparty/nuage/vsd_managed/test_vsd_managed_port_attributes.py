@@ -24,8 +24,10 @@ from tempest.lib import exceptions
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.test import tags
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_port_attributes
+from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -44,6 +46,10 @@ SEVERAL_VSD_CLAIMED_FIPS = 3
 
 VALID_MAC_ADDRESS = 'fa:fa:3e:e8:e8:c0'
 
+CONF = config.CONF
+external_id_release = Release(constants.EXTERNALID_RELEASE)
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 @nuage_test.class_header(tags=tags.VSD_MANAGED)
 class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
@@ -67,14 +73,21 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         network, subnet = self._create_os_l2_vsd_managed_subnet(vsd_l2_subnet)
         #  When I create a redirection-target in the VSD-L2-Managed-Subnet
         os_redirect_target = self._create_redirect_target_in_l2_subnet(subnet)
+
         # Then I expect the redirection-target in my list
         my_rt_found = self._find_redirect_target_in_list(os_redirect_target['nuage_redirect_target']['id'], subnet)
         self.assertTrue(my_rt_found, "Did not find my redirect-target in the list")
-        # And, as I do not trus the VSD, I expect the redirect-targetit to be present in the VSD as well ;-)
+        # And, as I do not trust the VSD, I expect the redirect-targetit to be present in the VSD as well ;-)
         vsd_redirect_target = self.nuage_vsd_client.get_redirection_target(
             constants.L2_DOMAIN, vsd_l2_subnet[0]['ID'], filters='ID',
             filter_value=os_redirect_target['nuage_redirect_target']['id'])
         self.assertNotEmpty(vsd_redirect_target, "Redirect target not found on VSD")
+
+        # with externalID
+        if external_id_release <= current_release:
+            self.assertEqual(vsd_redirect_target[0]['externalID'],
+                             ExternalId(subnet['id']).at_cms_id())
+
         # When I associate a port to the redirectict-target
         rtport = self.create_port(network)
         self._associate_rt_port(rtport, os_redirect_target)

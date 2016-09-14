@@ -1,7 +1,7 @@
 # Copyright 2015 OpenStack Foundation
 # All Rights Reserved.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
@@ -13,60 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from netaddr import *
-import collections
 import time
 
 from tempest import config
-from tempest import test
-from tempest.lib.common.utils import data_utils
-from tempest.lib import exceptions
-from tempest.services.network import resources as net_resources
-
 from nuagetempest.lib.utils import constants
-from nuagetempest.lib.test import nuage_test
-from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_port_attributes
 from nuagetempest.thirdparty.nuage.scenario import base_nuage_network_scenario_test
-
+from nuagetempest.lib.test import nuage_test
 
 CONF = config.CONF
-
-# # Stuff for the interconnectivity VM
-# OS_CONNECTING_NW_CIDR = IPNetwork('33.33.33.0/24')
-# OS_CONNECTING_NW_GW = '33.33.33.1'
-# # Constants used in this file
-# SEVERAL_REDIRECT_TARGETS = 3
-# EXPECT_NO_MULTIPLE_RT_MSG = "Bad request: Multiple redirect targets on a port not supported"
-# SEVERAL_POLICY_GROUPS = 3
-# SEVERAL_PORTS = 3
-# SEVERAL_VSD_FIP_POOLS = 3
-# SEVERAL_VSD_CLAIMED_FIPS = 3
-#
-# VALID_MAC_ADDRESS = 'fa:fa:3e:e8:e8:c0'
-# VSD_FIP_POOL_CIDR = IPNetwork('130.130.130.0/24')
-# VSD_FIP_POOL_GW = '130.130.130.1'
-# VSD_SECOND_SUBNET_CIDR = IPNetwork('30.31.32.0/24')
-#
-# Floating_IP_tuple = collections.namedtuple('Floating_IP_tuple',
-#                                            ['floating_ip', 'server'])
-#
 
 
 class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes,
                                base_nuage_network_scenario_test.NuageNetworkScenarioTest):
-
-    # @classmethod
-    # def resource_setup(cls):
-    #     super(PolicyGroupsScenarioTest, cls).resource_setup()
-    #     cls.iacl_template = ''
-    #     cls.eacl_templace = ''
-
-    ######################################################################################################################
-    ######################################################################################################################
-    # PolicyGroups
-    ######################################################################################################################
-    ######################################################################################################################
 
     @nuage_test.header()
     def test_e2e_l2_vm_connectivity_port_to_policygroup(self):
@@ -80,7 +39,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
                                                                 extra_params=None)
         self.addCleanup(self.nuage_vsd_client.delete_resource, constants.POLICYGROUP,
                         policy_group[0]['ID'],
-                        responseChoice=True) # enforce deletion of underlying ACL rules/vPorts
+                        responseChoice=True)  # enforce deletion of underlying ACL rules/vPorts
 
         # And the policy group has and ingress/egress policy with rules allowing PING
         self._prepare_l2_security_group_entries(policy_group[0]['ID'], vsd_l2_subnet[0]['ID'])
@@ -88,7 +47,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
         # I expect the policyGroup in my list
         pg_present = self._check_policy_group_in_list(policy_group[0]['ID'], policy_group_list)
-        self.assertTrue(pg_present,"Did not find vsd policy group in policy group list")
+        self.assertTrue(pg_present, "Did not find vsd policy group in policy group list")
         # And it has no external ID
         self.assertIsNone(policy_group[0]['externalID'],
                           "Policy Group has an external ID, while it should not")
@@ -125,9 +84,9 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
         # These Vm's have connectivity
         # for i in range(5):
-        time.sleep(3) # add a delay
+        time.sleep(3)  # add a delay
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (1)")
         # When I disassociate all ports from the policy group
         kwargs = {
             'nuage_policy_groups': [],
@@ -135,10 +94,10 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
-        connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
+        connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (1)")
         # When I re-associate all ports with the policy group
         kwargs = {
@@ -147,11 +106,11 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (2)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (2)")
         # When I disassociate 1 port from the policy group
         kwargs = {
             'nuage_policy_groups': [],
@@ -159,7 +118,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         # self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
@@ -171,11 +130,11 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         # self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (3)")
         # When I disassociate the other port from the policy group
         kwargs = {
             'nuage_policy_groups': [],
@@ -184,7 +143,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         # self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
         # Then these VM's have no more connectivity
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (3)")
         # When I re-associate that port with the policy group
@@ -194,11 +153,11 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         # self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
-        time.sleep(5) # add a delay to allow propagation of the rules
+        time.sleep(5)  # add a delay to allow propagation of the rules
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (3)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (3)")
         #
         #end for loop
         the_floating_ip = self.floating_ips.pop()
@@ -220,7 +179,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
                                                                 extra_params=None)
         self.addCleanup(self.nuage_vsd_client.delete_resource, constants.POLICYGROUP,
                         policy_group[0]['ID'],
-                        responseChoice=True) # enforce deletion of underlying ACL rules/vPorts
+                        responseChoice=True)  # enforce deletion of underlying ACL rules/vPorts
 
         # And the policy group has and ingress/egress policy with rules allowing PING
         self._prepare_l3_security_group_entries(policy_group[0]['ID'],
@@ -230,7 +189,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
         # I expect the policyGroup in my list
         pg_present = self._check_policy_group_in_list(policy_group[0]['ID'], policy_group_list)
-        self.assertTrue(pg_present,"Did not find vsd policy group in policy group list")
+        self.assertTrue(pg_present, "Did not find vsd policy group in policy group list")
         # And it has no external ID
         self.assertIsNone(policy_group[0]['externalID'],
                           "Policy Group has an external ID, while it should not")
@@ -251,10 +210,9 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
         # Then I expext the port in the show policy group response
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
-        if CONF.nuage_sut.nuage_plugin_mode != 'ml2' :
-
+        if CONF.nuage_sut.nuage_plugin_mode != 'ml2':
             port_present = self._check_port_in_policy_group(port1['id'], policy_group[0]['ID'])
             self.assertTrue(port_present, "Port(%s) assiociated to policy group (%s) is not present" %
                             (port1['id'], policy_group[0]['ID']))
@@ -277,7 +235,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
         # for i in range(5):
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (1)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (1)")
 
         # When I disassociate the port from the policy group
         kwargs = {
@@ -286,10 +244,10 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
-        connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr,1)
+        connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
         self.assertFalse(connectivity, msg="Ping connectivity in policy group while NOT expected (1)")
 
         # When I re-associate the port with the policy group
@@ -302,7 +260,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (2)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (2)")
 
         # When I disassociate the port from the policy group
         kwargs = {
@@ -311,7 +269,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)
@@ -324,11 +282,11 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         }
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have again connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
-        self.assertTrue(connectivity,msg="No ping connectivity in policy group while expected (4)")
+        self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (4)")
 
         # When I disassociate the port from the policy group
         kwargs = {
@@ -338,7 +296,7 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         self.update_port(port1, **kwargs)
         self.update_port(port2, **kwargs)
 
-        time.sleep(3) # add a delay to allow propagation of the rules
+        time.sleep(3)  # add a delay to allow propagation of the rules
 
         # Then these VM's have no more connectivity
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 1)

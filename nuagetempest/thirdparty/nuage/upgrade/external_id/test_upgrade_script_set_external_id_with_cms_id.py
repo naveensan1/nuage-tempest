@@ -12,22 +12,27 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+import testtools
 from oslo_log import log as logging
 from tempest.lib import exceptions
 
 import tempest.test
 from tempest import config
+
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 import upgrade_external_id_with_cms_id as upgrade_script
-
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
-class UpgradeScriptTest(tempest.test.BaseTestCase):
-    test_upgrade = False
+class UpgradeScriptTest(testtools.TestCase):
 
+    @nuage_test.header()
+    @testtools.skipUnless(Release(CONF.nuage_sut.release) < Release('4.0R5'),
+                          'No upgrade testing on release %s' % CONF.nuage_sut.release)
     def test_upgrade_script_external_id(self):
         conf_release = CONF.nuage_sut.release
         current_release = Release(conf_release)

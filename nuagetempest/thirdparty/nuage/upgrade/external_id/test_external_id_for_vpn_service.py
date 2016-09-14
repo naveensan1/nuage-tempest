@@ -20,9 +20,12 @@ from testtools.matchers import Contains
 from testtools.matchers import Not
 
 from tempest import config
+from tempest import test
 from tempest.common.utils import data_utils
 
 from tempest.api.network import base
+
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.utils import exceptions as n_exceptions
 
@@ -96,6 +99,8 @@ class ExternalIdForVpnServiceTest(VPNMixin, base.BaseNetworkTest):
         super(ExternalIdForVpnServiceTest, cls).setup_clients()
         cls.nuage_vsd_client = NuageRestClient()
 
+    @nuage_test.header()
+    @test.requires_ext(extension='vpnaas', service='network')
     def test_vpn_service_floating_ips(self):
         """ Create delete vpnservice with environment and also
         verifies the dummy router and subnet created by plugin """
@@ -107,7 +112,7 @@ class ExternalIdForVpnServiceTest(VPNMixin, base.BaseNetworkTest):
         network_a1 = self.create_network(network_name=data_utils.rand_name('networkA1'))
         subnet_a1 = self.create_subnet(network_a1)
         router_a1 = self.create_router(data_utils.rand_name('routerA1'),
-                                   external_network_id=ext_net_id)
+                                       external_network_id=ext_net_id)
         self.create_router_interface(router_a1['id'], subnet_a1['id'])
 
         # Creating the vpn service
@@ -123,10 +128,9 @@ class ExternalIdForVpnServiceTest(VPNMixin, base.BaseNetworkTest):
             with self.ipsecsiteconnection(
                     created_vpnservice['id'], created_ikepolicy['id'],
                     created_ipsecpolicy['id'],
-                    peer_address='10.30.35.2',
-                    peer_id='10.30.35.2',
-                    #peer_cidrs='2.0.0.0/24',
-                    peer_cidrs=CONF.network.tenant_network_cidr,
+                    peer_address='172.20.0.2',
+                    peer_id='172.20.0.2',
+                    peer_cidrs='2.0.0.0/24',
                     psk='secret',
                     **ipnkwargs) as created_ipsecsiteconnection:
 

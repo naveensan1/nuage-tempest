@@ -12,19 +12,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from nuagetempest.lib.nuage_tempest_test_loader import Release
-from nuagetempest.lib.utils import constants as n_constants
-from nuagetempest.services.nuage_client import NuageRestClient
-from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
+import netaddr
+
 from oslo_log import log as logging
 from tempest.api.network import base
 from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
-
-import netaddr
-
+from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.services.nuage_client import NuageRestClient
+from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
+from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
 
 CONF = config.CONF
 external_id_release = Release(n_constants.EXTERNALID_RELEASE)
@@ -75,7 +75,8 @@ class NuageServiceChaining(base.BaseNetworkTest):
         return redirect_target
 
     def _verify_redirect_target_rules(self, rtrule, parent,
-                                      parentinfo, ruleinfo):
+                                      parentinfo, ruleinfo,
+                                      with_external_id=None):
         redirect_target_rule_template = (
             self.nuage_vsd_client.get_advfwd_template(
                 parent, parentinfo['ID'])
@@ -93,10 +94,12 @@ class NuageServiceChaining(base.BaseNetworkTest):
         self.assertEqual(
             str(redirect_target_rule[0]['ID']),
             rtrule['nuage_redirect_target_rule']['id'])
-        if external_id_release <= current_release:
-            self.assertEqual(
-                str(redirect_target_rule[0]['externalID']),
-                parentinfo['externalID'])
+
+        if with_external_id is None:
+            self.assertIsNone(str(redirect_target_rule[0]['externalID']))
+        else:
+            self.assertEqual(with_external_id, str(redirect_target_rule[0]['externalID']))
+
         if not (str(ruleinfo['protocol']) == str(1)):
             pmin = str(ruleinfo['port_range_min'])
             pmax = str(ruleinfo['port_range_max'])
@@ -199,8 +202,14 @@ class NuageServiceChaining(base.BaseNetworkTest):
         rtrule = self.client.create_redirection_target_rule(**rule_body)
 
         # Verifying Redirect Target Rule on VSD
+        if external_id_release <= current_release:
+            external_id = ExternalId(self.subnets[0]['id']).at_cms_id()
+        else:
+            external_id = None
+
         self._verify_redirect_target_rules(
-            rtrule, 'l2domains', vsd_subnet[0], rule_body)
+            rtrule, 'l2domains', vsd_subnet[0], rule_body,
+            with_external_id=external_id)
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[0])
@@ -274,8 +283,14 @@ class NuageServiceChaining(base.BaseNetworkTest):
         rtrule = self.client.create_redirection_target_rule(**rule_body)
 
         # Verifying Redirect Target Rule on VSD
+        if external_id_release <= current_release:
+            external_id = ExternalId(self.router['id']).at_cms_id()
+        else:
+            external_id = None
+
         self._verify_redirect_target_rules(rtrule, 'domains',
-                                           domain[0], rule_body)
+                                           domain[0], rule_body,
+                                           with_external_id=external_id)
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
@@ -290,6 +305,86 @@ class NuageServiceChaining(base.BaseNetworkTest):
             filter_value=rt['nuage_redirect_target']['id'])
         self.assertEqual(redirect_target, '')
 
+###
+    @test.attr(type='smoke')
+    def test_create_virtualwire_redirection_target_on_subnet_in_l3domain(self):
+        # parameters for nuage redirection target
+        post_body = {'insertion_mode': 'VIRTUAL_WIRE',
+                     'redundancy_enabled': 'False',
+                     'subnet_id': self.subnets[1]['id'],
+                     'name': 'RT2'}
+
+        # Creating redirection Target
+        rt = self.client.create_redirection_target(**post_body)
+
+        router_ext_id = (
+            self.nuage_vsd_client.get_vsd_external_id(
+                self.router['id'])
+        )
+
+        domain = (
+            self.nuage_vsd_client.get_l3domain(
+                filters='externalID', filter_value=router_ext_id)
+        )
+
+        subnet_ext_id = (
+            self.nuage_vsd_client.get_vsd_external_id(
+                self.subnets[1]['id'])
+        )
+
+        vsd_subnet = (
+            self.nuage_vsd_client.get_domain_subnet(
+                'domains', domain[0]['ID'], filters='externalID',
+                filter_value=subnet_ext_id)
+        )
+
+        # Verifying Redirect Target on VSD
+        redirect_target = self._verify_redirect_target(
+            rt, 'domains', domain[0], post_body)
+        if external_id_release <= current_release:
+            self.assertEqual(redirect_target[0]['externalID'], subnet_ext_id)
+
+        body = self.security_groups_client.list_security_groups()
+        security_group_id = body['security_groups'][0]['id']
+
+        # Creating Redirect Target Rule
+        rtid = str(rt[u'nuage_redirect_target']['id'])
+        rule_body = {'priority': '200',
+                     'redirect_target_id': rtid,
+                     'protocol': '17',
+                     'origin_group_id': str(security_group_id),
+                     'remote_ip_prefix': '10.0.0.0/24',
+                     'action': 'REDIRECT',
+                     'port_range_min': '50',
+                     'port_range_max': '120'}
+
+        rtrule = self.client.create_redirection_target_rule(**rule_body)
+
+        # Verifying Redirect Target Rule on VSD
+        if external_id_release <= current_release:
+            external_id = ExternalId(self.subnets[1]['id']).at_cms_id()
+        else:
+            external_id = None
+
+        self._verify_redirect_target_rules(rtrule, 'domains',
+                                           domain[0], rule_body,
+                                           with_external_id=external_id)
+
+
+        # Associating port to Redirect Target
+        rtport = self.create_port(self.networks[1])
+        self.addCleanup(self.ports_client.delete_port, rtport['id'])
+        self._assign_unassign_rt_port(rtport, rt, 'subnets', vsd_subnet[0])
+
+        # Put in lines to delete the RT from the l3domain and verify on VSD
+        self.client.delete_redirection_target(
+            redirect_target[0]['ID'])
+        redirect_target = self.nuage_vsd_client.get_redirection_target(
+            'domains', domain[0]['ID'], filters='ID',
+            filter_value=rt['nuage_redirect_target']['id'])
+        self.assertEqual(redirect_target, '')
+
+    ###
     @test.attr(type='smoke')
     def test_create_l3_redirection_target_l3domain(self):
         # parameters for nuage redirection target

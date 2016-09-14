@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import testtools
 from external_id import ExternalId
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 
@@ -48,7 +49,7 @@ class ExternalIdTest(tempest.test.BaseTestCase):
         self.assertEqual(external_id.uuid, "PG_FOR_LESS_SECURITY_9705383f-3b49-4eb3-9c3e-994bdabbf48e_VM")
 
 
-class ReleaseTest(tempest.test.BaseTestCase):
+class ReleaseTest(testtools.TestCase):
     def test_release_full(self):
         release = Release("kilo 4.0R3")
         self.assertEqual(release.openstack_release, "kilo")
@@ -72,3 +73,18 @@ class ReleaseTest(tempest.test.BaseTestCase):
         #self.assertEqual(release.major_list[0], "4")
         #self.assertEqual(release.major_list[1], "0")
         #self.assertEqual(release.sub_release, 3)
+
+    def test_release_compare(self):
+        release = Release('4.0R5')
+        current_release = Release('0.0')
+
+        self.assertFalse(current_release == release)
+        self.assertFalse(current_release < release)
+        self.assertTrue( current_release > release)
+        self.assertFalse(current_release <= release)
+
+        self.assertFalse(release == current_release)
+        self.assertTrue(release < current_release)
+        self.assertFalse(release > current_release)
+        self.assertTrue(release <= current_release)
+

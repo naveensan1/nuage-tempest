@@ -20,6 +20,7 @@ from tempest import config
 from tempest.common.utils import data_utils
 from tempest.api.network import base as base
 
+from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.utils import constants as n_constants
 from nuagetempest.lib.utils import exceptions as n_exceptions
 
@@ -220,6 +221,7 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
 
     @testtools.skipUnless(Release('4.0R4') <= Release(CONF.nuage_sut.release),
                           'No upgrade testing on vport')
+    @nuage_test.header()
     def test_port_dhcp_options_matches_to_port(self):
         # Create a network
         name = data_utils.rand_name('network-')
@@ -281,6 +283,7 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
     # after updating the port security enabled, multiple default rules are created
     @testtools.skipUnless(Release('4.0R5') > Release(CONF.nuage_sut.release),
                           'No upgrade testing on vport')
+    @nuage_test.header()
     def test_port_security_fix_openstack_1451_false(self):
         # Create a network
         name = data_utils.rand_name('network-')
@@ -329,6 +332,7 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
     # after updating the port security enabled, multiple default rules are created
     @testtools.skipUnless(Release('4.0R4') > Release(CONF.nuage_sut.release),
                           'No upgrade testing on vport')
+    @nuage_test.header()
     def test_port_security_fix_openstack_1451_true(self):
         # Create a network
         name = data_utils.rand_name('network-')

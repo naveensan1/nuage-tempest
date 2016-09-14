@@ -25,6 +25,7 @@ from tempest.api.network import base
 from tempest.lib.common.utils import data_utils
 from tempest.services.network import resources as net_resources
 from nuagetempest.thirdparty.nuage.scenario import base_nuage_network_scenario_test
+from nuagetempest.lib.test import nuage_test
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -404,6 +405,7 @@ class TestNetworkBasicOps(base_nuage_network_scenario_test.NuageNetworkScenarioT
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
+    @nuage_test.header()
     def test_nuage_fip_network_basic_ops(self):
         """
         Spin a VM with a security group on an internal network, with

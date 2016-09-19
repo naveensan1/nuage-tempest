@@ -15,14 +15,38 @@ CONF = config.CONF
 
 
 class NuageExtraDHCPOptionsBaseL3(base_nuage_extra_dhcp_options.NuageExtraDHCPOptionsBase):
+    def _nuage_create_show_list_update_port_with_extra_dhcp_options(self,
+                                                                    nuage_network_type,
+                                                                    extra_dhcp_opts,
+                                                                    new_extra_dhcp_opts):
+        # do the test for requested nuage network type
+        if  nuage_network_type == NUAGE_NETWORK_TYPE['OS_Managed_L3']:
+            self._nuage_create_list_show_update_layer_x_port_with_extra_dhcp_options(
+                self.osmgd_l3_network['id'], self.nuage_domain[0]['ID'],
+                nuage_network_type, extra_dhcp_opts, new_extra_dhcp_opts)
+        elif nuage_network_type == NUAGE_NETWORK_TYPE['VSD_Managed_L3']:
+            self._nuage_create_list_show_update_layer_x_port_with_extra_dhcp_options(
+                self.vsdmgd_l3_network['id'], self.vsd_l3dom[0]['ID'],
+                nuage_network_type, extra_dhcp_opts, new_extra_dhcp_opts)
+        else:
+            self.assertTrue(False, 'Unknown NUAGE_NETWORK_TYPE detected')
+        pass
+
+
+class NuageExtraDHCPOptionsOSManagedL3Test(NuageExtraDHCPOptionsBaseL3):
+    #
+    # Openstack Managed Layer 3 networks
+    #
+
+    def __init__(self, *args, **kwargs):
+        super(NuageExtraDHCPOptionsOSManagedL3Test, self).__init__(*args, **kwargs)
+        self.nuage_network_type = NUAGE_NETWORK_TYPE['OS_Managed_L3']
+        self.vsd_parent_type = constants.DOMAIN
+
+
     @classmethod
     def resource_setup(cls):
         super(NuageExtraDHCPOptionsBaseL3, cls).resource_setup()
-
-        cls.vsd_l3dom_template = []
-        cls.vsd_l3domain = []
-        cls.vsd_zone = []
-        cls.vsd_subnet = []
 
         # Create a L3 OS managed network and find its corresponding VSD peer
         network_name = data_utils.rand_name('extra-dhcp-opt-L3-network')
@@ -41,107 +65,9 @@ class NuageExtraDHCPOptionsBaseL3(base_nuage_extra_dhcp_options.NuageExtraDHCPOp
             constants.DOMAIN, cls.nuage_domain[0]['ID'],
             filters='externalID', filter_value=cls.nuage_vsd_client.get_vsd_external_id(cls.osmgd_l3_subnet['id']))
 
-        # Create a L3 VSD Managed and link to its OS network
-        name = data_utils.rand_name('l3domain')
-        cls.vsd_l3dom_tmplt = cls.create_vsd_l3dom_template(
-            name=name)
-        cls.vsd_l3dom = cls.create_vsd_l3domain(name=name,
-                                                tid=cls.vsd_l3dom_tmplt[0]['ID'])
-        zonename = data_utils.rand_name('l3dom-zone')
-        cls.vsd_zone = cls.create_vsd_zone(name=zonename,
-                                           domain_id=cls.vsd_l3dom[0]['ID'])
-        subname = data_utils.rand_name('l3dom-sub')
-        cidr = IPNetwork('10.10.100.0/24')
-        cls.vsd_domain_subnet = cls.create_vsd_l3domain_subnet(
-            name=subname,
-            zone_id=cls.vsd_zone[0]['ID'],
-            cidr=cidr,
-            gateway='10.10.100.1')
-        # create subnet on OS with nuagenet param set to subnet UUID
-        net_name = data_utils.rand_name('vsdmgd-network')
-        cls.vsdmgd_l3_network = cls.create_network(network_name=net_name)
-        cls.vsdmgd_l3_subnet = cls.create_subnet(cls.vsdmgd_l3_network,
-                                                 cidr=cidr, mask_bits=24, nuagenet=cls.vsd_domain_subnet[0]['ID'],
-                                                 net_partition=CONF.nuage.nuage_default_netpartition)
-
     @classmethod
     def resource_cleanup(cls):
-        # Delete VSD managed OpenStack resources BEFORE deletion of the VSD resources
-        # Otherwise, VSD resource will not be able to remove all child resources
-        # when these are CMS managed. (e.g. permissions, groups and users)
-        cls._try_delete_resource(cls.networks_client.delete_network,
-                                 cls.vsdmgd_l3_network['id'])
-
-        for vsd_subnet in cls.vsd_subnet:
-            cls.nuage_vsd_client.delete_domain_subnet(vsd_subnet[0]['ID'])
-
-        for vsd_zone in cls.vsd_zone:
-            cls.nuage_vsd_client.delete_zone(vsd_zone['ID'])
-
-        for vsd_l3domain in cls.vsd_l3domain:
-            cls.nuage_vsd_client.delete_domain(vsd_l3domain[0]['ID'])
-
-        for vsd_l3dom_template in cls.vsd_l3dom_template:
-            cls.nuage_vsd_client.delete_l3domaintemplate(vsd_l3dom_template[0]['ID'])
         super(NuageExtraDHCPOptionsBaseL3, cls).resource_cleanup()
-
-    def _nuage_create_show_list_update_port_with_extra_dhcp_options(self,
-                                                                    nuage_network_type,
-                                                                    extra_dhcp_opts,
-                                                                    new_extra_dhcp_opts):
-        # do the test for requested nuage network type
-        if  nuage_network_type == NUAGE_NETWORK_TYPE['OS_Managed_L3']:
-            self._nuage_create_list_show_update_layer_x_port_with_extra_dhcp_options(
-                self.osmgd_l3_network['id'], self.nuage_domain[0]['ID'],
-                nuage_network_type, extra_dhcp_opts, new_extra_dhcp_opts)
-        elif nuage_network_type == NUAGE_NETWORK_TYPE['VSD_Managed_L3']:
-            self._nuage_create_list_show_update_layer_x_port_with_extra_dhcp_options(
-                self.vsdmgd_l3_network['id'], self.vsd_l3dom[0]['ID'],
-                nuage_network_type, extra_dhcp_opts, new_extra_dhcp_opts)
-        else:
-            self.assertTrue(False, 'Unknown NUAGE_NETWORK_TYPE detected')
-        pass
-
-    @classmethod
-    def create_vsd_l3dom_template(cls, **kwargs):
-        vsd_l3dom_tmplt = cls.nuage_vsd_client.create_l3domaintemplate(
-            kwargs['name'] + '-template')
-        cls.vsd_l3dom_template.append(vsd_l3dom_tmplt)
-        return vsd_l3dom_tmplt
-
-    @classmethod
-    def create_vsd_l3domain(cls, **kwargs):
-        vsd_l3dom = cls.nuage_vsd_client.create_domain(kwargs['name'],
-                                                       kwargs['tid'])
-        cls.vsd_l3domain.append(vsd_l3dom)
-        return vsd_l3dom
-
-    @classmethod
-    def create_vsd_zone(cls, **kwargs):
-        vsd_zone = cls.nuage_vsd_client.create_zone(kwargs['domain_id'],
-                                                    kwargs['name'])
-        cls.vsd_zone.append(vsd_zone)
-        return vsd_zone
-
-    @classmethod
-    def create_vsd_l3domain_subnet(cls, **kwargs):
-        vsd_subnet = cls.nuage_vsd_client.create_domain_subnet(kwargs['zone_id'],
-                                                               kwargs['name'],
-                                                               str(kwargs['cidr'].ip),
-                                                               str(kwargs['cidr'].netmask),
-                                                               kwargs['gateway'])
-        cls.vsd_subnet.append(vsd_subnet)
-        return vsd_subnet
-
-
-class NuageExtraDHCPOptionsOSManagedL3Test(NuageExtraDHCPOptionsBaseL3):
-    #
-    # Openstack Managed Layer 3 networks
-    #
-    def __init__(self, *args, **kwargs):
-        super(NuageExtraDHCPOptionsOSManagedL3Test, self).__init__(*args, **kwargs)
-        self.nuage_network_type = NUAGE_NETWORK_TYPE['OS_Managed_L3']
-        self.vsd_parent_type = constants.DOMAIN
 
     @nuage_test.header()
     def test_nuage_openstack_managed_layer3_port_with_extra_dhcp_options_001_netmask(self):
@@ -388,3 +314,88 @@ class NuageExtraDHCPOptionsVsdManagedL3Test(NuageExtraDHCPOptionsOSManagedL3Test
         super(NuageExtraDHCPOptionsVsdManagedL3Test, self).__init__(*args, **kwargs)
         self.nuage_network_type = NUAGE_NETWORK_TYPE['VSD_Managed_L3']
         self.vsd_parent_type = constants.DOMAIN
+
+    @classmethod
+    def create_vsd_l3dom_template(cls, **kwargs):
+        vsd_l3dom_tmplt = cls.nuage_vsd_client.create_l3domaintemplate(
+            kwargs['name'] + '-template')
+        cls.vsd_l3dom_template.append(vsd_l3dom_tmplt)
+        return vsd_l3dom_tmplt
+
+    @classmethod
+    def create_vsd_l3domain(cls, **kwargs):
+        vsd_l3dom = cls.nuage_vsd_client.create_domain(kwargs['name'],
+                                                       kwargs['tid'])
+        cls.vsd_l3domain.append(vsd_l3dom)
+        return vsd_l3dom
+
+    @classmethod
+    def create_vsd_zone(cls, **kwargs):
+        vsd_zone = cls.nuage_vsd_client.create_zone(kwargs['domain_id'],
+                                                    kwargs['name'])
+        cls.vsd_zone.append(vsd_zone)
+        return vsd_zone
+
+    @classmethod
+    def create_vsd_l3domain_subnet(cls, **kwargs):
+        vsd_subnet = cls.nuage_vsd_client.create_domain_subnet(kwargs['zone_id'],
+                                                               kwargs['name'],
+                                                               str(kwargs['cidr'].ip),
+                                                               str(kwargs['cidr'].netmask),
+                                                               kwargs['gateway'])
+        cls.vsd_subnet.append(vsd_subnet)
+        return vsd_subnet
+
+    @classmethod
+    def resource_setup(cls):
+        super(NuageExtraDHCPOptionsBaseL3, cls).resource_setup()
+
+        cls.vsd_l3dom_template = []
+        cls.vsd_l3domain = []
+        cls.vsd_zone = []
+        cls.vsd_subnet = []
+
+        # Create a L3 VSD Managed and link to its OS network
+        name = data_utils.rand_name('l3domain')
+        cls.vsd_l3dom_tmplt = cls.create_vsd_l3dom_template(
+            name=name)
+        cls.vsd_l3dom = cls.create_vsd_l3domain(name=name,
+                                                tid=cls.vsd_l3dom_tmplt[0]['ID'])
+        zonename = data_utils.rand_name('l3dom-zone')
+        cls.vsd_zone = cls.create_vsd_zone(name=zonename,
+                                           domain_id=cls.vsd_l3dom[0]['ID'])
+        subname = data_utils.rand_name('l3dom-sub')
+        cidr = IPNetwork('10.10.100.0/24')
+        cls.vsd_domain_subnet = cls.create_vsd_l3domain_subnet(
+            name=subname,
+            zone_id=cls.vsd_zone[0]['ID'],
+            cidr=cidr,
+            gateway='10.10.100.1')
+        # create subnet on OS with nuagenet param set to subnet UUID
+        net_name = data_utils.rand_name('vsdmgd-network')
+        cls.vsdmgd_l3_network = cls.create_network(network_name=net_name)
+        cls.vsdmgd_l3_subnet = cls.create_subnet(cls.vsdmgd_l3_network,
+                                                 cidr=cidr, mask_bits=24, nuagenet=cls.vsd_domain_subnet[0]['ID'],
+                                                 net_partition=CONF.nuage.nuage_default_netpartition)
+
+    @classmethod
+    def resource_cleanup(cls):
+        # Delete VSD managed OpenStack resources BEFORE deletion of the VSD resources
+        # Otherwise, VSD resource will not be able to remove all child resources
+        # when these are CMS managed. (e.g. permissions, groups and users)
+        cls._try_delete_resource(cls.networks_client.delete_network,
+                                 cls.vsdmgd_l3_network['id'])
+
+        for vsd_subnet in cls.vsd_subnet:
+            cls.nuage_vsd_client.delete_domain_subnet(vsd_subnet[0]['ID'])
+
+        for vsd_zone in cls.vsd_zone:
+            cls.nuage_vsd_client.delete_zone(vsd_zone['ID'])
+
+        for vsd_l3domain in cls.vsd_l3domain:
+            cls.nuage_vsd_client.delete_domain(vsd_l3domain[0]['ID'])
+
+        for vsd_l3dom_template in cls.vsd_l3dom_template:
+            cls.nuage_vsd_client.delete_l3domaintemplate(vsd_l3dom_template[0]['ID'])
+        super(NuageExtraDHCPOptionsBaseL3, cls).resource_cleanup()
+

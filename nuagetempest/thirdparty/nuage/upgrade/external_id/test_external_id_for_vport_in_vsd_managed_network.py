@@ -14,6 +14,7 @@
 #    under the License.
 
 import testtools
+from netaddr import IPNetwork
 from oslo_log import log as logging
 
 from tempest import config
@@ -44,24 +45,17 @@ extra_dhcp_opts = [
 
 class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
     class MatchingVsdVPort():
-        def __init__(self, outer, port, subnet):
+        def __init__(self, outer, port, subnet, vsd_l2domain):
             """Construct a Vsd_port. """
             self.test = outer
             self.port = port
             self.subnet = subnet
 
             self.vsd_vport = None
-            self.vsd_l2domain = None
+            self.vsd_l2domain = vsd_l2domain
             self.vsd_security_policy_group = None
 
         def get_by_external_id(self):
-            vsd_l2domains = self.test.nuage_vsd_client.get_l2domain(
-                filters='externalID', filter_value=self.subnet['id'])
-
-            # should have exact 1 match
-            self.test.assertEqual(len(vsd_l2domains), 1)
-            self.vsd_l2domain = vsd_l2domains[0]
-
             vsd_vports = self.test.nuage_vsd_client.get_vport(
                 parent=n_constants.L2_DOMAIN,
                 parent_id=self.vsd_l2domain['ID'],
@@ -219,15 +213,50 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
         super(ExternalIdForVPortTest, cls).setup_clients()
         cls.nuage_vsd_client = NuageRestClient()
 
+    def create_vsd_dhcpmanaged_l2dom_template(self, **kwargs):
+        params = {
+            'DHCPManaged': True,
+            'address': str(kwargs['cidr'].ip),
+            'netmask': str(kwargs['cidr'].netmask),
+            'gateway': kwargs['gateway']
+        }
+        vsd_l2dom_tmplt = self.nuage_vsd_client.create_l2domaintemplate(
+            kwargs['name'] + '-template', extra_params=params)
+        self.addCleanup(self.nuage_vsd_client.delete_l2domaintemplate, vsd_l2dom_tmplt[0]['ID'])
+        return vsd_l2dom_tmplt
+
     @testtools.skipUnless(Release('4.0R4') <= Release(CONF.nuage_sut.release),
                           'No upgrade testing on vport')
     @nuage_test.header()
     def test_port_dhcp_options_matches_to_port(self):
-        # Create a network
-        name = data_utils.rand_name('network-')
-        network = self.create_network(network_name=name)
+        net_name = data_utils.rand_name()
+        cidr = IPNetwork('10.10.100.0/24')
+        vsd_l2domain_templates = self.create_vsd_dhcpmanaged_l2dom_template(
+            name=net_name, cidr=cidr, gateway='10.10.100.1')
+        self.assertEqual(len(vsd_l2domain_templates), 1, "Failed to create vsd l2 domain template")
+
+        vsd_l2domain_template = vsd_l2domain_templates[0]
+        vsd_l2domains = self.nuage_vsd_client.create_l2domain(name=net_name,
+                                                              templateId=vsd_l2domain_template['ID'])
+        self.assertEqual(len(vsd_l2domains), 1, "Failed to create vsd l2 domain")
+        vsd_l2domain = vsd_l2domains[0]
+        self.addCleanup(self.nuage_vsd_client.delete_l2domain, vsd_l2domain['ID'])
+
+        body = self.networks_client.create_network(name=net_name)
+        network = body['network']
         self.addCleanup(self.networks_client.delete_network, network['id'])
-        subnet = self.create_subnet(network)
+        subnet_kwargs = {'name': network['name'],
+                         'cidr': '10.10.100.0/24',
+                         'gateway_ip': None,
+                         'network_id': network['id'],
+                         'nuagenet': vsd_l2domain['ID'],
+                         'net_partition' : CONF.nuage.nuage_default_netpartition,
+                         'enable_dhcp': True,
+                         'ip_version': 4
+        }
+
+        subnet = self.subnets_client.create_subnet(**subnet_kwargs)
+        self.assertIsNotNone(subnet)  # dummy check to use local variable
 
         name = data_utils.rand_name('extra-dhcp-opt-port-name')
         create_body = self.ports_client.create_port(
@@ -237,139 +266,9 @@ class ExternalIdForVPortTest(base.BaseAdminNetworkTest):
         port = create_body['port']
         self.addCleanup(self.ports_client.delete_port, port['id'])
 
-        vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
+        vsd_vport = self.MatchingVsdVPort(self, port, subnet, vsd_l2domain).get_by_external_id()
         vsd_vport.has_dhcp_options(with_external_id=ExternalId(port['id']).at_cms_id())
 
         # Delete
         vsd_vport.verify_cannot_delete()
 
-    def _build_default_security_policy_group_id(self, l2domain_id):
-        return "PG_FOR_LESS_SECURITY_%s_VM" % l2domain_id
-
-    def test_port_without_port_security_matches_to_port(self):
-        # Create a network
-        name = data_utils.rand_name('network-')
-        network = self.create_network(network_name=name)
-        self.addCleanup(self.networks_client.delete_network, network['id'])
-        subnet = self.create_subnet(network)
-
-        name = data_utils.rand_name('port-nosec')
-        create_body = self.ports_client.create_port(
-            name=name,
-            network_id=network['id'],
-            port_security_enabled=False)
-        port = create_body['port']
-        self.addCleanup(self.ports_client.delete_port, port['id'])
-
-        if self.test_upgrade:
-            vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
-            vsd_vport.has_default_security_policy_group(with_external_id=ExternalId(
-                self._build_default_security_policy_group_id(vsd_vport.vsd_vport['parentID'])).at_cms_id())
-            vsd_vport.has_default_egress_policy_entries(with_external_id=None)
-            vsd_vport.has_default_ingress_policy_entries(with_external_id=None)
-
-            upgrade_script.do_run_upgrade_script()
-
-        vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
-        vsd_vport.has_default_security_policy_group(with_external_id=ExternalId(
-            self._build_default_security_policy_group_id(vsd_vport.vsd_vport['parentID'])).at_cms_id())
-        vsd_vport.has_default_egress_policy_entries(with_external_id=ExternalId(subnet['id']).at_cms_id())
-        vsd_vport.has_default_ingress_policy_entries(with_external_id=ExternalId(subnet['id']).at_cms_id())
-
-        # Delete
-        vsd_vport.verify_cannot_delete()
-
-    # see OPENSTACK-1451
-    # after updating the port security enabled, multiple default rules are created
-    @nuage_test.header()
-    def test_port_security_fix_openstack_1451_false(self):
-        # Create a network
-        name = data_utils.rand_name('network-')
-        network = self.create_network(network_name=name)
-        self.addCleanup(self.networks_client.delete_network, network['id'])
-        subnet = self.create_subnet(network)
-
-        name = data_utils.rand_name('port-nosec')
-        create_body = self.ports_client.create_port(
-            name=name,
-            network_id=network['id'],
-            port_security_enabled=False)
-        port = create_body['port']
-        self.addCleanup(self.ports_client.delete_port, port['id'])
-
-        # switch port security to true/false
-        self.ports_client.update_port(port['id'], port_security_enabled=True)
-        self.ports_client.update_port(port['id'], port_security_enabled=False)
-
-        if self.test_upgrade:
-            vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
-            vsd_vport.has_default_security_policy_group(with_external_id=ExternalId(
-                self._build_default_security_policy_group_id(vsd_vport.vsd_vport['parentID'])).at_cms_id())
-
-            ## due to OPENSTACK-1451, multiple entries are created
-            self.assertRaisesRegex(AssertionError,
-                                   "1 != 2: Should find exact 1 match for ingress policy entries",
-                                   vsd_vport.has_default_ingress_policy_entries, with_external_id=None)
-            self.assertRaisesRegex(AssertionError,
-                                   "1 != 2: Should find exact 1 match for egress policy entries",
-                                   vsd_vport.has_default_egress_policy_entries, with_external_id=None)
-
-            # script should delete
-            upgrade_script.do_run_upgrade_script()
-
-        vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
-        vsd_vport.has_default_security_policy_group(with_external_id=ExternalId(
-            self._build_default_security_policy_group_id(vsd_vport.vsd_vport['parentID'])).at_cms_id())
-        vsd_vport.has_default_egress_policy_entries(with_external_id=ExternalId(subnet['id']).at_cms_id())
-        vsd_vport.has_default_ingress_policy_entries(with_external_id=ExternalId(subnet['id']).at_cms_id())
-
-        # Delete
-        vsd_vport.verify_cannot_delete()
-
-    # see OPENSTACK-1451
-    # after updating the port security enabled, multiple default rules are created
-    @nuage_test.header()
-    def test_port_security_fix_openstack_1451_true(self):
-        # Create a network
-        name = data_utils.rand_name('network-')
-        network = self.create_network(network_name=name)
-        self.addCleanup(self.networks_client.delete_network, network['id'])
-        subnet = self.create_subnet(network)
-
-        name = data_utils.rand_name('port-nosec')
-        create_body = self.ports_client.create_port(
-            name=name,
-            network_id=network['id'],
-            port_security_enabled=False)
-        port = create_body['port']
-        self.addCleanup(self.ports_client.delete_port, port['id'])
-
-        # switch port security to true/false
-        self.ports_client.update_port(port['id'], port_security_enabled=True)
-        self.ports_client.update_port(port['id'], port_security_enabled=False)
-        self.ports_client.update_port(port['id'], port_security_enabled=True)
-
-        if self.test_upgrade:
-            vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
-            vsd_vport.has_default_security_policy_group(with_external_id=ExternalId(
-                self._build_default_security_policy_group_id(vsd_vport.vsd_vport['parentID'])).at_cms_id())
-
-            ## due to OPENSTACK-1451, multiple entries are created
-            self.assertRaisesRegex(AssertionError,
-                                   "1 != 2: Should find exact 1 match for ingress policy entries",
-                                   vsd_vport.has_default_ingress_policy_entries, with_external_id=None)
-            self.assertRaisesRegex(AssertionError,
-                                   "1 != 2: Should find exact 1 match for egress policy entries",
-                                   vsd_vport.has_default_egress_policy_entries, with_external_id=None)
-
-            # script should delete
-            upgrade_script.do_run_upgrade_script()
-
-        vsd_vport = self.MatchingVsdVPort(self, port, subnet).get_by_external_id()
-        vsd_vport.has_default_security_policy_group(with_external_id=ExternalId(
-            self._build_default_security_policy_group_id(vsd_vport.vsd_vport['parentID'])).at_cms_id())
-        vsd_vport.has_default_egress_policy_entries(with_external_id=ExternalId(subnet['id']).at_cms_id())
-        vsd_vport.has_default_ingress_policy_entries(with_external_id=ExternalId(subnet['id']).at_cms_id())
-
-        # Delete
-        vsd_vport.verify_cannot_delete()

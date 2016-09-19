@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 from oslo_log import log as logging
+from netaddr import IPNetwork
 
 from tempest import config
 from tempest.common.utils import data_utils
@@ -155,6 +156,120 @@ class ExternalIdForVmTest(base_nuage_network_scenario_test.NuageNetworkScenarioT
 
         name = data_utils.rand_name('server-smoke')
         server = self._create_server(name, network)
+
+        # get the neutron port, based on the servers MAC address (expect only 1 interface)
+        port_mac = server['addresses'][network['name']][0]['OS-EXT-IPS-MAC:mac_addr']
+        ports_response = self.ports_client.list_ports(mac_address=port_mac)
+        port = ports_response['ports'][0]
+
+        if self.test_upgrade:
+            vsd_vm = self.MatchingVsdVm(self, server).get_by_uuid()
+            vsd_vm.has_parent_vm_interface(with_external_id=ExternalId(port['id']).at_cms_id())
+
+            upgrade_script.do_run_upgrade_script()
+
+        vsd_vm = self.MatchingVsdVm(self, server).get_by_external_id()
+        vsd_vm.has_parent_vm_interface(ExternalId(port['id']).at_cms_id())
+
+        # Delete
+        vsd_vm.verify_cannot_delete()
+
+    def create_vsd_dhcpmanaged_l2dom_template(self, **kwargs):
+        params = {
+            'DHCPManaged': True,
+            'address': str(kwargs['cidr'].ip),
+            'netmask': str(kwargs['cidr'].netmask),
+            'gateway': kwargs['gateway']
+        }
+        vsd_l2dom_tmplt = self.nuage_vsd_client.create_l2domaintemplate(
+            kwargs['name'] + '-template', extra_params=params)
+        self.addCleanup(self.nuage_vsd_client.delete_l2domaintemplate, vsd_l2dom_tmplt[0]['ID'])
+        return vsd_l2dom_tmplt
+
+    @nuage_test.header()
+    def test_server_on_vsd_managed_network_matching_vsd_vm(self):
+        net_name = data_utils.rand_name()
+        cidr = IPNetwork('10.10.100.0/24')
+        vsd_l2domain_templates = self.create_vsd_dhcpmanaged_l2dom_template(
+            name=net_name, cidr=cidr, gateway='10.10.100.1')
+        self.assertEqual(len(vsd_l2domain_templates), 1, "Failed to create vsd l2 domain template")
+
+        vsd_l2domain_template = vsd_l2domain_templates[0]
+        vsd_l2domains = self.nuage_vsd_client.create_l2domain(name=net_name,
+                                                              templateId=vsd_l2domain_template['ID'])
+        self.assertEqual(len(vsd_l2domains), 1, "Failed to create vsd l2 domain")
+        vsd_l2domain = vsd_l2domains[0]
+        self.addCleanup(self.nuage_vsd_client.delete_l2domain, vsd_l2domain['ID'])
+
+        network = self._create_network(namestart='network-')
+        subnet_kwargs = {'name': network['name'],
+                         'cidr': '10.10.100.0/24',
+                         'gateway_ip': None,
+                         'network_id': network['id'],
+                         'nuagenet': vsd_l2domain['ID'],
+                         'net_partition' : CONF.nuage.nuage_default_netpartition,
+                         'enable_dhcp': True,
+                         'ip_version': 4
+                        }
+
+        subnet = self.subnets_client.create_subnet(**subnet_kwargs)
+        self.assertIsNotNone(subnet)  # dummy check to use local variable
+
+        name = data_utils.rand_name('server-smoke')
+        server = self._create_server(name, network)
+
+        # get the neutron port, based on the servers MAC address (expect only 1 interface)
+        port_mac = server['addresses'][network['name']][0]['OS-EXT-IPS-MAC:mac_addr']
+        ports_response = self.ports_client.list_ports(mac_address=port_mac)
+        port = ports_response['ports'][0]
+
+        if self.test_upgrade:
+            vsd_vm = self.MatchingVsdVm(self, server).get_by_uuid()
+            vsd_vm.has_parent_vm_interface(with_external_id=ExternalId(port['id']).at_cms_id())
+
+            upgrade_script.do_run_upgrade_script()
+
+        vsd_vm = self.MatchingVsdVm(self, server).get_by_external_id()
+        vsd_vm.has_parent_vm_interface(ExternalId(port['id']).at_cms_id())
+
+        # Delete
+        vsd_vm.verify_cannot_delete()
+
+    @nuage_test.header()
+    def test_server_on_neutron_port_in_vsd_managed_network_matching_vsd_vm(self):
+        net_name = data_utils.rand_name()
+        cidr = IPNetwork('10.10.100.0/24')
+        vsd_l2domain_templates = self.create_vsd_dhcpmanaged_l2dom_template(
+            name=net_name, cidr=cidr, gateway='10.10.100.1')
+        self.assertEqual(len(vsd_l2domain_templates), 1, "Failed to create vsd l2 domain template")
+
+        vsd_l2domain_template = vsd_l2domain_templates[0]
+        vsd_l2domains = self.nuage_vsd_client.create_l2domain(name=net_name,
+                                                              templateId=vsd_l2domain_template['ID'])
+        self.assertEqual(len(vsd_l2domains), 1, "Failed to create vsd l2 domain")
+        vsd_l2domain = vsd_l2domains[0]
+        self.addCleanup(self.nuage_vsd_client.delete_l2domain, vsd_l2domain['ID'])
+
+        network = self._create_network(namestart='network-')
+        subnet_kwargs = {'name': network['name'],
+                         'cidr': '10.10.100.0/24',
+                         'gateway_ip': None,
+                         'network_id': network['id'],
+                         'nuagenet': vsd_l2domain['ID'],
+                         'net_partition' : CONF.nuage.nuage_default_netpartition,
+                         'enable_dhcp': True,
+                         'ip_version': 4
+        }
+
+        subnet = self.subnets_client.create_subnet(**subnet_kwargs)
+        self.assertIsNotNone(subnet)  # dummy check to use local variable
+
+        port = self._create_port(
+            namestart='port',
+            network_id=network['id'])
+
+        name = data_utils.rand_name('server-smoke')
+        server = self._create_server(name, network, port['id'])
 
         # get the neutron port, based on the servers MAC address (expect only 1 interface)
         port_mac = server['addresses'][network['name']][0]['OS-EXT-IPS-MAC:mac_addr']

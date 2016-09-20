@@ -108,6 +108,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             nuagenet=vsd_l2dom[0]['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
         self.assertEqual(subnet['cidr'], str(cidr))
+        self.assertTrue(subnet['vsd_managed'], "Subnet should be VSD managed.")
         self.assertTrue(self._verify_vm_ip(network['id'], net_name))
 
     @nuage_test.header(tags=['smoke'])
@@ -147,6 +148,7 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             mask_bits=16,
             nuagenet=vsd_l2dom_with_shared_managed[0]['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
+        self.assertTrue(subnet['vsd_managed'], "Subnet should be VSD managed.")
         self.assertEqual(
             str(IPNetwork(subnet['cidr']).ip),
             vsd_managed_shared_l2dom['address'])

@@ -1222,7 +1222,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
 
     @classmethod
     def setup_client(self):
-        super(IpAntiSpoofingCliTests, cls).setup_client()
+        super(IpAntiSpoofingCliTests, self).setup_client()
 
     @classmethod
     def resource_cleanup(cls):
@@ -1503,9 +1503,8 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
         sub_name = 'subnet78-1'
         port_name = 'port78-1'
         (subnet, port) = self._create_l2resources(ntw_name, sub_name, port_name)
-        data = port['fixed_ips'].replace(',', ' ').replace(':', ' ').\
-               replace('{', ' ').replace('}', ' ').split()
-        ip_address = data[3]
+        ip_address = port['fixed_ips'][0]['ip_address']
+
         mac_address = port['mac_address']
         allowed_addr_pair = 'type=dict list=true ip_address='\
                             +ip_address+',mac_address='+mac_address
@@ -1558,9 +1557,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
         sub_name = 'subnet81-1'
         port_name = 'port81-1'
         (subnet, port) = self._create_l2resources(ntw_name, sub_name, port_name)
-        data = port['fixed_ips'].replace(',', ' ').replace(':', ' ').\
-               replace('{', ' ').replace('}', ' ').split()
-        ip_address = data[3]
+        ip_address = port['fixed_ips'][0]['ip_address']
         mac_address = 'fe:a0:36:4b:c8:70'
         allowed_addr_pair = 'type=dict list=true ip_address='\
                             +ip_address+',mac_address='+mac_address
@@ -1714,9 +1711,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
         port_name = 'port90-1'
         router, subnet, port = self._create_l3resources(ntw_name, router_name,
                                                         sub_name, port_name)
-        data = port['fixed_ips'].replace(',', ' ').replace(':', ' ').\
-               replace('{', ' ').replace('}', ' ').split()
-        ip_address = data[3]
+        ip_address = port['fixed_ips'][0]['ip_address']
         mac_address = port['mac_address']
         allowed_addr_pair = 'type=dict list=true ip_address='\
                             +ip_address+',mac_address='+mac_address
@@ -1772,9 +1767,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingTestBase, test.BaseTestCase):
         port_name = 'port93-1'
         router, subnet, port = self._create_l3resources(ntw_name, router_name,
                                                         sub_name, port_name)
-        data = port['fixed_ips'].replace(',', ' ').replace(':', ' ').\
-               replace('{', ' ').replace('}', ' ').split()
-        ip_address = data[3]
+        ip_address = port['fixed_ips'][0]['ip_address']
         mac_address = 'fe:a0:36:4b:c8:70'
         allowed_addr_pair = 'type=dict list=true ip_address='\
                             +ip_address+',mac_address='+mac_address

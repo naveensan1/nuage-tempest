@@ -12,9 +12,18 @@ import time
 
 import netaddr
 
+CONF = config.CONF
+
+
 class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingTestBase,
                                  manager.NetworkScenarioTest,
                                  serv_base.BaseV2ComputeTest):
+
+    @classmethod
+    def skip_checks(cls):
+        super(IpAntiSpoofingTestScenario, cls).skip_checks()
+        if not 'vrs' in CONF.nuagext.nuage_components:
+            raise cls.skipException("vrs configuration tempest.conf section [nuageext] nuage_components is required")
 
     @classmethod
     def resource_setup(cls):

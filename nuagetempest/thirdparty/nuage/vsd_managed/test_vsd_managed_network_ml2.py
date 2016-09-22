@@ -80,7 +80,6 @@ class VSDManagedNetworksTestJSONML2(
             net_partition=CONF.nuage.nuage_default_netpartition,
             enable_dhcp=True)
         self.assertIsNotNone(subnet, "Subnet should be created.")
-        self.assertTrue(subnet['vsd_managed'], "Subnet should be VSD managed.")
 
         port = self.create_port(network)
         nuage_vport = self.nuageclient.get_vport(n_constants.L2_DOMAIN,

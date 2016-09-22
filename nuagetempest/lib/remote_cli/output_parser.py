@@ -16,6 +16,7 @@
 """Collection of utilities for parsing CLI clients output."""
 
 import re
+import json
 
 from tempest import exceptions
 from oslo_log import log as logging
@@ -175,3 +176,13 @@ def _table_columns(first_table_row):
         positions.append((start, end))
         start = end + 1
     return positions
+
+
+def to_list_of_dict(response):
+    items = response.split('\n')
+    result = []
+    for item in items:
+        result.append(json.loads(item))
+
+    return result
+

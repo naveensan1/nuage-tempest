@@ -31,7 +31,7 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             # get the address details of to compare
             vm_address = vm_osc['addresses'].values()[0][0]['addr']
             vm_vrs = base.poll_for_vm_boot(obj.TB.vrs_1.cmd, vm_address, 30)
-            obj.assertEqual(vm_vrs['ant_spoof'], 'Disabled')
+            obj.assertEqual(vm_vrs['anti_spoof'], 'Disabled')
             obj.assertEqual(vm_vrs['ip'], vm_address)
             obj.assertNotEqual(vm_vrs['evpn_id'], 0)
 

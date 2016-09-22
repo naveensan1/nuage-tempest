@@ -1,3 +1,5 @@
+
+import json
 import logging
 import os
 import urlparse
@@ -7,6 +9,7 @@ from tempest import config
 
 from tempest.lib.common import ssh
 import output_parser as cli_output_parser
+
 
 CONF = config.CONF
 
@@ -376,6 +379,6 @@ class ClientTestBase(object):
         """
         msg = 'Beginning of first line has invalid content: {}'.format(lines[:3])
         assert lines[0].startswith(beginning) == True, msg
-       
+
     def runTest(cls):
         pass

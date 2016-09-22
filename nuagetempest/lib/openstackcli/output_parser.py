@@ -16,6 +16,7 @@
 """Collection of utilities for parsing CLI clients output."""
 
 import re
+import json
 
 from tempest import exceptions
 from oslo_log import log as logging
@@ -113,6 +114,7 @@ def tables(output_lines):
 
     return tables_
 
+
 def table(output_lines):
     """Parse single table from cli output.
 
@@ -146,6 +148,7 @@ def table(output_lines):
 
     return table_
 
+
 def _table_columns(first_table_row):
     """Find column ranges in output line.
 
@@ -161,3 +164,13 @@ def _table_columns(first_table_row):
         positions.append((start, end))
         start = end + 1
     return positions
+
+
+def to_list_of_dict(response):
+    items = response.split('\n')
+    result = []
+    for item in items:
+        if item:
+            result.append(json.loads(item))
+
+    return result

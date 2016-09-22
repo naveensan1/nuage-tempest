@@ -43,26 +43,22 @@ class VsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
             'private_net_cidr': str(cidr)}
 
         if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
-            msg = "is in CREATE_FAILED status due to 'Resource CREATE failed: InternalServerError: resources.private_subnet: create_subnet_postcommit failed.'"
+            msg = "Stack (.*) is in CREATE_FAILED status due to 'Resource CREATE failed: InternalServerError: " + \
+                  "resources.private_subnet: create_subnet_postcommit failed.'"
         else:
             msg = "Bad subnet request: In advance mode, net-partition name must be provided"
 
         # Small difference between El7 and Ubuntu heat results in different output: check the neutron output only
-        self.assertRaisesRegexp(exceptions.StackBuildErrorException,
-                                # "Resource CREATE failed: BadRequest: resources.private_subnet: Bad subnet request:
-                                # In advance mode, net-partition name must be provided",
-                                # "Bad subnet request: In advance mode, net-partition name must be provided",
-                                msg,
-                                self.launch_stack,
-                                stack_file_name,
-                                stack_parameters)
-        pass
+        self.assertRaisesRegex(exceptions.StackBuildErrorException,
+                               msg,
+                               self.launch_stack,
+                               stack_file_name,
+                               stack_parameters)
 
     @test.attr(type=['negative', 'slow'])
     @nuage_test.header()
     def test_link_subnet_to_vsd_l2domain_without_valid_vsd_l2domain(self):
         """ Test heat creation should raise exception for a private VSD managed network without valid l2_domain id
-
         """
         cidr = IPNetwork('10.10.100.0/24')
 
@@ -74,11 +70,16 @@ class VsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
             'private_net_name': self.private_net_name,
             'private_net_cidr': str(cidr)}
 
+        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+            msg = "Stack (.*) is in CREATE_FAILED status due to " + \
+                  "'Resource CREATE failed: BadRequest: resources.private_subnet: " + \
+                  "Invalid input for nuagenet. Reason: 'not a valid UUID' is not a valid UUID.'"
+        else:
+            msg = "Invalid input for nuagenet. Reason: 'not a valid UUID' is not a valid UUID."
+
         # Small difference between El7 and Ubuntu heat results in different output: check the neutron output only
-        self.assertRaisesRegexp(exceptions.StackBuildErrorException,
-                                # "'Resource CREATE failed: BadRequest: resources.private_subnet:
-                                #  Invalid input for nuagenet. Reason: 'not a valid UUID' is not a valid UUID.",
-                                "Invalid input for nuagenet. Reason: 'not a valid UUID' is not a valid UUID.",
+        self.assertRaisesRegex(exceptions.StackBuildErrorException,
+                                msg,
                                 self.launch_stack,
                                 stack_file_name,
                                 stack_parameters)
@@ -87,7 +88,6 @@ class VsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
     @nuage_test.header()
     def test_link_subnet_to_vsd_l2domain_without_existing_vsd_l2domain(self):
         """ Test heat creation should raise exception for a private VSD managed network without valid l2_domain id
-
         """
         cidr = IPNetwork('10.10.100.0/24')
 
@@ -99,12 +99,16 @@ class VsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
             'private_net_name': self.private_net_name,
             'private_net_cidr': str(cidr)}
 
+        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+            msg = "Stack (.*) is in CREATE_FAILED status due to 'Resource CREATE failed: InternalServerError: " + \
+                  "resources.private_subnet: create_subnet_postcommit failed.'"
+        else:
+            msg = "Nuage API: Error in REST call to VSD: Cannot find l2domain with ID"
+
         # Small difference between El7 and Ubuntu heat results in different output: check the neutron output only
-        self.assertRaisesRegexp(exceptions.StackBuildErrorException,
-                                # "Resource CREATE failed: InternalServerError: resources.private_subnet:
-                                # Nuage API: Error in REST call to VSD: Cannot find l2domain with ID",
-                                "Nuage API: Error in REST call to VSD: Cannot find l2domain with ID",
-                                self.launch_stack,
-                                stack_file_name,
-                                stack_parameters)
+        self.assertRaisesRegex(exceptions.StackBuildErrorException,
+                               msg,
+                               self.launch_stack,
+                               stack_file_name,
+                               stack_parameters)
 

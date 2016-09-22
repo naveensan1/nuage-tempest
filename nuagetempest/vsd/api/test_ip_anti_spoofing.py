@@ -82,6 +82,7 @@ class IpAntiSpoofingVSDBase():
         if obj.get_vip_action(vip_params) == obj.vip_action.vip:
             obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
             vsd_vips = vsd_port.virtual_ips.get()
+
             for os_vip in port['allowed_address_pairs']:
                 vsd_vip = vsd_vips.pop()
                 obj.assertEqual(os_vip['ip_address'], vsd_vip.virtual_ip)
@@ -90,7 +91,8 @@ class IpAntiSpoofingVSDBase():
         # Case where no action occurs on VSD for given AAP
         if obj.get_vip_action(vip_params) == obj.vip_action.no_vip:
             obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
-  
+
+
 class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
 
     def __init__(self):

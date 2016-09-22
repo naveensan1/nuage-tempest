@@ -66,6 +66,7 @@ class VSDManagedNetworksTestJSONML2(
     @nuage_test.header(tags=['smoke'])
     def test_create_port_subnet_l2_managed(self):
         net_name = data_utils.rand_name()
+
         cidr = IPNetwork('10.10.100.0/24')
         vsd_l2dom_tmplt = self.create_vsd_dhcpmanaged_l2dom_template(
             name=net_name, cidr=cidr, gateway='10.10.100.1')
@@ -79,6 +80,7 @@ class VSDManagedNetworksTestJSONML2(
             net_partition=CONF.nuage.nuage_default_netpartition,
             enable_dhcp=True)
         self.assertIsNotNone(subnet, "Subnet should be created.")
+        self.assertTrue(subnet['vsd_managed'], "Subnet should be VSD managed.")
 
         port = self.create_port(network)
         nuage_vport = self.nuageclient.get_vport(n_constants.L2_DOMAIN,
@@ -86,6 +88,39 @@ class VSDManagedNetworksTestJSONML2(
                                                  filters='externalID',
                                                  filter_value=port['id'])
         self.assertIsNotNone(nuage_vport, "vport should be created.")
+
+        # External ID tests
+        vsd_l2domains = self.nuageclient.get_l2domain(filters='ID',
+                                                      filter_value=vsd_l2dom['ID'])
+        self.assertEqual(len(vsd_l2domains), 1, "Failed to get vsd l2 domain")
+        vsd_l2domain = vsd_l2domains[0]
+        self.assertIsNone(vsd_l2domain['externalID'], "Should not get an External ID")
+
+        # When I delete the OS linked network with the port
+        # Then I get an exception
+        self.assertRaisesRegexp(exceptions.Conflict,
+                                "There are one or more ports still in use",
+                                self.networks_client.delete_network,
+                                network['id'])
+
+        # When I delete the OS linked subnet after deletion of the port
+        self.ports_client.delete_port(port['id'])
+
+        # Then the vport on the VSD is also deleted
+        nuage_vport = self.nuageclient.get_vport(n_constants.L2_DOMAIN,
+                                                 vsd_l2dom['ID'],
+                                                 filters='externalID',
+                                                 filter_value=port['id'])
+        self.assertEqual('', nuage_vport, "vport should be deleted.")
+
+        # Then I can delete the network
+        self.networks_client.delete_network(network['id'])
+
+        # Then the VSD managed network is still there
+        vsd_l2domains = self.nuageclient.get_l2domain(filters='ID',
+                                                      filter_value=vsd_l2dom['ID'])
+        self.assertEqual(len(vsd_l2domains), 1, "Failed to get vsd l2 domain")
+        vsd_l2domain = vsd_l2domains[0]
 
     # HP - Unica scenario with DHCP-options defined in VSD
     @nuage_test.header(tags=['smoke'])

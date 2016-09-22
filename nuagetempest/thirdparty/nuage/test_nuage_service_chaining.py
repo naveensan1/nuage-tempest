@@ -437,8 +437,14 @@ class NuageServiceChaining(base.BaseNetworkTest):
         rtrule = self.client.create_redirection_target_rule(**rule_body)
 
         # Verifying Redirect Target Rule on VSD
-        self._verify_redirect_target_rules(
-            rtrule, 'domains', domain[0], rule_body)
+        if external_id_release <= current_release:
+            external_id = ExternalId(self.router['id']).at_cms_id()
+        else:
+            external_id = None
+
+        self._verify_redirect_target_rules(rtrule, 'domains',
+                                           domain[0], rule_body,
+                                           with_external_id=external_id)
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])
@@ -515,8 +521,14 @@ class NuageServiceChaining(base.BaseNetworkTest):
         rtrule = self.client.create_redirection_target_rule(**rule_body)
 
         # Verifying Redirect Target Rule on VSD
-        self._verify_redirect_target_rules(
-            rtrule, 'domains', domain[0], rule_body)
+        if external_id_release <= current_release:
+            external_id = ExternalId(self.router['id']).at_cms_id()
+        else:
+            external_id = None
+
+        self._verify_redirect_target_rules(rtrule, 'domains',
+                                           domain[0], rule_body,
+                                           with_external_id=external_id)
 
         # Associating port to Redirect Target
         rtport = self.create_port(self.networks[1])

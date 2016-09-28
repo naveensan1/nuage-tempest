@@ -1,8 +1,8 @@
 # Copyright 2013 OpenStack Foundation
 # All Rights Reserved.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
 #         http://www.apache.org/licenses/LICENSE-2.0
@@ -13,15 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from nuagetempest.lib.nuage_tempest_test_loader import Release
-from nuagetempest.lib.utils import constants as n_constants
-from nuagetempest.services.nuage_client import NuageRestClient
+import uuid
+
 import six
-from tempest.api.network import test_security_groups
 from tempest.common.utils import data_utils
 from tempest import config
 from tempest import test
-import uuid
+from tempest.api.network import base_security_groups as base
+from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.services.nuage_client import NuageRestClient
+from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
 
 CONF = config.CONF
 external_id_release = Release(n_constants.EXTERNALID_RELEASE)
@@ -29,29 +31,18 @@ conf_release = CONF.nuage_sut.release
 current_release = Release(conf_release)
 
 
-class SecGroupTestNuage(test_security_groups.SecGroupTest):
-    _interface = 'json'
+class SecGroupTestNuageBase(base.BaseSecGroupTest):
     _tenant_network_cidr = CONF.network.tenant_network_cidr
+    nuage_any_domain = None
+    nuage_domain_type = None
 
     @classmethod
     def setup_clients(cls):
-        super(SecGroupTestNuage, cls).setup_clients()
+        super(SecGroupTestNuageBase, cls).setup_clients()
         cls.nuage_vsd_client = NuageRestClient()
 
-    @classmethod
-    def resource_setup(cls):
-        super(SecGroupTestNuage, cls).resource_setup()
-
-        # Nuage specific resource addition
-        name = data_utils.rand_name('network-')
-        cls.network = cls.create_network(network_name=name)
-        cls.subnet = cls.create_subnet(cls.network)
-        cls.nuage_l2domain = cls.nuage_vsd_client.get_l2domain(
-            filters='externalID',
-            filter_value=cls.subnet['id'])
-
     def _create_verify_security_group_rule(self, **kwargs):
-        sec_group_rule = self.security_group_rules_client\
+        sec_group_rule = self.security_group_rules_client \
             .create_security_group_rule(**kwargs)
         self._verify_nuage_acl(sec_group_rule.get('security_group_rule'))
 
@@ -64,9 +55,23 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
         self.addCleanup(self.ports_client.delete_port, body['port']['id'])
 
     def _verify_vsd_policy_grp(self, remote_group_id):
+        nuage_policy_grps = self.nuage_vsd_client.get_policygroup(
+            self.nuage_domain_type,
+            self.nuage_any_domain[0]['ID'])
+
+        self.assertGreater(len(nuage_policy_grps), 0)
+        found = False
+        for nuage_policy_grp in nuage_policy_grps:
+            if ExternalId(remote_group_id).at_cms_id() == nuage_policy_grp['externalID']:
+                found = True
+                break
+
+        self.assertTrue(found, "Must have nuage policy group with maching externalID")
+
+        # can retrieve VSD policy group by the externalID
         nuage_policy_grp = self.nuage_vsd_client.get_policygroup(
-            n_constants.L2_DOMAIN,
-            self.nuage_l2domain[0]['ID'],
+            self.nuage_domain_type,
+            self.nuage_any_domain[0]['ID'],
             filters='externalID',
             filter_value=remote_group_id)
         self.assertEqual(nuage_policy_grp[0]['name'],
@@ -83,27 +88,24 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
 
     def _get_nuage_acl_entry_template(self, sec_group_rule):
         if sec_group_rule['direction'] == 'ingress':
-            nuage_eacl_template = self.nuage_vsd_client.\
-                get_egressacl_template(n_constants.L2_DOMAIN,
-                                       self.nuage_l2domain[0]['ID'])
-            nuage_eacl_entrytemplate = self.nuage_vsd_client.\
-                get_egressacl_entytemplate(
-                    n_constants.EGRESS_ACL_TEMPLATE,
-                    nuage_eacl_template[0]['ID'],
-                    filters='externalID',
-                    filter_value=sec_group_rule['id'])
+            nuage_eacl_template = self.nuage_vsd_client. \
+                get_egressacl_template(self.nuage_domain_type,
+                                       self.nuage_any_domain[0]['ID'])
+            nuage_eacl_entrytemplate = self.nuage_vsd_client. \
+                get_egressacl_entytemplate(n_constants.EGRESS_ACL_TEMPLATE,
+                                           nuage_eacl_template[0]['ID'],
+                                           filters='externalID',
+                                           filter_value=sec_group_rule['id'])
             return nuage_eacl_entrytemplate
         else:
-            nuage_iacl_template = self.nuage_vsd_client.\
-                get_ingressacl_template(
-                    n_constants.L2_DOMAIN,
-                    self.nuage_l2domain[0]['ID'])
-            nuage_iacl_entrytemplate = self.nuage_vsd_client.\
-                get_ingressacl_entytemplate(
-                    n_constants.INGRESS_ACL_TEMPLATE,
-                    nuage_iacl_template[0]['ID'],
-                    filters='externalID',
-                    filter_value=sec_group_rule['id'])
+            nuage_iacl_template = self.nuage_vsd_client. \
+                get_ingressacl_template(self.nuage_domain_type,
+                                        self.nuage_any_domain[0]['ID'])
+            nuage_iacl_entrytemplate = self.nuage_vsd_client. \
+                get_ingressacl_entytemplate(n_constants.INGRESS_ACL_TEMPLATE,
+                                            nuage_iacl_template[0]['ID'],
+                                            filters='externalID',
+                                            filter_value=sec_group_rule['id'])
             return nuage_iacl_entrytemplate
 
     def _verify_nuage_acl(self, sec_group_rule):
@@ -112,10 +114,11 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
             self._verify_vsd_policy_grp(sec_group_rule['remote_group_id'])
 
         if sec_group_rule.get('remote_ip_prefix'):
-            self._verify_vsd_network_macro(sec_group_rule
-                                           ['remote_ip_prefix'])
+            self._verify_vsd_network_macro(sec_group_rule['remote_ip_prefix'])
 
         nuage_acl_entry = self._get_nuage_acl_entry_template(sec_group_rule)
+
+        self.assertEqual(nuage_acl_entry[0]['externalID'], ExternalId(sec_group_rule['id']).at_cms_id())
 
         to_verify = ['protocol', 'etherType', 'sourcePort', 'destinationPort']
         expected = {}
@@ -142,14 +145,12 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
                         str(sec_group_rule['port_range_min']) + '-' + str(
                             sec_group_rule['port_range_max']))
             else:
-                self.assertEqual(value, n_constants.PROTO_NAME_TO_NUM
-                                 [sec_group_rule[key]],
+                self.assertEqual(value, n_constants.PROTO_NAME_TO_NUM[sec_group_rule[key]],
                                  "Field %s of the created security group "
                                  "rule does not match with %s." %
                                  (key, value))
 
-    @test.attr(type='smoke')
-    def test_create_list_update_show_delete_security_group(self):
+    def _test_create_list_update_show_delete_security_group(self):
         group_create_body, name = self._create_security_group()
 
         # List security groups and verify if created group is there in response
@@ -163,8 +164,7 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
         self._create_nuage_port_with_security_group(
             group_create_body['security_group']['id'], self.network['id'])
         # Verify vsd.
-        self._verify_vsd_policy_grp(group_create_body
-                                    ['security_group']['id'])
+        self._verify_vsd_policy_grp(group_create_body['security_group']['id'])
         new_name = data_utils.rand_name('security-')
         new_description = data_utils.rand_name('security-description')
         update_body = self.security_groups_client.update_security_group(
@@ -182,8 +182,7 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
         self.assertEqual(show_body['security_group']['description'],
                          new_description)
 
-    @test.attr(type='smoke')
-    def test_create_show_delete_security_group_rule(self):
+    def _test_create_show_delete_security_group_rule(self):
         group_create_body, _ = self._create_security_group()
         # create a nuage port to create sg on VSD.
         self._create_nuage_port_with_security_group(
@@ -217,8 +216,7 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
             self.assertIn(rule_create_body['security_group_rule']['id'],
                           rule_list)
 
-    @test.attr(type='smoke')
-    def test_create_security_group_rule_with_additional_args(self):
+    def _test_create_security_group_rule_with_additional_args(self):
         """Verify security group rule with additional arguments works.
 
         direction:ingress, ethertype:[IPv4/IPv6],
@@ -238,8 +236,7 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
             port_range_min=port_range_min,
             port_range_max=port_range_max)
 
-    @test.attr(type='smoke')
-    def test_create_security_group_rule_with_icmp_type_code(self):
+    def _test_create_security_group_rule_with_icmp_type_code(self):
         """Verify security group rule for icmp protocol works.
 
         Specify icmp type (port_range_min) and icmp code
@@ -260,8 +257,7 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
                 ethertype=self.ethertype, protocol=protocol,
                 port_range_min=icmp_type, port_range_max=icmp_code)
 
-    @test.attr(type='smoke')
-    def test_create_security_group_rule_with_remote_group_id(self):
+    def _test_create_security_group_rule_with_remote_group_id(self):
         # Verify creating security group rule with remote_group_id works
         sg1_body, _ = self._create_security_group()
         sg2_body, _ = self._create_security_group()
@@ -282,8 +278,7 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
             port_range_max=port_range_max,
             remote_group_id=remote_id)
 
-    @test.attr(type='smoke')
-    def test_create_security_group_rule_with_remote_ip_prefix(self):
+    def _test_create_security_group_rule_with_remote_ip_prefix(self):
         # Verify creating security group rule with remote_ip_prefix works
         sg1_body, _ = self._create_security_group()
         self._create_nuage_port_with_security_group(
@@ -300,3 +295,169 @@ class SecGroupTestNuage(test_security_groups.SecGroupTest):
             port_range_min=port_range_min,
             port_range_max=port_range_max,
             remote_ip_prefix=ip_prefix)
+
+
+class SecGroupTestNuageL2Domain(SecGroupTestNuageBase):
+    @classmethod
+    def resource_setup(cls):
+        super(SecGroupTestNuageL2Domain, cls).resource_setup()
+
+        # Nuage specific resource addition
+        name = data_utils.rand_name('network-')
+        cls.network = cls.create_network(network_name=name)
+        cls.subnet = cls.create_subnet(cls.network)
+        nuage_l2domain = cls.nuage_vsd_client.get_l2domain(
+            filters='externalID',
+            filter_value=cls.subnet['id'])
+        cls.nuage_any_domain = nuage_l2domain
+        cls.nuage_domain_type = n_constants.L2_DOMAIN
+
+    @test.attr(type='smoke')
+    def test_create_list_update_show_delete_security_group(self):
+        self._test_create_list_update_show_delete_security_group()
+
+    @test.attr(type='smoke')
+    def test_create_show_delete_security_group_rule(self):
+        self._test_create_show_delete_security_group_rule()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_additional_args(self):
+        self._test_create_security_group_rule_with_additional_args()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_icmp_type_code(self):
+        self._test_create_security_group_rule_with_icmp_type_code()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_remote_group_id(self):
+        self._test_create_security_group_rule_with_remote_group_id()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_remote_ip_prefix(self):
+        self._test_create_security_group_rule_with_remote_ip_prefix()
+
+
+class SecGroupTestNuageL3Domain(SecGroupTestNuageBase):
+    @classmethod
+    def resource_setup(cls):
+        super(SecGroupTestNuageL3Domain, cls).resource_setup()
+
+        # Create a network
+        name = data_utils.rand_name('network-')
+        cls.network = cls.create_network(network_name=name)
+
+        # Create a subnet
+        cls.subnet = cls.create_subnet(cls.network)
+
+        # Create a router
+        name = data_utils.rand_name('router-')
+        create_body = cls.routers_client.create_router(
+            name, external_gateway_info={
+                "network_id": CONF.network.public_network_id},
+            admin_state_up=False)
+        cls.router = create_body['router']
+        cls.routers_client.add_router_interface(
+            cls.router['id'], subnet_id=cls.subnet['id'])
+
+        nuage_l3domain = cls.nuage_vsd_client.get_l3domain(
+            filters='externalID',
+            filter_value=cls.router['id'])
+
+        cls.nuage_any_domain = nuage_l3domain
+        cls.nuage_domain_type = n_constants.DOMAIN
+
+    @classmethod
+    def resource_cleanup(cls):
+        try:
+            cls.routers_client.remove_router_interface(cls.router['id'],
+                                                       subnet_id=cls.subnet['id'])
+        finally:
+            pass
+
+        super(SecGroupTestNuageL3Domain, cls).resource_cleanup()
+
+    @test.attr(type='smoke')
+    def test_security_group_rule_on_port_in_l3domain(self):
+        group_create_body, name = self._create_security_group()
+        security_group = group_create_body['security_group']
+
+        # create a nuage port to create the security group on VSD.
+        post_body = {"network_id": self.network['id'],
+                     "device_owner": "compute:None",
+                     "device_id": str(uuid.uuid1()),
+                     "security_groups": [security_group['id']]}
+        body = self.ports_client.create_port(**post_body)
+        self.addCleanup(self.ports_client.delete_port, body['port']['id'])
+
+        self._verify_vsd_policy_grp(security_group['id'])
+
+        new_name = data_utils.rand_name('security-')
+        new_description = data_utils.rand_name('security-description')
+        update_body = self.security_groups_client.update_security_group(
+            security_group['id'],
+            name=new_name,
+            description=new_description)
+
+        # Verify if security group is updated
+        self.assertEqual(update_body['security_group']['name'], new_name)
+        self.assertEqual(update_body['security_group']['description'],
+                         new_description)
+
+        # Show details of the updated security group
+        show_body = self.security_groups_client.show_security_group(
+            group_create_body['security_group']['id'])
+        self.assertEqual(show_body['security_group']['name'], new_name)
+        self.assertEqual(show_body['security_group']['description'],
+                         new_description)
+
+        # Create rules for each protocol
+        protocols = ['tcp', 'udp', 'icmp']
+        for protocol in protocols:
+            rule_create_body = (
+                self.security_group_rules_client.create_security_group_rule(
+                    security_group_id=security_group['id'],
+                    protocol=protocol,
+                    direction='ingress',
+                    ethertype=self.ethertype
+                ))
+            # Show details of the created security rule
+            show_rule_body = (
+                self.security_group_rules_client.show_security_group_rule(
+                    rule_create_body['security_group_rule']['id']))
+            create_dict = rule_create_body['security_group_rule']
+            for key, value in six.iteritems(create_dict):
+                self.assertEqual(value,
+                                 show_rule_body['security_group_rule'][key],
+                                 "%s does not match." % key)
+            self._verify_nuage_acl(rule_create_body['security_group_rule'])
+            # List rules and verify created rule is in response
+            rule_list_body = (self.security_group_rules_client.
+                              list_security_group_rules())
+            rule_list = [rule['id']
+                         for rule in rule_list_body['security_group_rules']]
+            self.assertIn(rule_create_body['security_group_rule']['id'],
+                          rule_list)
+
+    @test.attr(type='smoke')
+    def test_create_list_update_show_delete_security_group(self):
+        self._test_create_list_update_show_delete_security_group()
+
+    @test.attr(type='smoke')
+    def test_create_show_delete_security_group_rule(self):
+        self._test_create_show_delete_security_group_rule()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_additional_args(self):
+        self._test_create_security_group_rule_with_additional_args()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_icmp_type_code(self):
+        self._test_create_security_group_rule_with_icmp_type_code()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_remote_group_id(self):
+        self._test_create_security_group_rule_with_remote_group_id()
+
+    @test.attr(type='smoke')
+    def test_create_security_group_rule_with_remote_ip_prefix(self):
+        self._test_create_security_group_rule_with_remote_ip_prefix()

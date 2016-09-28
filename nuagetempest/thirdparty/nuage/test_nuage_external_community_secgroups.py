@@ -35,7 +35,7 @@ current_release = Release(conf_release)
 LOG = logging.getLogger(__name__)
 
 
-class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
+class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuageBase):
     @classmethod
     def setup_clients(cls):
         super(NuageExtSecGroup, cls).setup_clients()
@@ -130,7 +130,6 @@ class NuageExtSecGroup(test_security_groups_nuage.SecGroupTestNuage):
                         filters='ID',
                         filter_value=ext_sg_rule['id'])
             else:
-                # TODO: Check with Spurthi
                 nuage_entrytemplate = self.nuageclient. \
                     get_ingressacl_entytemplate(
                         constants.INGRESS_ACL_TEMPLATE,

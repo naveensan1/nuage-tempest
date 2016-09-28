@@ -27,6 +27,7 @@ from tempest import config
 from tempest import test
 from tempest.lib import exceptions
 
+from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
 
 CONF = config.CONF
 external_id_release = Release(n_constants.EXTERNALID_RELEASE)
@@ -298,6 +299,9 @@ class RoutersTestNuage(test_routers.RoutersTest):
             parent=n_constants.DOMAIN, parent_id=nuage_domain[0]['ID'])
         self.assertEqual(
             nuage_static_route[0][u'nextHopIp'], next_hop, "wrong nexthop")
+
+        if Release(CONF.nuage_sut.release) >= Release('4.0R5'):
+            self.assertEqual(nuage_static_route[0]['externalID'], ExternalId(self.router['id']).at_cms_id())
 
     @test.attr(type='smoke')
     def test_add_router_interface_different_netpart(self):

@@ -4,6 +4,10 @@ import re
 import unittest
 import sys
 
+import logging
+
+LOG = logging.getLogger()
+
 class IpAntiSpoofingVSDBase():
 
     def __init__(self):
@@ -60,13 +64,31 @@ class IpAntiSpoofingVSDBase():
                                      in_rule=None, eg_rule=None):
         # Method to verify the ingress and egress rules created for ports with
         # port-security-enabled set to False
+
+        LOG.debug('_verify_ingress_egress_rules')
+        obj.assertIsNotNone(obj, "obj must not be None")
+        obj.assertIsNotNone(obj.TB, "TB must not be None")
+        obj.assertIsNotNone(obj.TB.vsd_1, "vsd_1 must not be None")
+        obj.assertIsNotNone(obj.TB.vsd_1.api_client, "api_client must not be None")
+        obj.assertIsNotNone(obj.TB.vsd_1.session, "session must not be None")
+
+        LOG.debug('with obj {}'.format(obj))
+        LOG.debug('with TB.vsd_1.api_client.url {}'.format(obj.TB.vsd_1.api_client.url))
+
         if in_rule is None:
+            LOG.debug('getting ingress rules')
             in_rule = obj.TB.vsd_1.get_ingress_acl_entry(filter=None)
         if eg_rule is None:
+            LOG.debug('getting egress rules')
             eg_rule = obj.TB.vsd_1.get_egress_acl_entry(filter=None)
+
+        obj.assertIsNotNone(in_rule, "in_rule must not be None")
+
         obj.assertEqual(in_rule.network_type, 'ANY')
         obj.assertEqual(in_rule.location_type, 'POLICYGROUP')
         obj.assertEqual(in_rule.location_id, vsd_pg.id)
+
+        obj.assertIsNotNone(eg_rule, "eg_rule must not be None")
 
         obj.assertEqual(eg_rule.network_type, 'ANY')
         obj.assertEqual(eg_rule.location_type, 'POLICYGROUP')

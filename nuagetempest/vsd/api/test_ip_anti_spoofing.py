@@ -4,9 +4,11 @@ import re
 import unittest
 import sys
 
-import logging
+import logging as real_logging
+from oslo_log import log as logging
 
 LOG = logging.getLogger()
+
 
 class IpAntiSpoofingVSDBase():
 

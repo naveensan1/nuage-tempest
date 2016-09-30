@@ -38,7 +38,7 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
             port = obj.os_data.get_resource('scn-port11-1').os_data
             vm   = obj.os_data.get_resource('scn-port11-vm-1').os_data 
             (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
-                _get_vsd_router_subnet_port(router, subnet, port)
+                _get_vsd_router_subnet_port(router, subnet, port, obj)
 
             vsd_vm = vsd_l3dom.vms.get_first()
             vsd_vm_inf = vsd_vm.interfaces.pop()
@@ -62,7 +62,7 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
             (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
-                _get_vsd_router_subnet_port(router, subnet, port)
+                _get_vsd_router_subnet_port(router, subnet, port, obj)
             vsd_vm = vsd_l3dom.vms.get_first()
             vsd_vm_inf = vsd_vm.interfaces.pop()
             obj.assertEqual(vsd_vm_inf['IPAddress'],

@@ -1,17 +1,14 @@
+import sys
+
 from nuagetempest.lib import test_base as base
 from tempest import test
 import re
-import unittest
-import sys
-
-import logging as real_logging
 from oslo_log import log as logging
 
-LOG = logging.getLogger()
+LOG = logging.getLogger(__name__)
 
 
 class IpAntiSpoofingVSDBase():
-
     def __init__(self):
         pass
 
@@ -37,14 +34,14 @@ class IpAntiSpoofingVSDBase():
             filter=base.get_filter_str('externalID', subnet_ext_id))
         port_ext_id = base.get_external_id(port['id'])
         vsd_port = obj.TB.vsd_1.get_vport(subnet=vsd_sub,
-            filter=base.get_filter_str('externalID', port_ext_id))
+                                          filter=base.get_filter_str('externalID', port_ext_id))
         return (vsd_l3dom, vsd_sub, vsd_port)
 
     def _get_port_for_vsd_managed_l2domain(self, vsd_sub, port, obj):
         vsd_ent = obj.TB.vsd_1.get_enterprise(
             filter='name == "{}"'.format(obj.def_net_partition))
         l2dom_vsd_sub = obj.TB.vsd_1.get_l2domain(enterprise=vsd_ent.id,
-            filter='name == "{}"'.format(vsd_sub['name']))
+                                                  filter='name == "{}"'.format(vsd_sub['name']))
         port_ext_id = base.get_external_id(port['id'])
         vsd_ports = l2dom_vsd_sub.vports.get()
         while vsd_ports.__len__() > 0:
@@ -52,14 +49,14 @@ class IpAntiSpoofingVSDBase():
             if port['id'] == vsd_port.name:
                 break
         return vsd_port
-    
+
     def _get_port_for_vsd_managed_l3domain(self, vsd_l3dom, vsd_sub, port, obj):
         domain_sub = obj.TB.vsd_1.get_subnet_from_domain(
             domain=vsd_l3dom[0]['ID'],
             filter='name == "{}"'.format(vsd_sub['name']))
         port_ext_id = base.get_external_id(port['id'])
         vsd_port = obj.TB.vsd_1.get_vport(subnet=domain_sub,
-            filter=base.get_filter_str('externalID', port_ext_id))
+                                          filter=base.get_filter_str('externalID', port_ext_id))
         return vsd_port
 
     def _verify_ingress_egress_rules(self, obj, vsd_pg,
@@ -67,22 +64,12 @@ class IpAntiSpoofingVSDBase():
         # Method to verify the ingress and egress rules created for ports with
         # port-security-enabled set to False
 
-        LOG.debug('_verify_ingress_egress_rules')
-        obj.assertIsNotNone(obj, "obj must not be None")
-        obj.assertIsNotNone(obj.TB, "TB must not be None")
-        obj.assertIsNotNone(obj.TB.vsd_1, "vsd_1 must not be None")
-        obj.assertIsNotNone(obj.TB.vsd_1.api_client, "api_client must not be None")
-        obj.assertIsNotNone(obj.TB.vsd_1.session, "session must not be None")
-
-        LOG.debug('with obj {}'.format(obj))
-        LOG.debug('with TB.vsd_1.api_client.url {}'.format(obj.TB.vsd_1.api_client.url))
-
         if in_rule is None:
             LOG.debug('getting ingress rules')
-            in_rule = obj.TB.vsd_1.get_ingress_acl_entry(filter=None)
+            in_rule = obj.TB.vsd_1.get_ingress_acl_entry(filter=base.get_filter_str('locationID', vsd_pg.id))
         if eg_rule is None:
             LOG.debug('getting egress rules')
-            eg_rule = obj.TB.vsd_1.get_egress_acl_entry(filter=None)
+            eg_rule = obj.TB.vsd_1.get_egress_acl_entry(filter=base.get_filter_str('locationID', vsd_pg.id))
 
         obj.assertIsNotNone(in_rule, "in_rule must not be None")
 
@@ -97,7 +84,7 @@ class IpAntiSpoofingVSDBase():
         obj.assertEqual(eg_rule.location_id, vsd_pg.id)
 
     def _verify_vip_and_anti_spoofing(self, port, vsd_port,
-                                            vip_params, obj):
+                                      vip_params, obj):
         # Case where only the anti-spoofing is enabled
         if obj.get_vip_action(vip_params) == obj.vip_action.spoofing:
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -118,9 +105,8 @@ class IpAntiSpoofingVSDBase():
 
 
 class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
-
     def __init__(self):
-        pass 
+        pass
 
     class _create_delete_sec_disabled_ntw_port_l2domain():
         def __init__(self):
@@ -132,7 +118,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom1-1').os_data
             port = obj.os_data.get_resource('port1-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom1-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port1-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -155,7 +141,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom2-1').os_data
             port = obj.os_data.get_resource('port2-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom2-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port2-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -178,7 +164,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom3-1').os_data
             port = obj.os_data.get_resource('port3-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom3-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port3-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -200,7 +186,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router4-1').os_data
             subnet = obj.os_data.get_resource('subnet4-1').os_data
             port = obj.os_data.get_resource('port4-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router4-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet4-1', vsd_data=vsd_sub)
@@ -224,7 +210,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router5-1').os_data
             subnet = obj.os_data.get_resource('subnet5-1').os_data
             port = obj.os_data.get_resource('port5-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router5-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet5-1', vsd_data=vsd_sub)
@@ -248,7 +234,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router6-1').os_data
             subnet = obj.os_data.get_resource('subnet6-1').os_data
             port = obj.os_data.get_resource('port6-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router6-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet6-1', vsd_data=vsd_sub)
@@ -273,7 +259,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom7-1').os_data
             port = obj.os_data.get_resource('port7-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom7-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port7-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -292,7 +278,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             port_2 = obj.os_data.get_resource('port7-2').os_data
             vsd_port_1 = obj.os_data.get_resource('port7-1').vsd_data
             vsd_l2domain, vsd_port_2 = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                       l2domain, port_2, obj)
+                l2domain, port_2, obj)
             obj.os_data.update_resource('port7-2', vsd_data=vsd_port_2)
             obj.assertEqual(vsd_port_1.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port_2.address_spoofing, 'INHERITED')
@@ -314,7 +300,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom8-1').os_data
             port = obj.os_data.get_resource('port8-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom8-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port8-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
@@ -331,7 +317,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             port_2 = obj.os_data.get_resource('port8-2').os_data
             vsd_port_1 = obj.os_data.get_resource('port8-1').vsd_data
             vsd_l2domain, vsd_port_2 = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                       l2domain, port_2, obj)
+                l2domain, port_2, obj)
             obj.os_data.update_resource('port8-2', vsd_data=vsd_port_2)
             obj.assertEqual(vsd_port_1.address_spoofing, 'INHERITED')
             obj.assertEqual(vsd_port_2.address_spoofing, 'ENABLED')
@@ -342,7 +328,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             port_2_pg = vsd_port_2.policy_groups.get_first()
             obj.assertNotEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
             obj.assertEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
-    
+
     class _update_port_from_sec_disabled_to_enabled_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -353,7 +339,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom9-1').os_data
             port = obj.os_data.get_resource('port9-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom9-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port9-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -370,7 +356,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom9-1').os_data
             port = obj.os_data.get_resource('port9-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                       l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('port9-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'DISABLED')
             obj.assertEqual(vsd_port.name, port['id'])
@@ -388,7 +374,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom10-1').os_data
             port = obj.os_data.get_resource('port10-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom10-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port10-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'INHERITED')
@@ -403,14 +389,14 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom10-1').os_data
             port = obj.os_data.get_resource('port10-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                       l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('port10-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port.name, port['id'])
 
             port_pg = vsd_port.policy_groups.get_first()
             obj.assertEqual(port_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
-    
+
     class _update_ntw_from_sec_disabled_to_enabled_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -421,7 +407,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router11-1').os_data
             subnet = obj.os_data.get_resource('subnet11-1').os_data
             port = obj.os_data.get_resource('port11-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router11-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet11-1', vsd_data=vsd_sub)
@@ -443,7 +429,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             port_1 = obj.os_data.get_resource('port11-1').os_data
             port_2 = obj.os_data.get_resource('port11-2').os_data
             vsd_port_1 = obj.os_data.get_resource('port11-1').vsd_data
-            (vsd_l3dom, vsd_sub, vsd_port_2) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port_2) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port_2, obj)
             obj.os_data.update_resource('port11-2', vsd_data=vsd_port_2)
             obj.assertEqual(vsd_port_1.address_spoofing, 'ENABLED')
@@ -466,7 +452,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router12-1').os_data
             subnet = obj.os_data.get_resource('subnet12-1').os_data
             port = obj.os_data.get_resource('port12-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router12-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet12-1', vsd_data=vsd_sub)
@@ -486,7 +472,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             port_1 = obj.os_data.get_resource('port12-1').os_data
             port_2 = obj.os_data.get_resource('port12-2').os_data
             vsd_port_1 = obj.os_data.get_resource('port12-1').vsd_data
-            (vsd_l3dom, vsd_sub, vsd_port_2) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port_2) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port_2, obj)
             obj.os_data.update_resource('port12-2', vsd_data=vsd_port_2)
 
@@ -499,7 +485,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             port_2_pg = vsd_port_2.policy_groups.get_first()
             obj.assertNotEqual(port_1_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
             obj.assertEqual(port_2_pg.name[:21], 'PG_FOR_LESS_SECURITY_')
-    
+
     class _update_port_from_sec_disabled_to_enabled_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -510,7 +496,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router13-1').os_data
             subnet = obj.os_data.get_resource('subnet13-1').os_data
             port = obj.os_data.get_resource('port13-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router13-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet13-1', vsd_data=vsd_sub)
@@ -530,9 +516,9 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router13-1').os_data
             subnet = obj.os_data.get_resource('subnet13-1').os_data
             port = obj.os_data.get_resource('port13-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
-            obj.os_data.update_resource('port13-1', vsd_data=vsd_port) 
+            obj.os_data.update_resource('port13-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'DISABLED')
             obj.assertEqual(vsd_port.name, port['id'])
 
@@ -549,7 +535,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router14-1').os_data
             subnet = obj.os_data.get_resource('subnet14-1').os_data
             port = obj.os_data.get_resource('port14-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router14-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet14-1', vsd_data=vsd_sub)
@@ -567,7 +553,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router14-1').os_data
             subnet = obj.os_data.get_resource('subnet14-1').os_data
             port = obj.os_data.get_resource('port14-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('port14-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -585,7 +571,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom21-1').os_data
             port = obj.os_data.get_resource('port21-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom21-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port21-1', vsd_data=vsd_port)
             vip_params = ('0', '0', '0', '0')
@@ -601,7 +587,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom22-1').os_data
             port = obj.os_data.get_resource('port22-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom22-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port22-1', vsd_data=vsd_port)
             vip_params = ('0', '0', '0', '1')
@@ -617,7 +603,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom23-1').os_data
             port = obj.os_data.get_resource('port23-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom23-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port23-1', vsd_data=vsd_port)
             vip_params = ('0', '0', '1', '1')
@@ -633,7 +619,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom24-1').os_data
             port = obj.os_data.get_resource('port24-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom24-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port24-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '0', '0')
@@ -649,7 +635,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom25-1').os_data
             port = obj.os_data.get_resource('port25-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom25-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port25-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '0', '1')
@@ -665,7 +651,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom26-1').os_data
             port = obj.os_data.get_resource('port26-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom26-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port26-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '1', '1')
@@ -681,7 +667,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom27-1').os_data
             port = obj.os_data.get_resource('port27-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom27-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port27-1', vsd_data=vsd_port)
             vip_params = ('1', '0', '0', '0')
@@ -697,13 +683,13 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom28-1').os_data
             port = obj.os_data.get_resource('port28-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom28-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port28-1', vsd_data=vsd_port)
-            
+
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
             obj.assertEqual(vsd_port.name, port['id'])
-            
+
     class _anti_spoofing_for_params_1_0_1_1_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -713,7 +699,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom29-1').os_data
             port = obj.os_data.get_resource('port29-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom29-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port29-1', vsd_data=vsd_port)
             vip_params = ('1', '0', '1', '1')
@@ -729,7 +715,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom30-1').os_data
             port = obj.os_data.get_resource('port30-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom30-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port30-1', vsd_data=vsd_port)
             vip_params = ('1', '1', '0', '0')
@@ -745,7 +731,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom31-1').os_data
             port = obj.os_data.get_resource('port31-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom31-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port31-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -760,7 +746,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             l2domain = obj.os_data.get_resource('l2dom32-1').os_data
             port = obj.os_data.get_resource('port32-1').os_data
             vsd_l2domain, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     l2domain, port, obj)
+                l2domain, port, obj)
             obj.os_data.update_resource('l2dom32-1', vsd_data=vsd_l2domain)
             obj.os_data.update_resource('port32-1', vsd_data=vsd_port)
             vip_params = ('1', '1', '1', '1')
@@ -776,7 +762,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router41-1').os_data
             subnet = obj.os_data.get_resource('subnet41-1').os_data
             port = obj.os_data.get_resource('port41-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router41-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet41-1', vsd_data=vsd_sub)
@@ -794,7 +780,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router42-1').os_data
             subnet = obj.os_data.get_resource('subnet42-1').os_data
             port = obj.os_data.get_resource('port42-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router42-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet42-1', vsd_data=vsd_sub)
@@ -812,7 +798,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router43-1').os_data
             subnet = obj.os_data.get_resource('subnet43-1').os_data
             port = obj.os_data.get_resource('port43-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router43-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet43-1', vsd_data=vsd_sub)
@@ -830,7 +816,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router44-1').os_data
             subnet = obj.os_data.get_resource('subnet44-1').os_data
             port = obj.os_data.get_resource('port44-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router44-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet44-1', vsd_data=vsd_sub)
@@ -848,11 +834,11 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router45-1').os_data
             subnet = obj.os_data.get_resource('subnet45-1').os_data
             port = obj.os_data.get_resource('port45-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router45-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet45-1', vsd_data=vsd_sub)
-            obj.os_data.update_resource('port45-1', vsd_data=vsd_port) 
+            obj.os_data.update_resource('port45-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '0', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
@@ -866,7 +852,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router46-1').os_data
             subnet = obj.os_data.get_resource('subnet46-1').os_data
             port = obj.os_data.get_resource('port46-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router46-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet46-1', vsd_data=vsd_sub)
@@ -884,7 +870,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router47-1').os_data
             subnet = obj.os_data.get_resource('subnet47-1').os_data
             port = obj.os_data.get_resource('port47-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router47-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet47-1', vsd_data=vsd_sub)
@@ -902,7 +888,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router48-1').os_data
             subnet = obj.os_data.get_resource('subnet48-1').os_data
             port = obj.os_data.get_resource('port48-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router48-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet48-1', vsd_data=vsd_sub)
@@ -910,7 +896,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             vip_params = ('1', '0', '0', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
- 
+
     class _anti_spoofing_for_params_1_0_1_1_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -920,7 +906,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router49-1').os_data
             subnet = obj.os_data.get_resource('subnet49-1').os_data
             port = obj.os_data.get_resource('port49-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router49-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet49-1', vsd_data=vsd_sub)
@@ -938,7 +924,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router50-1').os_data
             subnet = obj.os_data.get_resource('subnet50-1').os_data
             port = obj.os_data.get_resource('port50-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router50-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet50-1', vsd_data=vsd_sub)
@@ -956,7 +942,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router51-1').os_data
             subnet = obj.os_data.get_resource('subnet51-1').os_data
             port = obj.os_data.get_resource('port51-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router51-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet51-1', vsd_data=vsd_sub)
@@ -974,7 +960,7 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router52-1').os_data
             subnet = obj.os_data.get_resource('subnet52-1').os_data
             port = obj.os_data.get_resource('port52-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router52-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet52-1', vsd_data=vsd_sub)
@@ -1048,7 +1034,6 @@ class IpAntiSpoofingTest(IpAntiSpoofingVSDBase):
 
 
 class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
-
     def __init__(self):
         pass
 
@@ -1061,13 +1046,13 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet70-1').os_data
             port = obj.os_data.get_resource('port70-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet70-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port70-1', vsd_data=vsd_port)
             vip_params = ('0', '0', '0', '0')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
-    
+
     class _anti_spoofing_for_params_0_0_0_1_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -1077,13 +1062,13 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet71-1').os_data
             port = obj.os_data.get_resource('port71-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet71-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port71-1', vsd_data=vsd_port)
             vip_params = ('0', '0', '0', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
-    
+
     class _anti_spoofing_for_params_0_0_1_1_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -1093,13 +1078,13 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet72-1').os_data
             port = obj.os_data.get_resource('port72-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet72-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port72-1', vsd_data=vsd_port)
             vip_params = ('0', '0', '1', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
-    
+
     class _anti_spoofing_for_params_0_1_0_0_l2domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -1109,7 +1094,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet73-1').os_data
             port = obj.os_data.get_resource('port73-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet73-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port73-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '0', '0')
@@ -1125,7 +1110,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet74-1').os_data
             port = obj.os_data.get_resource('port74-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet74-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port74-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '0', '1')
@@ -1141,7 +1126,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet75-1').os_data
             port = obj.os_data.get_resource('port75-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet75-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port75-1', vsd_data=vsd_port)
             vip_params = ('0', '1', '1', '1')
@@ -1158,7 +1143,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet76-1').os_data
             port = obj.os_data.get_resource('port76-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet76-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port76-1', vsd_data=vsd_port)
             vip_params = ('1', '0', '0', '0')
@@ -1174,7 +1159,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet77-1').os_data
             port = obj.os_data.get_resource('port77-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet77-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port77-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -1189,7 +1174,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet78-1').os_data
             port = obj.os_data.get_resource('port78-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet78-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port78-1', vsd_data=vsd_port)
             vip_params = ('1', '0', '1', '1')
@@ -1205,7 +1190,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet79-1').os_data
             port = obj.os_data.get_resource('port79-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet79-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port79-1', vsd_data=vsd_port)
             vip_params = ('1', '1', '0', '0')
@@ -1221,7 +1206,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet80-1').os_data
             port = obj.os_data.get_resource('port80-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet80-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port80-1', vsd_data=vsd_port)
             obj.assertEqual(vsd_port.address_spoofing, 'ENABLED')
@@ -1236,13 +1221,13 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             subnet = obj.os_data.get_resource('subnet81-1').os_data
             port = obj.os_data.get_resource('port81-1').os_data
             vsd_subnet, vsd_port = self.ip_anti_spoof._get_vsd_l2dom_port(
-                                     subnet, port, obj)
+                subnet, port, obj)
             obj.os_data.update_resource('subnet81-1', vsd_data=vsd_subnet)
             obj.os_data.update_resource('port81-1', vsd_data=vsd_port)
             vip_params = ('1', '1', '1', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
-    
+
     class _anti_spoofing_for_params_0_0_0_0_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -1252,7 +1237,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router82-1').os_data
             subnet = obj.os_data.get_resource('subnet82-1').os_data
             port = obj.os_data.get_resource('port82-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router82-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet82-1', vsd_data=vsd_sub)
@@ -1270,7 +1255,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router83-1').os_data
             subnet = obj.os_data.get_resource('subnet83-1').os_data
             port = obj.os_data.get_resource('port83-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router83-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet83-1', vsd_data=vsd_sub)
@@ -1288,7 +1273,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router84-1').os_data
             subnet = obj.os_data.get_resource('subnet84-1').os_data
             port = obj.os_data.get_resource('port84-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router84-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet84-1', vsd_data=vsd_sub)
@@ -1296,7 +1281,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             vip_params = ('0', '0', '1', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
                 port, vsd_port, vip_params, obj)
-  
+
     class _anti_spoofing_for_params_0_1_0_0_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -1306,7 +1291,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router85-1').os_data
             subnet = obj.os_data.get_resource('subnet85-1').os_data
             port = obj.os_data.get_resource('port85-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router85-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet85-1', vsd_data=vsd_sub)
@@ -1324,7 +1309,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router86-1').os_data
             subnet = obj.os_data.get_resource('subnet86-1').os_data
             port = obj.os_data.get_resource('port86-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router86-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet86-1', vsd_data=vsd_sub)
@@ -1342,7 +1327,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router87-1').os_data
             subnet = obj.os_data.get_resource('subnet87-1').os_data
             port = obj.os_data.get_resource('port87-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router87-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet87-1', vsd_data=vsd_sub)
@@ -1360,7 +1345,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router88-1').os_data
             subnet = obj.os_data.get_resource('subnet88-1').os_data
             port = obj.os_data.get_resource('port88-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router88-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet88-1', vsd_data=vsd_sub)
@@ -1378,7 +1363,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router89-1').os_data
             subnet = obj.os_data.get_resource('subnet89-1').os_data
             port = obj.os_data.get_resource('port89-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router89-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet89-1', vsd_data=vsd_sub)
@@ -1395,7 +1380,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router90-1').os_data
             subnet = obj.os_data.get_resource('subnet90-1').os_data
             port = obj.os_data.get_resource('port90-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router90-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet90-1', vsd_data=vsd_sub)
@@ -1413,7 +1398,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router91-1').os_data
             subnet = obj.os_data.get_resource('subnet91-1').os_data
             port = obj.os_data.get_resource('port91-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router91-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet91-1', vsd_data=vsd_sub)
@@ -1431,15 +1416,15 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router92-1').os_data
             subnet = obj.os_data.get_resource('subnet92-1').os_data
             port = obj.os_data.get_resource('port92-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router92-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet92-1', vsd_data=vsd_sub)
             obj.os_data.update_resource('port92-1', vsd_data=vsd_port)
             vip_params = ('1', '1', '0', '1')
             self.ip_anti_spoof._verify_vip_and_anti_spoofing(
-                port, vsd_port, vip_params, obj) 
-    
+                port, vsd_port, vip_params, obj)
+
     class _anti_spoofing_for_params_1_1_1_1_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTest()
@@ -1449,7 +1434,7 @@ class IpAntiSpoofingCliTests(IpAntiSpoofingVSDBase):
             router = obj.os_data.get_resource('router93-1').os_data
             subnet = obj.os_data.get_resource('subnet93-1').os_data
             port = obj.os_data.get_resource('port93-1').os_data
-            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof.\
+            (vsd_l3dom, vsd_sub, vsd_port) = self.ip_anti_spoof. \
                 _get_vsd_router_subnet_port(router, subnet, port, obj)
             obj.os_data.update_resource('router93-1', vsd_data=vsd_l3dom)
             obj.os_data.update_resource('subnet93-1', vsd_data=vsd_sub)

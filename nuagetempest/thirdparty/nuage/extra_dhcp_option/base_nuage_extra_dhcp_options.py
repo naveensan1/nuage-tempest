@@ -156,6 +156,18 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         # # TODO: Hendrik: only use admin credentials where required!
         cls.client = cls.admin_client
 
+    @classmethod
+    def resource_setup(cls):
+        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+            # create default netpartition if it is not there
+            netpartition_name = cls.nuage_vsd_client.def_netpart_name
+            net_partition = cls.nuage_vsd_client.get_net_partition(netpartition_name)
+            if not net_partition:
+                net_partition = cls.nuage_vsd_client.create_net_partition(netpartition_name,
+                                                                          fip_quota=100,
+                                                                          extra_params=None)
+        super(NuageExtraDHCPOptionsBase, cls).resource_setup()
+
     def _create_port_with_extra_dhcp_options(self, network_id, extra_dhcp_opts, client=None):
         # allow tests to use admin client
         if not client:

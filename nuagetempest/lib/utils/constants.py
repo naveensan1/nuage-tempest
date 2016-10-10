@@ -151,6 +151,11 @@ MAX_INT_PLUS_ONE = MAX_INT + 1
 MAX_UNSIGNED_INT32 = (2**32) - 1
 MAX_UNSIGNED_INT32_PLUS_ONE = MAX_UNSIGNED_INT32 + 1
 
+# See https://github.mv.usa.alcatel.com/Documentation/VSP/blob/f343a106350c8fd6ef59d661dde61f83079e1d4f/VSP-User-Guide/vspug-17_vni-rtrd-allocation.rst
+# See see http://tools.ietf.org/html/draft-mahalingam-dutt-dcops-vxlan-09
+MAX_VNID = (2 ** 24) - 1
+
+
 # PAT constants
 NUAGE_PAT_VSD_ENABLED = 'ENABLED'
 NUAGE_PAT_VSD_DISABLED = 'DISABLED'

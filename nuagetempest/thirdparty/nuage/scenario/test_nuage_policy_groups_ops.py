@@ -233,6 +233,9 @@ class PolicyGroupsScenarioTest(base_vsd_managed_port_attributes.BaseVSDManagedPo
         # vm2 = self._create_server(name='vm2', network_id=network['id'], port_id=port2['id'])
         # These Vm's have connectivity
         vm1_ip_addr = vm1['addresses'][network['name']][0]['addr']
+
+        time.sleep(10)  # wait for boot complete
+
         # for i in range(5):
         connectivity = self._check_vm_policy_group_ping(vm_conn, floating_ip.floating_ip_address, vm1_ip_addr, 10)
         self.assertTrue(connectivity, msg="No ping connectivity in policy group while expected (1)")

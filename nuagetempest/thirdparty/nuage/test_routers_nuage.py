@@ -755,7 +755,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
     @test.attr(type='smoke')
     def test_router_create_update_show_delete_with_backhaul_vnid_rt_rd(self):
         name = data_utils.rand_name('router-')
-        bkhaul_vnid = lib_data_utils.rand_int_id()
+        bkhaul_vnid = lib_data_utils.rand_int_id(start=0, end=n_constants.MAX_VNID)
         bkhaul_rt = "1:1"
         bkhaul_rd = "2:2"
         create_body = self.admin_routers_client.create_router(
@@ -791,7 +791,7 @@ class RoutersTestNuage(test_routers.RoutersTest):
         self.assertEqual(show_body['router']['nuage_backhaul_rd'], bkhaul_rd)
 
         # Update the backhaul rt:rd to new values
-        updated_bkhaul_vnid = lib_data_utils.rand_int_id()
+        updated_bkhaul_vnid = lib_data_utils.rand_int_id(start=0, end=n_constants.MAX_VNID)
         updated_bkhaul_rt = "3:3"
         updated_bkhaul_rd = "4:4"
         update_body = self.patch_update_router(create_body['router']['id'],

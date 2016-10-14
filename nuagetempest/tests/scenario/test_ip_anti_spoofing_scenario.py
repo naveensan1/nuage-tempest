@@ -42,9 +42,10 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingTestBase,
         # Get the first available VRS hostname to spawn VM
         ovs = self.TB.vrs_1.cmd('hostname')
         kwargs = {'availability_zone': 'nova:'+ovs[0][0]}
-        vm = self.create_server(name='scn-port1-vm-1', networks=[ntw], 
-                                wait_until='ACTIVE', **kwargs)
-        self.os_data.insert_resource(vm['name'], 'scn-port1-1', os_data=vm) 
+        vm = self.create_server(name='scn-port1-vm-1', networks=[ntw],
+                                wait_until='ACTIVE',
+                                **kwargs)
+        self.os_data.insert_resource(vm['name'], 'scn-port1-1', os_data=vm)
         self.assertEqual(port['fixed_ips'][0]['ip_address'],
                          vm['addresses'][network['name']][0]['addr'])
         self.assertEqual(port['mac_address'],

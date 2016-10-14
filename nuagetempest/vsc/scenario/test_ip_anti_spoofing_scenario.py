@@ -1,4 +1,4 @@
-
+from testtools.matchers import Equals
 
 class IpAntiSpoofingTestScenarioBase():
     def __init__(self):
@@ -31,20 +31,28 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             self.ip_anti_spoof = IpAntiSpoofingTestScenario()
 
         def verify_vm_in_sec_disabled_port_l2domain(self, obj):
-            vm_osc = obj.os_data.get_resource('scn-port1-vm-1').os_data
-            vm_vsc = obj.TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
-            vm_dict = self.ip_anti_spoof._get_vm_details_in_vsc(vm_vsc)
-            obj.assertEqual(vm_dict['Anti Spoof Enabled'], 'false')
+            vsd_port = obj.os_data.get_resource('scn-port1-1').vsd_data
+
+            vports_vsc = obj.TB.vsc_1.cmd.vswitchctrl_vport_vm_detail()
+            vport_vsc = next (x for x in vports_vsc if x['vsd_vp_uuid'] == vsd_port.id)
+
+            obj.assertIsNotNone(vports_vsc)
+            obj.assertGreaterEqual(len(vports_vsc), 1)
+            obj.assertThat(vport_vsc['anti_spoof_enabled'], Equals('false'))
 
     class _vm_in_sec_disabled_port_l3domain():
         def __init__(self):
             self.ip_anti_spoof = IpAntiSpoofingTestScenario()
 
         def verify_vm_in_sec_disabled_port_l3domain(self, obj):
-            vm_osc = obj.os_data.get_resource('scn-port11-vm-1').os_data
-            vm_vsc = obj.TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
-            vm_dict = self.ip_anti_spoof._get_vm_details_in_vsc(vm_vsc)
-            obj.assertEqual(vm_dict['Anti Spoof Enabled'], 'false')
+            vsd_port = obj.os_data.get_resource('scn-port11-1').vsd_data
+
+            vports_vsc = obj.TB.vsc_1.cmd.vswitchctrl_vport_vm_detail()
+            vport_vsc = next (x for x in vports_vsc if x['vsd_vp_uuid'] == vsd_port.id)
+
+            obj.assertIsNotNone(vports_vsc)
+            obj.assertGreaterEqual(len(vports_vsc), 1)
+            obj.assertThat(vport_vsc['anti_spoof_enabled'], Equals('false'))
 
     class _vm_with_port_parameters_1_0_0_1_l3domain():
         def __init__(self):
@@ -52,10 +60,14 @@ class IpAntiSpoofingTestScenario(IpAntiSpoofingTestScenarioBase):
             pass
 
         def verify_vm_vip_and_anit_spoof_l3domain(self, obj):
-            vm_osc = obj.os_data.get_resource('scn-port12-vm-1').os_data
-            vm_vsc = obj.TB.vsc_1.cmd('show vswitch-controller vports type vm detail')
-            vm_dict = self.ip_anti_spoof._get_vm_details_in_vsc(vm_vsc)
-            obj.assertEqual(vm_dict['Anti Spoof Enabled'], 'true')
-            obj.assertEqual(vm_dict['No. of Virtual IP'], '1')
+            vsd_port = obj.os_data.get_resource('scn-port12-1').vsd_data
+
+            vports_vsc = obj.TB.vsc_1.cmd.vswitchctrl_vport_vm_detail()
+            vport_vsc = next (x for x in vports_vsc if x['vsd_vp_uuid'] == vsd_port.id)
+
+            obj.assertIsNotNone(vports_vsc)
+            obj.assertGreaterEqual(len(vports_vsc), 1)
+            obj.assertThat(vport_vsc['anti_spoof_enabled'], Equals('true'))
+            obj.assertThat(vport_vsc['vips_count'], Equals(1))
 
 

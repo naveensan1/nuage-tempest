@@ -9,7 +9,9 @@ from tempest.lib import exceptions
 from tempest.api.network import base
 
 from nuagetempest.lib.utils import constants as constants
+from nuagetempest.lib import features
 from nuagetempest.services import nuage_client
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 
 CONF = config.CONF
 
@@ -109,6 +111,48 @@ DHCP_OPTION_NUMBER_TO_NAME = {
     255: 'server-ip-address'
 }
 
+####################################
+# Special conversion for 3.2 release
+####################################
+
+# Some options need to be treated as int (for easier comparison with the VSD dhcp options response)
+TREAT_32_DHCP_OPTION_AS_INT = [
+    'time-offset',
+    'boot-file-size',
+    'ip-forward-enable',
+    'non-local-source-routing',
+    'max-datagram-reassembly',
+    'default-ttl',
+    'mtu',
+    'all-subnets-local',
+    'router-discovery',
+    'trailer-encapsulation',
+    'arp-timeout',
+    'ethernet-encap',
+    'tcp-ttl',
+    'tcp-keepalive',
+    'client-arch'
+]
+
+# Some options are treated as raw hex, (for easier comparison with the VSD dhcp options response)
+TREAT_32_DHCP_OPTION_AS_RAW_HEX = [
+    'netbios-nodetype',
+    'client-machine-id',
+    'classless-static-route',
+    'client-interface-id',
+    'vendor-id-encap',
+    'server-ip-address'
+]
+
+# Some options need to be concatenated (for easier comparison with the VSD dhcp options response)
+TREAT_32_DHCP_OPTION_AS_CONCAT_STRING = [
+    'domain-search',
+    'sip-server'
+]
+
+####################################
+# Special conversion for 4.0 release
+####################################
 
 # Some options are treated as raw hex, (for easier comparison with the VSD dhcp options response)
 TREAT_DHCP_OPTION_AS_RAW_HEX = [
@@ -289,16 +333,36 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         # convert all elements in the openstack extra dhcp option value list into the format return by VSD
         # so we can use easy list comparison
         tmp_var = ""
-        if opt_name in TREAT_DHCP_OPTION_AS_RAW_HEX:
-            for opt_value in opt_values:
-                # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
-                tmp_var += self._convert_to_hex(opt_value)
-            opt_values = [tmp_var]
-        if opt_name in TREAT_DHCP_OPTION_NETBIOS_NODETYPE:
-            for opt_value in opt_values:
-                # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
-                tmp_var += self._convert_netbios_type(opt_value)
-            opt_values = [tmp_var]
+
+        if features.NUAGE_FEATURES.current_release > Release("3.2"):
+            if opt_name in TREAT_32_DHCP_OPTION_AS_INT:
+                for opt_value in opt_values:
+                    # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(hex(int(opt_value)))
+                    # more than integer in the list: VSD wil have them concatenated, so let's do this here as well
+                    tmp_var += self._convert_to_hex(hex(int(opt_value)))
+                opt_values = [tmp_var]
+            elif opt_name in TREAT_32_DHCP_OPTION_AS_RAW_HEX:
+                for opt_value in opt_values:
+                    # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
+                    tmp_var += self._convert_to_hex(opt_value)
+                opt_values = [tmp_var]
+            elif opt_name in TREAT_32_DHCP_OPTION_AS_CONCAT_STRING:
+                for opt_value in opt_values:
+                    # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
+                    tmp_var += opt_value
+                opt_values = [tmp_var]
+
+        else:
+            if opt_name in TREAT_DHCP_OPTION_AS_RAW_HEX:
+                for opt_value in opt_values:
+                    # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
+                    tmp_var += self._convert_to_hex(opt_value)
+                opt_values = [tmp_var]
+            if opt_name in TREAT_DHCP_OPTION_NETBIOS_NODETYPE:
+                for opt_value in opt_values:
+                    # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(opt_value)
+                    tmp_var += self._convert_netbios_type(opt_value)
+                opt_values = [tmp_var]
         return opt_values
 
     def _verify_vsd_extra_dhcp_options(self, vsd_dchp_options, extra_dhcp_opts):

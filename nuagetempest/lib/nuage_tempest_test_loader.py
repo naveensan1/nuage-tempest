@@ -74,6 +74,7 @@ class Release(object):
             raise Exception("Can not parse release String '%s'" % release)
         self.openstack_release = (parsed.group(1) or '').lower()
         self.major_release = parsed.group(2) or '0.0'
+        self.labelled = "R" in release
         self.sub_release = int(parsed.group(5)) if parsed.group(5) else -1
         self.major_list = self.major_release.split('.')
 
@@ -90,6 +91,7 @@ class Release(object):
         equal = True
         equal &= self.openstack_release == other.openstack_release
         equal &= self.major_release == other.major_release
+        equal &= self.labelled == other.labelled
         equal &= self.sub_release == other.sub_release
         return equal
 
@@ -115,16 +117,31 @@ class Release(object):
         if other.major_list and self.major_list:
             comparison = cmp(other.major_list, self.major_list)
             if comparison == 0:
-                return self.sub_release <= other.sub_release
+                if self.labelled:
+                    if other.labelled:
+                        return self.sub_release <= other.sub_release
+                    else:
+                        return True
+                else:
+                    if other.labelled:
+                        return False
+                    else:
+                        return self.sub_release <= other.sub_release
+
             return comparison > 0
         else:
             if self.sub_release == other.sub_release:
                 return self.openstack_release is None
 
     def __str__(self):
+        if self.labelled:
+            sub = 'R'
+        else:
+            sub = '-'
+
         return ("%s %s%s" % (self.openstack_release or "",
                              self.major_release or "",
-                             ('R' + str(self.sub_release))
+                             (sub + str(self.sub_release))
                              if self.sub_release != -1 else "")
                 ).strip()
 

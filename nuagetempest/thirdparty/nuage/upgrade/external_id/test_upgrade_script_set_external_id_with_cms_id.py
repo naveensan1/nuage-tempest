@@ -14,6 +14,8 @@
 #    under the License.
 
 import testtools
+from testtools.matchers import MatchesRegex
+
 from oslo_log import log as logging
 from tempest.lib import exceptions
 
@@ -44,13 +46,19 @@ class UpgradeScriptTest(testtools.TestCase):
 
         try:
             response = upgrade_script.execute("python -c 'import sys; print sys.path'")
-            self.assertNotEmpty(response)
+            self.assertIsInstance(response, unicode)
+            self.assertNotEqual('', response)
+            self.assertThat(response, testtools.matchers.Contains("python2.7"))
+
         except exceptions.SSHExecCommandFailed as e:
             LOG.debug("Failed. Exception %s", e)
 
         try:
             response = upgrade_script.execute("python " + script_cmd + " " + script_args)
-            self.assertNotEmpty(response)
+            self.assertIsInstance(response, unicode)
+            self.assertNotEqual('', response)
+            self.assertThat(response, testtools.matchers.Contains("Setting ExternalID's on VSD is now complete."))
+
         except exceptions.SSHExecCommandFailed as e:
             LOG.debug("Failed. Exception %s", e)
             raise e

@@ -97,7 +97,7 @@ class NuageServiceChaining(base.BaseNetworkTest):
             rtrule['nuage_redirect_target_rule']['id'])
 
         if with_external_id is None:
-            self.assertIsNone(str(redirect_target_rule[0]['externalID']))
+            self.assertIsNone(redirect_target_rule[0]['externalID'])
         else:
             self.assertEqual(with_external_id, str(redirect_target_rule[0]['externalID']))
 

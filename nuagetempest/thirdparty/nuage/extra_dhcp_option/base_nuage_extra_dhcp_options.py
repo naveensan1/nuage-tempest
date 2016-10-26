@@ -334,7 +334,7 @@ class NuageExtraDHCPOptionsBase(base.BaseAdminNetworkTest):
         # so we can use easy list comparison
         tmp_var = ""
 
-        if features.NUAGE_FEATURES.current_release > Release("3.2"):
+        if features.NUAGE_FEATURES.current_release < Release("4.0R1"):
             if opt_name in TREAT_32_DHCP_OPTION_AS_INT:
                 for opt_value in opt_values:
                     # opt_values[opt_value.index(opt_value)] = self.my_convert_to_hex(hex(int(opt_value)))

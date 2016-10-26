@@ -175,12 +175,6 @@ class FloatingIPTestAdminNuage(base.BaseAdminNetworkTest):
        self.service_manager.wait_for_service_status(nuage_constants.NEUTRON_SERVICE)
 
     @test.attr(type='smoke')
-    def test_fipsubs_in_shared_domain_with_plugin_file(self):
-        # TODO: add the test code here
-        raise(exceptions.NotImplemented)
-        pass
-
-    @test.attr(type='smoke')
     def test_create_fipsubs_in_shared_domain(self):
         # Create first FIP subnet
         fipsub1 = self.create_fip_subnet('172.40.0.0/24')

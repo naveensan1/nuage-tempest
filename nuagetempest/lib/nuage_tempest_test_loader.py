@@ -74,7 +74,7 @@ class Release(object):
             raise Exception("Can not parse release String '%s'" % release)
         self.openstack_release = (parsed.group(1) or '').lower()
         self.major_release = parsed.group(2) or '0.0'
-        self.labelled = "R" in release
+        self.labelled = "R" in release.upper()
         self.sub_release = int(parsed.group(5)) if parsed.group(5) else -1
         self.major_list = self.major_release.split('.')
 

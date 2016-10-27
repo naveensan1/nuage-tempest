@@ -1,14 +1,13 @@
-from nuagetempest.lib import test_base as base
+from testtools.matchers import MatchesAny
+from testtools.matchers import Equals
 from nuagetempest.vsd.api import test_ip_anti_spoofing as antispoof
-from tempest import test
-import re
-import unittest
-import sys
+
 
 class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
 
     def __init__(self):
         pass
+
 
     class _vm_in_sec_disabled_port_l2domain():
         def __init__(self):
@@ -28,7 +27,7 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
             obj.assertEqual(vsd_vm_inf['IPAddress'], 
                             port['fixed_ips'][0]['ip_address'])
             obj.assertEqual(vsd_vm_inf['MAC'], port['mac_address'])
-            obj.assertEqual(vsd_vm.status, 'RUNNING')
+            obj.assertThat(vsd_vm.status, MatchesAny(Equals('RUNNING'), Equals('INIT')))
 
 
     class _vm_in_sec_disabled_port_l3domain():
@@ -50,7 +49,8 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
             obj.assertEqual(vsd_vm_inf['IPAddress'], 
                             port['fixed_ips'][0]['ip_address'])
             obj.assertEqual(vsd_vm_inf['MAC'], port['mac_address'])
-            obj.assertEqual(vsd_vm.status, 'RUNNING')
+            obj.assertThat(vsd_vm.status, MatchesAny(Equals('RUNNING'), Equals('INIT')))
+
 
     class _vm_with_port_parameters_1_0_0_1_l3domain():
         def __init__(self):
@@ -76,4 +76,4 @@ class IpAntiSpoofingTestScenario(antispoof.IpAntiSpoofingVSDBase):
             obj.assertEqual(vsd_vm_inf['IPAddress'],
                             port['fixed_ips'][0]['ip_address'])
             obj.assertEqual(vsd_vm_inf['MAC'], port['mac_address'])
-            obj.assertEqual(vsd_vm.status, 'RUNNING')
+            obj.assertThat(vsd_vm.status, MatchesAny(Equals('RUNNING'), Equals('INIT')))

@@ -141,6 +141,10 @@ FIP_RATE_GROUP = "fiprate"
 FIP_RATE_DEFAULT = "default_fip_rate"
 FIP_RATE_LOG_FILE = "fip_rate_change_log"
 
+#Bidirectional FIP constants
+BIDIRECTIONAL_FIP_RATE_DEFAULT_EGRESS = 'default_egress_fip_rate_kbps'
+BIDIRECTIONAL_FIP_RATE_DEFAULT_INGRESS = 'default_ingress_fip_rate_kbps'
+
 NUAGE_FIP_UNDERLAY = "nuage_fip_underlay"
 NUAGE_FIP_UNDERLAY_GROUP = "restproxy"
 

@@ -16,6 +16,7 @@
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib import features
 
+from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.services.nuage_client import NuageRestClient
 from tempest.api.network import test_floating_ips
 from tempest.common.utils import data_utils
@@ -27,7 +28,8 @@ from testtools.matchers import KeysEqual
 import uuid
 
 CONF = config.CONF
-
+conf_release = CONF.nuage_sut.release
+current_release = Release(conf_release)
 
 class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
     _interface = 'json'
@@ -48,18 +50,17 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
             cls.create_port(cls.network, **post_body)
 
     def _verify_fip_on_vsd(self, created_floating_ip,
-                           router_id, port_id, subnet_id, associated='true'):
+                           router_id, port_id, subnet_id, associated=True):
         # verifying on Domain level that the floating ip is added
         nuage_domain = self.nuage_vsd_client.get_l3domain(
             filters='externalID',
             filter_value=router_id)
         nuage_domain_fip = self.nuage_vsd_client.get_floatingip(
             constants.DOMAIN, nuage_domain[0]['ID'])
-        self.assertEqual(
-            nuage_domain_fip[0]['address'],
-            created_floating_ip['floating_ip_address'])
-
-        if associated == 'true':
+        if associated:
+            self.assertEqual(
+                nuage_domain_fip[0]['address'],
+                created_floating_ip['floating_ip_address'])
             # verifying on vminterface level that the floating ip is associated
             vsd_subnets = self.nuage_vsd_client.get_domain_subnet(
                 None, None, 'externalID', subnet_id)
@@ -70,9 +71,11 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
             self.assertEqual(
                 nuage_vport[0]['associatedFloatingIPID'],
                 nuage_domain_fip[0]['ID'])
+        elif current_release.sub_release < 2099:
+            pass
         else:
-            # verifying the floating is not assigned to any network interface
-            self.assertEqual(nuage_domain_fip[0]['assigned'], False)
+            self.assertEqual(0, len(nuage_domain_fip))
+
 
     @test.attr(type='smoke')
     def test_create_list_show_update_delete_floating_ip(self):
@@ -109,7 +112,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD Validation
         self._verify_fip_on_vsd(
             created_floating_ip, created_floating_ip['router_id'],
-            self.ports[2]['id'], self.subnet['id'], 'true')
+            self.ports[2]['id'], self.subnet['id'], True)
 
         # Verify the floating ip exists in the list of all floating_ips
         floating_ips = self.floating_ips_client.list_floatingips()
@@ -140,7 +143,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD Validation
         self._verify_fip_on_vsd(
             created_floating_ip, created_floating_ip['router_id'],
-            self.ports[3]['id'], self.subnet['id'], 'true')
+            self.ports[3]['id'], self.subnet['id'], True)
 
         # Disassociate floating IP from the port
         floating_ip = self.floating_ips_client.update_floatingip(
@@ -153,7 +156,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
 
         # VSD Validation
         self._verify_fip_on_vsd(
-            created_floating_ip, self.router['id'], None, None, 'false')
+            created_floating_ip, self.router['id'], None, None, False)
 
     @test.attr(type='smoke')
     def test_create_update_floating_ip(self):
@@ -190,7 +193,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD Validation
         self._verify_fip_on_vsd(
             created_floating_ip, created_floating_ip['router_id'],
-            self.ports[2]['id'], self.subnet['id'], 'true')
+            self.ports[2]['id'], self.subnet['id'], True)
 
         # Verify the floating ip exists in the list of all floating_ips
         floating_ips = self.floating_ips_client.list_floatingips()
@@ -226,7 +229,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD Validation
         self._verify_fip_on_vsd(created_floating_ip, self.router['id'],
                                 created_port['id'], self.subnet['id'],
-                                'true')
+                                True)
         # Delete port
         self.ports_client.delete_port(created_port['id'])
         # Verifies the details of the floating_ip
@@ -253,7 +256,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD Validation
         self._verify_fip_on_vsd(
             created_floating_ip, created_floating_ip['router_id'],
-            self.ports[3]['id'], self.subnet['id'], 'true')
+            self.ports[3]['id'], self.subnet['id'], True)
 
         network2 = self.create_network()
         subnet2 = self.create_subnet(network2)
@@ -271,7 +274,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD Validation
         self._verify_fip_on_vsd(
             created_floating_ip, created_floating_ip['router_id'],
-            self.ports[3]['id'], self.subnet['id'], 'true')
+            self.ports[3]['id'], self.subnet['id'], True)
 
     @test.attr(type='smoke')
     def test_create_floating_ip_specifying_a_fixed_ip_address(self):
@@ -288,7 +291,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
         # VSD validation
         self._verify_fip_on_vsd(
             created_floating_ip, created_floating_ip['router_id'],
-            self.ports[3]['id'], self.subnet['id'], 'true')
+            self.ports[3]['id'], self.subnet['id'], True)
 
         floating_ip = self.floating_ips_client.update_floatingip(
             created_floating_ip['id'],
@@ -297,7 +300,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
 
         # VSD Validation
         self._verify_fip_on_vsd(
-            created_floating_ip, self.router['id'], None, None, 'false')
+            created_floating_ip, self.router['id'], None, None, False)
 
     @test.attr(type='smoke')
     def test_create_floatingip_with_rate_limiting(self):

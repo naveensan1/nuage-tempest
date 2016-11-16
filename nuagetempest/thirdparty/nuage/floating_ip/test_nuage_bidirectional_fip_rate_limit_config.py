@@ -145,7 +145,7 @@ class TestNuageBidiFRLConfigurationJSON(TestNuageBidiFRLConfigurationBase):
     def _convert_mbps_to_kbps(self, value):
         return float(value) * 1000
 
-    def _verify_fip_openstack(self, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None):
+    def _verify_fip_openstack(self, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None, backward=False):
         # Then it should be created
         # for the admin tenant id
         self.assertIsNotNone(created_floating_ip['id'])
@@ -160,10 +160,12 @@ class TestNuageBidiFRLConfigurationJSON(TestNuageBidiFRLConfigurationBase):
         self.LOG.info("Egress FIP Rate limit %s", created_floating_ip['nuage_egress_fip_rate_kbps'])
         if ingress_rate_limit is not None:
             self.assertEqual(float(created_floating_ip['nuage_ingress_fip_rate_kbps']), float(ingress_rate_limit))
-        if egress_rate_limit is not None:
+        if egress_rate_limit is not None and backward is False:
             self.assertEqual(float(created_floating_ip['nuage_egress_fip_rate_kbps']), float(egress_rate_limit))
+        else:
+            self.assertEqual(float(created_floating_ip['nuage_egress_fip_rate_kbps']), float(egress_rate_limit*1000))
 
-    def _verify_fip_vsd(self, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None):
+    def _verify_fip_vsd(self, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None, backward=False):
         # verifying on Domain level that the floating ip is added
         external_id = self.nuage_vsd_client.get_vsd_external_id(created_floating_ip['router_id'])
         nuage_domain = self.nuage_vsd_client.get_l3domain(
@@ -200,23 +202,40 @@ class TestNuageBidiFRLConfigurationJSON(TestNuageBidiFRLConfigurationBase):
         self.LOG.info("OpenStack Ingress FIP Rate limit %s", qos[0]['EgressFIPPeakInformationRate'])
         if ingress_rate_limit is not None:
             self.assertEqual(float(ingress_rate_limit), self._convert_mbps_to_kbps(qos[0]['EgressFIPPeakInformationRate']))
-        if egress_rate_limit is not None:
+        if egress_rate_limit is not None and backward is False:
             self.assertEqual(float(egress_rate_limit), self._convert_mbps_to_kbps(qos[0]['FIPPeakInformationRate']))
+        else:
+            self.assertEqual(float(egress_rate_limit), float(qos[0]['FIPPeakInformationRate']))
 
         self.assertEqual(self.nuage_vsd_client.get_vsd_external_id(created_floating_ip['id']), qos[0]['externalID'])
 
-    def _create_fip_with_default_fip_rate_limit(self, ingress_default_rate_limit, egress_default_rate_limit):
-        self.must_have_configuration_attribute(
-            CONF.nuage_sut.nuage_plugin_configuration,
-            constants.FIP_RATE_GROUP, constants.BIDIRECTIONAL_FIP_RATE_DEFAULT_EGRESS, str(egress_default_rate_limit))
-        self.must_have_configuration_attribute(
-            CONF.nuage_sut.nuage_plugin_configuration,
-            constants.FIP_RATE_GROUP, constants.BIDIRECTIONAL_FIP_RATE_DEFAULT_INGRESS, str(ingress_default_rate_limit))
+    def _create_fip_with_default_fip_rate_limit(self, ingress_default_rate_limit=None, egress_default_rate_limit=None, default_fip_rate=None):
+        if egress_default_rate_limit:
+            self.must_have_configuration_attribute(
+                CONF.nuage_sut.nuage_plugin_configuration,
+                constants.FIP_RATE_GROUP, constants.BIDIRECTIONAL_FIP_RATE_DEFAULT_EGRESS, str(egress_default_rate_limit))
+        if ingress_default_rate_limit:
+            self.must_have_configuration_attribute(
+                CONF.nuage_sut.nuage_plugin_configuration,
+                constants.FIP_RATE_GROUP, constants.BIDIRECTIONAL_FIP_RATE_DEFAULT_INGRESS, str(ingress_default_rate_limit))
+        if default_fip_rate:
+            self.must_have_configuration_attribute(
+                CONF.nuage_sut.nuage_plugin_configuration,
+                constants.FIP_RATE_GROUP, constants.FIP_RATE_DEFAULT, str(default_fip_rate))
+        if egress_default_rate_limit is None:
+            self.must_have_configuration_attribute(
+                CONF.nuage_sut.nuage_plugin_configuration,
+                constants.FIP_RATE_GROUP, constants.BIDIRECTIONAL_FIP_RATE_DEFAULT_EGRESS, None)
         # When I create a fip with default rate limit
         created_floating_ip = self._do_create_fip_with_default_rate_limit()
         show_floating_ip = self._do_get_floating_ip(created_floating_ip['id'])
         # Then I got a valid OpenStack FIP with the default rate limit
-        self._verify_fip_openstack(show_floating_ip, ingress_default_rate_limit, egress_default_rate_limit)
+        if default_fip_rate and egress_default_rate_limit:
+            self._verify_fip_openstack(show_floating_ip, ingress_default_rate_limit, egress_default_rate_limit)
+        elif default_fip_rate is None and egress_default_rate_limit:
+            self._verify_fip_openstack(show_floating_ip, ingress_default_rate_limit, egress_default_rate_limit)
+        else:
+            self._verify_fip_openstack(show_floating_ip, ingress_default_rate_limit, default_fip_rate, backward=True)
 
         # Then I got a valid VSD FIP with the default rate limit
         if ingress_default_rate_limit == -1:
@@ -228,8 +247,18 @@ class TestNuageBidiFRLConfigurationJSON(TestNuageBidiFRLConfigurationBase):
             egress_vsd_fip_rate = "INFINITY"
         else:
             egress_vsd_fip_rate = str(egress_default_rate_limit)
+            
+        if default_fip_rate == -1:
+            default_vsd_fip_rate = "INFINITY"
+        else:
+            default_vsd_fip_rate = str(default_fip_rate)
 
-        self._verify_fip_vsd(created_floating_ip, ingress_vsd_fip_rate, egress_vsd_fip_rate)
+        if default_fip_rate and egress_default_rate_limit:
+            self._verify_fip_vsd(created_floating_ip, ingress_vsd_fip_rate, egress_vsd_fip_rate)
+        elif default_fip_rate is None and egress_default_rate_limit:
+            self._verify_fip_vsd(created_floating_ip, ingress_vsd_fip_rate, egress_vsd_fip_rate)
+        else:
+            self._verify_fip_vsd(created_floating_ip, ingress_vsd_fip_rate, default_vsd_fip_rate, backward=True)
 
     @test.attr(type='smoke')
     @nuage_test.header()
@@ -246,6 +275,9 @@ class TestNuageBidiFRLConfigurationJSON(TestNuageBidiFRLConfigurationBase):
         self.must_have_configuration_attribute(
             CONF.nuage_sut.nuage_plugin_configuration,
             constants.FIP_RATE_GROUP, constants.BIDIRECTIONAL_FIP_RATE_DEFAULT_INGRESS, None)
+        self.must_have_configuration_attribute(
+            CONF.nuage_sut.nuage_plugin_configuration,
+            constants.FIP_RATE_GROUP, constants.FIP_RATE_DEFAULT, None)
         # When I create a fip with default rate limit
         created_floating_ip = self._do_create_fip_with_default_rate_limit()
         show_floating_ip = self._do_get_floating_ip(created_floating_ip['id'])
@@ -265,11 +297,19 @@ class TestNuageBidiFRLConfigurationJSON(TestNuageBidiFRLConfigurationBase):
 
     @nuage_test.header()
     def test_create_fip_with_default_rate_limit_min_value(self):
-        self._create_fip_with_default_fip_rate_limit(0, 0)
+        self._create_fip_with_default_fip_rate_limit('0', '0')
 
     @nuage_test.header()
     def test_create_fip_with_default_rate_limit_max_value(self):
         self._create_fip_with_default_fip_rate_limit(2147483647, 2147483647)
+        
+    @nuage_test.header()
+    def test_create_fip_with_default_rate_limit_backward_compatibility_both(self):
+        self._create_fip_with_default_fip_rate_limit(123, 123, 5000)
+
+    @nuage_test.header()
+    def test_create_fip_with_default_rate_limit_backward_compatibility_old(self):
+        self._create_fip_with_default_fip_rate_limit(123, default_fip_rate=5000)
 
     @nuage_test.header()
     def test_create_update_fip_rate_limit_with_keyword_default(self):

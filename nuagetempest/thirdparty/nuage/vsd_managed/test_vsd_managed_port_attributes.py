@@ -14,6 +14,7 @@
 #    under the License.
 
 from netaddr import *
+import testtools
 
 from oslo_log import log as logging
 from tempest import config
@@ -1024,6 +1025,7 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         #self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
 
     @nuage_test.header()
+    @testtools.skip('OPENSTACK-1503: [ML2] Fails cleanup redirect_target_rule')
     def test_l2_list_policy_group_no_security_group_neg(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD created policy group
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()

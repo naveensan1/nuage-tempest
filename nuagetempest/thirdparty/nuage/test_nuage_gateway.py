@@ -13,16 +13,22 @@
 #    under the License.
 #
 
-import base_nuage_gateway as base
-from nuagetempest.lib.utils import constants as n_constants
+import uuid
+from testtools.matchers import Equals
+from testtools.matchers import Is
+from testtools.matchers import ContainsDict
 from oslo_log import log as logging
+
 from tempest import config
 from tempest.lib import exceptions as lib_exec
 from tempest import test
-import uuid
+from nuagetempest.lib.utils import constants as n_constants
+from nuagetempest.lib.nuage_tempest_test_loader import Release
+from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
+
+import base_nuage_gateway as base
 
 CONF = config.CONF
-
 LOG = logging.getLogger(__name__)
 
 
@@ -655,25 +661,96 @@ class NuageGatewayTestJSON(base.BaseNuageGatewayTest):
             n_constants.DOMAIN, l3domain[0]['ID'])
         self.assertEqual(default_pg[0]['name'],
                          'defaultPG-VRSG-BRIDGE-' + vport['subnet'])
+
+        if Release(CONF.nuage_sut.release) >= Release("4.0R6"):
+            # must have external ID as subnet@ cms_id
+            self.assertThat(default_pg[0], ContainsDict({'externalID': Equals(ExternalId(self.subnet['id']).at_cms_id())}))
+        else:
+            self.assertThat(default_pg[0], ContainsDict({'externalID': Equals(None)}))
+
         vport_from_pg = self.nuage_vsd_client.get_vport(
             n_constants.POLICYGROUP,
             default_pg[0]['ID'])
         self.assertEqual(vport_from_pg[0]['name'], vport['name'])
+        
+        # Egress ACL
         nuage_eacl_template = self.nuage_vsd_client.get_egressacl_template(
             n_constants.DOMAIN,
             l3domain[0]['ID'])
+
+        if Release(CONF.nuage_sut.release) >= Release("4.0R5"):
+            # must have external ID as router_id @ cms_id
+            self.assertThat(nuage_eacl_template[0], ContainsDict({'externalID': Equals(ExternalId(self.routers[0]['id']).at_cms_id())}))
+        else:
+            self.assertThat(nuage_eacl_template[0], ContainsDict({'externalID': Equals(None)}))
+
         nuage_eacl_entrytemplate = \
             self.nuage_vsd_client.get_egressacl_entytemplate(
                 n_constants.EGRESS_ACL_TEMPLATE,
                 nuage_eacl_template[0]['ID'])
+
+        if Release(CONF.nuage_sut.release) >= Release("4.0R6"):
+            # must have external ID as router_id @ cms_id
+            self.assertThat(nuage_eacl_entrytemplate[0], ContainsDict({'externalID': Equals(ExternalId(self.subnet['id']).at_cms_id())}))
+        else:
+            self.assertThat(nuage_eacl_entrytemplate[0], ContainsDict({'externalID': Equals(None)}))
+
         vport_tp_pg_mapping = False
         for nuage_eacl_entry in nuage_eacl_entrytemplate:
             if nuage_eacl_entry['locationID'] == default_pg[0]['ID']:
+                if Release(CONF.nuage_sut.release) >= Release("4.0R6"):
+                    # must have external ID as ???
+                    self.assertThat(nuage_eacl_entry, ContainsDict({'externalID': Equals(ExternalId(self.subnet['id']).at_cms_id())}))
+                else:
+                    self.assertThat(nuage_eacl_entry, ContainsDict({'externalID': Equals(None)}))
+
                 self.assertEqual(
                     nuage_eacl_entrytemplate[0]['networkType'],
                     'ENDPOINT_DOMAIN')
                 self.assertEqual(
                     nuage_eacl_entrytemplate[0]['locationType'],
+                    'POLICYGROUP')
+                vport_tp_pg_mapping = True
+
+        if vport_tp_pg_mapping is False:
+            assert False, "Bridge Vport not found in default PG"
+
+        # Ingress ACL
+        nuage_iacl_template = self.nuage_vsd_client.get_ingressacl_template(
+            n_constants.DOMAIN,
+            l3domain[0]['ID'])
+
+        if Release(CONF.nuage_sut.release) >= Release("4.0R5"):
+            # must have external ID as router_id @ cms_id
+            self.assertThat(nuage_iacl_template[0], ContainsDict({'externalID': Equals(ExternalId(self.routers[0]['id']).at_cms_id())}))
+        else:
+            self.assertThat(nuage_iacl_template[0], ContainsDict({'externalID': Equals(None)}))
+
+        nuage_iacl_entrytemplate = \
+            self.nuage_vsd_client.get_ingressacl_entytemplate(
+                n_constants.INGRESS_ACL_TEMPLATE,
+                nuage_iacl_template[0]['ID'])
+
+        if Release(CONF.nuage_sut.release) >= Release("4.0R6"):
+            # must have external ID as router_id @ cms_id
+            self.assertThat(nuage_iacl_entrytemplate[0], ContainsDict({'externalID': Equals(ExternalId(self.subnet['id']).at_cms_id())}))
+        else:
+            self.assertThat(nuage_iacl_entrytemplate[0], ContainsDict({'externalID': Equals(None)}))
+
+        vport_tp_pg_mapping = False
+        for nuage_iacl_entry in nuage_iacl_entrytemplate:
+            if nuage_iacl_entry['locationID'] == default_pg[0]['ID']:
+                if Release(CONF.nuage_sut.release) >= Release("4.0R6"):
+                    # must have external ID as ???
+                    self.assertThat(nuage_iacl_entry, ContainsDict({'externalID': Equals(ExternalId(self.subnet['id']).at_cms_id())}))
+                else:
+                    self.assertThat(nuage_iacl_entry, ContainsDict({'externalID': Equals(None)}))
+
+                self.assertEqual(
+                    nuage_iacl_entrytemplate[0]['networkType'],
+                    'ENDPOINT_DOMAIN')
+                self.assertEqual(
+                    nuage_iacl_entrytemplate[0]['locationType'],
                     'POLICYGROUP')
                 vport_tp_pg_mapping = True
 

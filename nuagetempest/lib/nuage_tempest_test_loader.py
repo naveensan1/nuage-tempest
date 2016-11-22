@@ -119,14 +119,14 @@ class Release(object):
             if comparison == 0:
                 if self.labelled:
                     if other.labelled:
-                        return self.sub_release <= other.sub_release
+                        return self.sub_release < other.sub_release
                     else:
                         return True
                 else:
                     if other.labelled:
                         return False
                     else:
-                        return self.sub_release <= other.sub_release
+                        return self.sub_release < other.sub_release
 
             return comparison > 0
         else:

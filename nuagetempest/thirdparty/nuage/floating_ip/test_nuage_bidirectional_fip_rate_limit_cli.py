@@ -16,6 +16,7 @@ import nuagetempest.services.nuage_client as nuage_client
 
 CONF = config.CONF
 
+MSG_NO_INPUT = "neutron floatingip-create: error: argument --nuage-ingress-fip-rate-kbps: expected one argument"
 MSG_INVALID_INPUT = '\'nuage_ingress_fip_rate_kbps\' should be a number higher than 0, -1 for unlimited or \'default\' for the configured default value'
 MSG_INVALID_INPUT_FOR_OPERATION = "Invalid input for operation: " \
                                   "'nuage_fip_rate' should be a number higher than 0, " \
@@ -378,6 +379,6 @@ class TestNuageBidiFRLCliWDef(TestNuageBidiFRLCliWODefault):
         port = self.create_port_with_args(self.network['name'])
 
         self.assertRaisesRegexp(exceptions.SSHExecCommandFailed,
-                                MSG_INVALID_INPUT,
+                                MSG_NO_INPUT,
                                 self.create_floating_ip_with_args,
                                 self.ext_net_id, '--port-id', port['id'], '--nuage-ingress-fip-rate-kbps')

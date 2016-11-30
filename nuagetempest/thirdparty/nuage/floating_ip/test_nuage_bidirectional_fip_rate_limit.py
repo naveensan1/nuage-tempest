@@ -144,11 +144,12 @@ class TestNuageBidirectionalFipRateLimit(base_nuage_bidirectional_fip_rate_limit
     def test_update_floatingip_with_rate_limit_unlimited_value_ingress(self):
         fip = self._create_fip_with_fip_rate_limit(self.ports[0], 3000)
         self._update_fip_with_fip_rate_limit(self.ports[0], fip, constants.UNLIMITED)
-
+    
+    @nuage_test.header()
     def test_update_floatingip_with_rate_limit_high_value_ingress(self):
         fip = self._create_fip_with_fip_rate_limit(self.ports[0], 3000)
         self._update_fip_with_fip_rate_limit(self.ports[0], fip, 100000)
-    
+
     #ONLY EGRESS DIRECTION TESTS
     @test.attr(type='smoke')
     @nuage_test.header()
@@ -188,6 +189,10 @@ class TestNuageBidirectionalFipRateLimit(base_nuage_bidirectional_fip_rate_limit
         fip = self._create_fip_with_fip_rate_limit(self.ports[0], egress_rate_limit=3000)
         self._update_fip_with_fip_rate_limit(self.ports[0], fip, egress_rate_limit=constants.UNLIMITED)
 
+    @nuage_test.header()
     def test_update_floatingip_with_rate_limit_high_value_egress(self):
         fip = self._create_fip_with_fip_rate_limit(self.ports[0], egress_rate_limit=3000)
-        self._update_fip_with_fip_rate_limit(self.ports[0], fip, egress_rate_limit=100000)
+
+    @nuage_test.header()
+    def test_create_floatingip_with_rate_limit_backward(self):
+        fip = self._create_fip_with_fip_rate_limit_backward(self.ports[0], rate_limit=3000)

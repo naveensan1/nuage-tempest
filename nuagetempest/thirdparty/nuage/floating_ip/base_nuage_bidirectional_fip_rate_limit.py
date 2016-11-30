@@ -102,6 +102,20 @@ class NuageBidirectionalFipRateLimitBase(base.BaseNetworkTest):
                         created_floating_ip['id'])
         return created_floating_ip
 
+    def _do_create_fip_for_port_with_rate_limit_backward(self, port_id, rate_limit=None):
+        rate_limit_dict = {}
+        if rate_limit is not None:
+            rate_limit_dict['nuage_fip_rate'] = rate_limit
+
+        body = self.floating_ips_client.create_floatingip(
+            floating_network_id=self.ext_net_id,
+            port_id=port_id, **rate_limit_dict)
+
+        created_floating_ip = body['floatingip']
+        self.addCleanup(self.floating_ips_client.delete_floatingip,
+                        created_floating_ip['id'])
+        return created_floating_ip
+
     def _do_update_fip_to_rate_limit(self, floating_ip_id, ingress_rate_limit=None, egress_rate_limit=None):
         rate_limit_dict = {}
         if ingress_rate_limit is not None:
@@ -121,7 +135,7 @@ class NuageBidirectionalFipRateLimitBase(base.BaseNetworkTest):
         floating_ip = body['floatingip']
         return floating_ip
 
-    def _verify_fip_openstack(self, port, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None):
+    def _verify_fip_openstack(self, port, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None, backward=False):
         # Then it should be created
         # for the admin tenant id
         self.assertIsNotNone(created_floating_ip['id'])
@@ -136,10 +150,12 @@ class NuageBidirectionalFipRateLimitBase(base.BaseNetworkTest):
         self.LOG.info("Egress FIP Rate limit %s", created_floating_ip['nuage_egress_fip_rate_kbps'])
         if ingress_rate_limit is not None:
             self.assertEqual(float(created_floating_ip['nuage_ingress_fip_rate_kbps']), float(ingress_rate_limit))
-        if egress_rate_limit is not None:
+        if egress_rate_limit is not None and backward is False:
             self.assertEqual(float(created_floating_ip['nuage_egress_fip_rate_kbps']), float(egress_rate_limit))
+        elif egress_rate_limit is not None:
+            self.assertEqual(float(created_floating_ip['nuage_egress_fip_rate_kbps']), float(egress_rate_limit) * 1000)
 
-    def _verify_fip_vsd(self, port, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None):
+    def _verify_fip_vsd(self, port, created_floating_ip, ingress_rate_limit=None, egress_rate_limit=None, backward=False):
         # verifying on Domain level that the floating ip is added
         external_id = self.nuage_vsd_client.get_vsd_external_id(created_floating_ip['router_id'])
         nuage_domain = self.nuage_vsd_client.get_l3domain(
@@ -176,8 +192,10 @@ class NuageBidirectionalFipRateLimitBase(base.BaseNetworkTest):
         self.LOG.info("OpenStack Ingress FIP Rate limit %s", qos[0]['EgressFIPPeakInformationRate'])
         if ingress_rate_limit is not None:
             self.assertEqual(float(ingress_rate_limit), self._convert_mbps_to_kbps(qos[0]['EgressFIPPeakInformationRate']))
-        if egress_rate_limit is not None:
+        if egress_rate_limit is not None and backward is False:
             self.assertEqual(float(egress_rate_limit), self._convert_mbps_to_kbps(qos[0]['FIPPeakInformationRate']))
+        elif egress_rate_limit is not None:
+            self.assertEqual(float(egress_rate_limit), float(qos[0]['FIPPeakInformationRate']))
 
         self.assertEqual(self.nuage_vsd_client.get_vsd_external_id(created_floating_ip['id']), qos[0]['externalID'])
 
@@ -192,6 +210,20 @@ class NuageBidirectionalFipRateLimitBase(base.BaseNetworkTest):
 
         # Then I got a valid VSD FIP with the default rate limit
         self._verify_fip_vsd(port, created_floating_ip, openstack_to_vsd(ingress_rate_limit), openstack_to_vsd(egress_rate_limit))
+
+        return created_floating_ip
+
+    def _create_fip_with_fip_rate_limit_backward(self, port, rate_limit=None):
+        # When I create a fip with default rate limit
+        
+        created_floating_ip = self._do_create_fip_for_port_with_rate_limit_backward(port['id'], rate_limit)
+
+        show_floating_ip = self._do_get_floating_ip(created_floating_ip['id'])
+        # Then I got a valid OpenStack FIP with the default rate limit
+        self._verify_fip_openstack(port, show_floating_ip, None, rate_limit, backward=True)
+
+        # Then I got a valid VSD FIP with the default rate limit
+        self._verify_fip_vsd(port, created_floating_ip, openstack_to_vsd(None), openstack_to_vsd(rate_limit), backward=True)
 
         return created_floating_ip
 

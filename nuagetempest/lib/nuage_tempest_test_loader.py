@@ -63,7 +63,8 @@ def _filter_test_class_by_release(test_class, current_release):
 @functools.total_ordering
 class Release(object):
     release_regex = re.compile("^([a-zA-Z]+)?[\D]*"
-                               "((\d+(\.(?=\d))?){2,})?[\D]*(\d+)?$")
+                               "((\d+(\.(?=\d))?){2,})?[\D]*"
+                               "(\d+(\.(?=\d))?)*$")
 
     def __init__(self, release_string):
         self._parse_release(release_string)
@@ -75,8 +76,9 @@ class Release(object):
         self.openstack_release = (parsed.group(1) or '').lower()
         self.major_release = parsed.group(2) or '0.0'
         self.labelled = "R" in release.upper()
-        self.sub_release = int(parsed.group(5)) if parsed.group(5) else -1
+        self.sub_release = parsed.group(5) or ''
         self.major_list = self.major_release.split('.')
+        self.sub_list = self.sub_release.split('.')
 
     def __eq__(self, other):
         """Compares self with another Release object.
@@ -119,14 +121,14 @@ class Release(object):
             if comparison == 0:
                 if self.labelled:
                     if other.labelled:
-                        return self.sub_release < other.sub_release
+                        return cmp(other.sub_list, self.sub_list)
                     else:
                         return True
                 else:
                     if other.labelled:
                         return False
                     else:
-                        return self.sub_release < other.sub_release
+                        return cmp(other.sub_list, self.sub_list)
 
             return comparison > 0
         else:
@@ -142,6 +144,5 @@ class Release(object):
         return ("%s %s%s" % (self.openstack_release or "",
                              self.major_release or "",
                              (sub + str(self.sub_release))
-                             if self.sub_release != -1 else "")
+                             if self.sub_release != '' else "")
                 ).strip()
-

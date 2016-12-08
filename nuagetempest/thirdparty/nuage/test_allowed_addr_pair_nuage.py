@@ -377,6 +377,8 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     def test_create_address_pair_with_same_ip(self):
+        if Release("4.0R6.1") <= current_release:
+            return
         # Create a vm
         post_body = {"network_id": self.l3network['id'],
                      "device_owner": 'compute:None',

@@ -64,7 +64,7 @@ def _filter_test_class_by_release(test_class, current_release):
 class Release(object):
     release_regex = re.compile("^([a-zA-Z]+)?[\D]*"
                                "((\d+(\.(?=\d))?){2,})?[\D]*"
-                               "(\d+(\.(?=\d))?)*$")
+                               "((\d+(\.(?=\d))?)*)$")
 
     def __init__(self, release_string):
         self._parse_release(release_string)
@@ -121,14 +121,14 @@ class Release(object):
             if comparison == 0:
                 if self.labelled:
                     if other.labelled:
-                        return cmp(other.sub_list, self.sub_list)
+                        return cmp(other.sub_list, self.sub_list) > 0
                     else:
                         return True
                 else:
                     if other.labelled:
                         return False
                     else:
-                        return cmp(other.sub_list, self.sub_list)
+                        return cmp(other.sub_list, self.sub_list) > 0
 
             return comparison > 0
         else:

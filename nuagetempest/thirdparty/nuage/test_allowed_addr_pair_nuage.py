@@ -105,6 +105,39 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
 
+    def test_create_address_pair_on_l2domain_with_no_mac_routersubnetbind(self):
+        # Create port with allowed address pair attribute
+        # For /32 cidr
+        addrpair_port = self.create_port(self.network)
+        allowed_address_pairs = [{
+                                     'ip_address': addrpair_port['fixed_ips'][0]['ip_address']}]
+        body = self._create_port_with_allowed_address_pair(
+            allowed_address_pairs, self.network['id'])
+        port = body['port']
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port['fixed_ips'][0]['ip_address'],
+            port['mac_address'])
+        # Check address spoofing is disabled on vport in VSD
+        subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_l2domain(
+            filters='externalID', filter_value=subnet_ext_id)
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.L2_DOMAIN,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.ENABLED,
+                         nuage_vport[0]['addressSpoofing'])
+
     @test.attr(type='smoke')
     def test_create_address_pair_on_l2domain_with_mac(self):
         # Create port with allowed address pair attribute
@@ -137,6 +170,43 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
 
+    @test.attr(type='smoke')
+    def test_create_address_pair_on_l2domain_with_mac_routersubnetbind(self):
+        # Create port with allowed address pair attribute
+        # For /32 cidr
+        addrpair_port = self.create_port(self.network)
+        allowed_address_pairs = [{
+                                     'ip_address': addrpair_port['fixed_ips'][0]['ip_address'],
+                                     'mac_address': addrpair_port['mac_address']}]
+        body = self._create_port_with_allowed_address_pair(
+            allowed_address_pairs, self.network['id'])
+        port = body['port']
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+        self._verify_port_by_id(port['id'])
+
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port['fixed_ips'][0]['ip_address'],
+            addrpair_port['mac_address'])
+
+        # Check address spoofing is disabled on vport in VSD
+        subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_l2domain(
+            filters='externalID', filter_value=subnet_ext_id)
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.L2_DOMAIN,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.ENABLED,
+                         nuage_vport[0]['addressSpoofing'])
+
+
     def test_create_address_pair_on_l2domain_with_cidr(self):
         # Create port with AAP for non /32 cidr
         ip_address = '30.30.0.0/24'
@@ -163,6 +233,38 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             filter_value=port_ext_id)
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
+
+    def test_create_address_pair_on_l2domain_with_cidr_routersubnetbind(self):
+        # Create port with AAP for non /32 cidr
+        ip_address = '30.30.0.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{'ip_address': ip_address,
+                                  'mac_address': mac_address}]
+        body = self._create_port_with_allowed_address_pair(
+            allowed_address_pairs, self.network['id'])
+        port = body['port']
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, ip_address, mac_address)
+        # Check address spoofing is disabled on vport in VSD
+        subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_l2domain(
+            filters='externalID', filter_value=subnet_ext_id)
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.L2_DOMAIN,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.ENABLED,
+                         nuage_vport[0]['addressSpoofing'])
+
 
     @test.attr(type='smoke')
     def test_create_address_pair_on_l3subnet_with_mac(self):
@@ -209,6 +311,58 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             self.assertEqual(nuage_vip[0]['externalID'],
                              self.nuage_vsd_client.get_vsd_external_id(
                                  port['id']))
+
+    @test.attr(type='smoke')
+    def test_create_address_pair_on_l3subnet_with_mac_routersubnetbind(self):
+        # Create port with allowed address pair attribute
+        addrpair_port = self.create_port(self.l3network)
+        allowed_address_pairs = [{'ip_address':
+                                      addrpair_port['fixed_ips'][0]['ip_address'],
+                                  'mac_address': addrpair_port['mac_address']}]
+        body = self._create_port_with_allowed_address_pair(
+            allowed_address_pairs, self.l3network['id'])
+        port = body['port']
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port['fixed_ips'][0]['ip_address'],
+            addrpair_port['mac_address'])
+        # Check VIP is created in VSD
+        l3domain_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            self.router['id'])
+        nuage_domain = self.nuage_vsd_client.get_resource(
+            n_constants.DOMAIN,
+            filters='externalID',
+            filter_value=l3domain_ext_id)
+        subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_domain_subnet(
+            n_constants.DOMAIN, nuage_domain[0]['ID'],
+            filters='externalID', filter_value=subnet_ext_id)
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.SUBNETWORK,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.INHERITED,
+                         nuage_vport[0]['addressSpoofing'])
+        nuage_vip = self.nuage_vsd_client.get_virtual_ip(
+            n_constants.VPORT,
+            nuage_vport[0]['ID'],
+            filters='virtualIP',
+            filter_value=str(addrpair_port['fixed_ips'][0]['ip_address']))
+        self.assertEqual(addrpair_port['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
+
 
     def test_create_address_pair_on_l3subnet_with_no_mac(self):
         # Create port with allowed address pair attribute
@@ -291,6 +445,49 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         self.assertEqual(n_constants.ENABLED,
                          nuage_vport[0]['addressSpoofing'])
 
+
+    def test_create_address_pair_on_l3subnet_with_cidr_routersubnetbind(self):
+        # Create port with allowed address pair attribute
+        ip_address = '30.30.0.0/24'
+        mac_address = 'fe:a0:36:4b:c8:70'
+        allowed_address_pairs = [{
+                                     'ip_address': ip_address, 'mac_address': mac_address}]
+        body = self._create_port_with_allowed_address_pair(
+            allowed_address_pairs, self.l3network['id'])
+        port = body['port']
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, ip_address, mac_address)
+        # Check VIP is created in VSD
+        l3domain_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            self.router['id'])
+        nuage_domain = self.nuage_vsd_client.get_resource(
+            n_constants.DOMAIN,
+            filters='externalID',
+            filter_value=l3domain_ext_id)
+        subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_domain_subnet(
+            n_constants.DOMAIN,
+            nuage_domain[0]['ID'],
+            filters='externalID',
+            filter_value=subnet_ext_id)
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.SUBNETWORK,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.ENABLED,
+                         nuage_vport[0]['addressSpoofing'])
+
+
     @test.attr(type='smoke')
     def test_update_address_pair_on_l3subnet(self):
         addrpair_port_1 = self.create_port(self.l3network)
@@ -343,6 +540,101 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
              'mac_address': addrpair_port_2['mac_address']}]
         port = self.update_port(
             port, allowed_address_pairs=allowed_address_pairs)
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port_2['fixed_ips'][0]['ip_address'],
+            addrpair_port_2['mac_address'])
+        # Verify new VIP is created
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.SUBNETWORK,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.INHERITED,
+                         nuage_vport[0]['addressSpoofing'])
+        nuage_vip = self.nuage_vsd_client.get_virtual_ip(
+            n_constants.VPORT,
+            nuage_vport[0]['ID'],
+            filters='virtualIP',
+            filter_value=str(addrpair_port_2['fixed_ips'][0]['ip_address']))
+        self.assertEqual(addrpair_port_2['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
+        # Verify old VIP is deleted
+        nuage_vip = self.nuage_vsd_client.get_virtual_ip(
+            n_constants.VPORT,
+            nuage_vport[0]['ID'],
+            filters='virtualIP',
+            filter_value=str(addrpair_port_1['fixed_ips'][0]['ip_address']))
+        self.assertEmpty(nuage_vip)
+
+
+    @test.attr(type='smoke')
+    def test_update_address_pair_on_l3subnet_routersubnetbind(self):
+        addrpair_port_1 = self.create_port(self.l3network)
+        allowed_address_pairs = [
+            {'ip_address': addrpair_port_1['fixed_ips'][0]['ip_address'],
+             'mac_address': addrpair_port_1['mac_address']}]
+        body = self._create_port_with_allowed_address_pair(
+            allowed_address_pairs, self.l3network['id'])
+        port = body['port']
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, allowed_address_pairs[0]['ip_address'],
+            allowed_address_pairs[0]['mac_address'])
+        # Check VIP is created in VSD
+        l3domain_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            self.router['id'])
+        nuage_domain = self.nuage_vsd_client.get_resource(
+            n_constants.DOMAIN,
+            filters='externalID',
+            filter_value=l3domain_ext_id)
+        subnet_ext_id = self.nuage_vsd_client.get_vsd_external_id(
+            port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_domain_subnet(
+            n_constants.DOMAIN, nuage_domain[0]['ID'],
+            filters='externalID', filter_value=subnet_ext_id)
+        port_ext_id = self.nuage_vsd_client.get_vsd_external_id(port['id'])
+        nuage_vport = self.nuage_vsd_client.get_vport(
+            n_constants.SUBNETWORK,
+            nuage_subnet[0]['ID'],
+            filters='externalID',
+            filter_value=port_ext_id)
+        self.assertEqual(n_constants.INHERITED,
+                         nuage_vport[0]['addressSpoofing'])
+        nuage_vip = self.nuage_vsd_client.get_virtual_ip(
+            n_constants.VPORT,
+            nuage_vport[0]['ID'],
+            filters='virtualIP',
+            filter_value=str(addrpair_port_1['fixed_ips'][0]['ip_address']))
+        self.assertEqual(addrpair_port_1['mac_address'], nuage_vip[0]['MAC'])
+        if external_id_release <= current_release:
+            self.assertEqual(nuage_vip[0]['externalID'],
+                             self.nuage_vsd_client.get_vsd_external_id(
+                                 port['id']))
+        # Update the address pairs
+        # Create port with allowed address pair attribute
+        addrpair_port_2 = self.create_port(self.l3network)
+        allowed_address_pairs = [
+            {'ip_address': addrpair_port_2['fixed_ips'][0]['ip_address'],
+             'mac_address': addrpair_port_2['mac_address']}]
+        port = self.update_port(
+            port, allowed_address_pairs=allowed_address_pairs)
+
+        # routersubnetbind
+        self.delete_router_interface(self.router['id'], self.subnet['id'])
+        self.create_router_interface(self.router['id'], self.subnet['id'])
+
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute
         self._verify_port_allowed_address_fields(

@@ -116,8 +116,14 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         port = body['port']
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        new_router = self.create_router('r')
+        self.create_router_interface(new_router['id'], port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port['fixed_ips'][0]['ip_address'],
+            port['mac_address'])
+        self.routers_client.remove_router_interface(new_router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
 
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute
@@ -183,8 +189,15 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         port = body['port']
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        new_router = self.create_router('r')
+        self.create_router_interface(new_router['id'], port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port['fixed_ips'][0]['ip_address'],
+            addrpair_port['mac_address'])
+        self.routers_client.remove_router_interface(new_router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
+
         self._verify_port_by_id(port['id'])
 
         # Confirm port was created with allowed address pair attribute
@@ -245,8 +258,14 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         port = body['port']
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        new_router = self.create_router('r')
+        self.create_router_interface(new_router['id'], port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, ip_address, mac_address)
+        self.routers_client.remove_router_interface(new_router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
+
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute
         self._verify_port_allowed_address_fields(
@@ -324,8 +343,13 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         port = body['port']
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        self.routers_client.remove_router_interface(self.router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port['fixed_ips'][0]['ip_address'],
+            addrpair_port['mac_address'])
+        self.create_router_interface(self.router['id'], port['fixed_ips'][0]['subnet_id'])
 
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute
@@ -457,8 +481,12 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         port = body['port']
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        self.routers_client.remove_router_interface(self.router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, ip_address, mac_address)
+        self.create_router_interface(self.router['id'], port['fixed_ips'][0]['subnet_id'])
 
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute
@@ -584,8 +612,13 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
         port = body['port']
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        self.routers_client.remove_router_interface(self.router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, allowed_address_pairs[0]['ip_address'],
+            allowed_address_pairs[0]['mac_address'])
+        self.create_router_interface(self.router['id'], port['fixed_ips'][0]['subnet_id'])
 
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute
@@ -632,8 +665,16 @@ class AllowedAddressPairTest(base.BaseNetworkTest):
             port, allowed_address_pairs=allowed_address_pairs)
 
         # routersubnetbind
-        self.delete_router_interface(self.router['id'], self.subnet['id'])
-        self.create_router_interface(self.router['id'], self.subnet['id'])
+        self.routers_client.remove_router_interface(self.router['id'],subnet_id=port['fixed_ips'][0]['subnet_id'])
+        self._verify_port_by_id(port['id'])
+        # Confirm port was created with allowed address pair attribute
+        self._verify_port_allowed_address_fields(
+            port, addrpair_port_2['fixed_ips'][0]['ip_address'],
+            addrpair_port_2['mac_address'])
+        self.create_router_interface(self.router['id'], port['fixed_ips'][0]['subnet_id'])
+        nuage_subnet = self.nuage_vsd_client.get_domain_subnet(
+            n_constants.DOMAIN, nuage_domain[0]['ID'],
+            filters='externalID', filter_value=subnet_ext_id)
 
         self._verify_port_by_id(port['id'])
         # Confirm port was created with allowed address pair attribute

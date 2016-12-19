@@ -30,8 +30,6 @@ from nuagetempest.services.nuage_client import NuageRestClient
 
 
 CONF = config.CONF
-conf_release = CONF.nuage_sut.release
-current_release = Release(conf_release)
 
 
 class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
@@ -74,7 +72,7 @@ class FloatingIPTestJSONNuage(test_floating_ips.FloatingIPTestJSON):
             self.assertEqual(
                 nuage_vport[0]['associatedFloatingIPID'],
                 nuage_domain_fip[0]['ID'])
-        elif current_release.sub_release < 2099:
+        elif Release(CONF.nuage_sut.release) >= Release("4.0R6"):
             pass
         else:
             self.assertEqual(0, len(nuage_domain_fip))

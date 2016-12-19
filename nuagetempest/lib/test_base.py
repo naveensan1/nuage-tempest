@@ -16,7 +16,7 @@ def get_filter_str(key, value):
 
 
 def poll_for_vm_boot(vrs, vm_ip, max_tries):
-    vrs_data = vrs.vmportshow()
+    vrs_data = vrs.appctl.port_show('vm')
     for vm in vrs_data:
         for each_try in (0, max_tries):
             if vm['ip'] != '0':

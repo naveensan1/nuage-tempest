@@ -33,7 +33,7 @@ class FWaaSExtensionTestJSON():
         
         VSD_TO_OS_ACTION = {
             'allow': "FORWARD",
-            'drop': "DROP"
+            'deny': "DROP"
         }
         
         self._populate_vsd_data_to_obj_fw_rule(name, obj)
@@ -46,7 +46,14 @@ class FWaaSExtensionTestJSON():
         firewall_acl_vsd = firewall_acl_vsd.to_dict()
         #Protocol and externalID cannot be verified VSD-18219
         obj.assertEqual(firewall_acl_os['name'], firewall_acl_vsd['description'])
-        obj.assertEqual(firewall_acl_vsd['stateful'], True)
+        if firewall_acl_os['action'] == "allow":
+            obj.assertEqual(firewall_acl_vsd['stateful'], True)
+        else:
+            obj.assertEqual(firewall_acl_vsd['stateful'], False)
+        if firewall_acl_vsd['sourcePort']:
+            firewall_acl_vsd['sourcePort'] = firewall_acl_vsd['sourcePort'].replace('-', ':')
+        if firewall_acl_vsd['destinationPort']:
+            firewall_acl_vsd['destinationPort'] = firewall_acl_vsd['destinationPort'].replace('-', ':')
         obj.assertEqual(firewall_acl_os['source_port'], firewall_acl_vsd['sourcePort'])
         obj.assertEqual(firewall_acl_os['destination_port'], firewall_acl_vsd['destinationPort'])
         obj.assertEqual(firewall_acl_os['source_ip_address'], firewall_acl_vsd['addressOverride'])
@@ -71,3 +78,22 @@ class FWaaSExtensionTestJSON():
         def verify_firewall_rule(self, obj):
             self.fwaas_api_tests._verify_fw_rule('fw-rule-2', obj)
             
+    class _create_update_delete_firewall_rule_all_attributes():
+        def __init__(self):
+            self.fwaas_api_tests = FWaaSExtensionTestJSON()
+            pass
+
+        def verify_firewall_rule(self, obj):
+            self.fwaas_api_tests._verify_fw_rule('fw-rule-3', obj)
+            
+    class _create_firewall_rule_different_protocol_types_and_actions():
+        def __init__(self):
+            self.fwaas_api_tests = FWaaSExtensionTestJSON()
+            pass
+
+        def verify_firewall_rules_all(self, obj):
+            self.fwaas_api_tests._verify_fw_rule('fw-rule-4', obj)
+            self.fwaas_api_tests._verify_fw_rule('fw-rule-5', obj)
+            self.fwaas_api_tests._verify_fw_rule('fw-rule-6', obj)
+            self.fwaas_api_tests._verify_fw_rule('fw-rule-7', obj)
+

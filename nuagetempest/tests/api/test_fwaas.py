@@ -213,11 +213,20 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
     def test_create_update_delete_firewall_rule_all_attributes(self):
         # Create firewall rule
         body = self.firewall_rules_client.create_firewall_rule(
-            name=data_utils.rand_name("fw-rule"),
+            name='fw-rule-3',
             action="allow",
             protocol="tcp")
         fw_rule_id = body['firewall_rule']['id']
 
+        self.os_data.insert_resource('fw-rule-3',
+                                    os_data=body['firewall_rule'],
+                                    parent=self.def_net_partition)
+        
+        tag_name = 'verify_firewall_rule'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+        self.os_data.delete_resource('fw-rule-3')
+        
         # Update firewall rule
         updated_dict = {'action': 'deny',
                         'protocol': 'udp',
@@ -228,6 +237,14 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
         body = self.firewall_rules_client.update_firewall_rule(fw_rule_id,
                                                                **updated_dict)
         rule = body['firewall_rule']
+        
+        self.os_data.insert_resource('fw-rule-3',
+                                    os_data=body['firewall_rule'],
+                                    parent=self.def_net_partition)
+        tag_name = 'verify_firewall_rule'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
+        
         self.assertEqual((updated_dict['action'],
                       updated_dict['protocol'],
                       updated_dict['source_ip_address'],
@@ -279,19 +296,25 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
         all_rules = []
         
         body = self.firewall_rules_client.create_firewall_rule(
-            name=data_utils.rand_name("fw-rule"),
+            name='fw-rule-4',
             action="allow",
             protocol=None)
         all_rules.append(body['firewall_rule'])
+        self.os_data.insert_resource('fw-rule-4',
+                                    os_data=body['firewall_rule'],
+                                    parent=self.def_net_partition)
         
         body = self.firewall_rules_client.create_firewall_rule(
-            name=data_utils.rand_name("fw-rule"),
+            name='fw-rule-5',
             action="deny",
             protocol="icmp")
         all_rules.append(body['firewall_rule'])
+        self.os_data.insert_resource('fw-rule-5',
+                                    os_data=body['firewall_rule'],
+                                    parent=self.def_net_partition)
         
         body = self.firewall_rules_client.create_firewall_rule(
-            name=data_utils.rand_name("fw-rule"),
+            name='fw-rule-6',
             action="allow",
             protocol="udp",
             source_ip_address="1.1.1.5/32",
@@ -299,9 +322,12 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
             source_port="1000:2000",
             destination_port="1000:2000")
         all_rules.append(body['firewall_rule'])
+        self.os_data.insert_resource('fw-rule-6',
+                                    os_data=body['firewall_rule'],
+                                    parent=self.def_net_partition)
         
         body = self.firewall_rules_client.create_firewall_rule(
-            name=data_utils.rand_name("fw-rule"),
+            name='fw-rule-7',
             action="allow",
             protocol='tcp',
             source_ip_address="1.1.1.6/32",
@@ -309,6 +335,9 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
             source_port="3000:4000",
             destination_port="3000:4000")
         all_rules.append(body['firewall_rule'])
+        self.os_data.insert_resource('fw-rule-7',
+                                    os_data=body['firewall_rule'],
+                                    parent=self.def_net_partition)
 
         #Verify
         fw_rules = self.firewall_rules_client.list_firewall_rules()
@@ -327,6 +356,10 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
                         m['protocol'],
                         m['ip_version'],
                         m['enabled']) for m in fw_rules])
+        
+        tag_name = 'verify_firewall_rules_all'
+        nuage_ext.nuage_extension.nuage_components(
+            nuage_ext._generate_tag(tag_name, self.__class__.__name__), self)
 
         #Delete all rules
         for rule in all_rules:

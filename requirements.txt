@@ -1,3 +1,4 @@
+netaddr
 testtools
 tempest>0
 vspk

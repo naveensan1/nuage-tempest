@@ -1042,8 +1042,12 @@ class BaseVSDManagedPortAttributes(base_vsd_managed_networks.BaseVSDManagedNetwo
         self.assertEqual(mac_address, addrpair_mac)
 
     def _remove_allowed_addres_pair_from_port(self, port):
-        kwargs = {'allowed_address_pairs': []}
-        self.update_port(port,**kwargs)
+        # kwargs = {'name': data_utils.rand_name('network-'),
+        #           'port_security_enabled': 'False'}
+        # body = cls.networks_client.create_network(**kwargs)
+        aap_list = []
+        kwargs = {'allowed_address_pairs': aap_list}
+        self.update_port(port, **kwargs)
 
     @classmethod
     def _create_vsd_floatingip_pool(cls, fip_pool_cidr=VSD_FIP_POOL_CIDR):

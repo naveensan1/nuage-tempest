@@ -10,7 +10,9 @@ from tempest import test
 from tempest.common.utils import data_utils
 from tempest import exceptions
 from tempest.lib import exceptions as lib_exc
+from nuagetempest.lib.utils import constants as nuage_constants
 from nuagetempest.services.nuage_client import NuageRestClient
+from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 
 CONF = config.CONF
 
@@ -28,6 +30,26 @@ class BaseNuageNetworksTestCase(test.BaseTestCase):
         cls.subnets_client = client_manager.subnets_client
         cls.ports_client = client_manager.ports_client
 
+        cls.nuage_network_client = NuageNetworkClientJSON(
+            client_manager.auth_provider,
+            CONF.network.catalog_type,
+            CONF.network.region or CONF.identity.region,
+            endpoint_type=CONF.network.endpoint_type,
+            build_interval=CONF.network.build_interval,
+            build_timeout=CONF.network.build_timeout,
+            **client_manager.default_params)
+
+
+############################################################
+# VSD resources
+############################################################
+class VsdTestCaseMixin(test.BaseTestCase):
+
+    @classmethod
+    def setup_clients(cls):
+        super(VsdTestCaseMixin, cls).setup_clients()
+        cls.nuage_vsd_client = NuageRestClient()
+
     @classmethod
     def resource_setup(cls):
         # ML2-driver does not support net-partitions.
@@ -40,22 +62,11 @@ class BaseNuageNetworksTestCase(test.BaseTestCase):
                 cls.net_partition = cls.nuage_vsd_client.create_net_partition(netpartition_name,
                                                                               fip_quota=100,
                                                                               extra_params=None)
-        super(BaseNuageNetworksTestCase, cls).resource_setup()
+        super(VsdTestCaseMixin, cls).resource_setup()
 
     @classmethod
     def resource_cleanup(cls):
-        super(BaseNuageNetworksTestCase, cls).resource_cleanup()
-
-
-############################################################
-# VSD resources
-############################################################
-class VsdTestCaseMixin(BaseNuageNetworksTestCase):
-
-    @classmethod
-    def setup_clients(cls):
-        super(VsdTestCaseMixin, cls).setup_clients()
-        cls.nuage_vsd_client = NuageRestClient()
+        super(VsdTestCaseMixin, cls).resource_cleanup()
 
     def create_vsd_l2domain_template(self, name=None, ip_type=None, dhcp_managed=None,
                                      cidr4=None,
@@ -174,6 +185,21 @@ class VsdTestCaseMixin(BaseNuageNetworksTestCase):
         self.addCleanup(self.nuage_vsd_client.delete_l2domain, vsd_l2domain['ID'])
         return vsd_l2domain
 
+    def _given_vsd_l2domain(self, cidr4=None, cidr6=None, dhcp_managed=False, **kwargs):
+        if cidr6:
+            ip_type = "DUALSTACK"
+        else:
+            ip_type = "IPV4"
+
+        vsd_l2domain_template = self.create_vsd_l2domain_template(
+            ip_type=ip_type, dhcp_managed=dhcp_managed,
+            cidr4=cidr4,
+            cidr6=cidr6)
+
+        vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
+
+        return vsd_l2domain
+
     def create_vsd_l3dom_template(self, **kwargs):
         vsd_l3dom_templates = self.nuage_vsd_client.create_l3domaintemplate(
             kwargs['name'] + '-template')
@@ -218,11 +244,70 @@ class VsdTestCaseMixin(BaseNuageNetworksTestCase):
         self.addCleanup(self.nuage_vsd_client.delete_domain_subnet, vsd_subnet['ID'])
         return vsd_subnet
 
+    def _given_vsd_l3subnet(self, cidr4=None, cidr6=None, dhcp_managed=True, **kwargs):
+        name = data_utils.rand_name('l3domain-')
+        vsd_l3domain_template = self.create_vsd_l3dom_template(
+            name=name)
+        vsd_l3domain = self.create_vsd_l3domain(name=name,
+                                                tid=vsd_l3domain_template['ID'])
+
+        self.assertEqual(vsd_l3domain['name'], name)
+        zone_name = data_utils.rand_name('zone-')
+        extra_params = None
+        vsd_zone = self.create_vsd_zone(name=zone_name,
+                                        domain_id=vsd_l3domain['ID'],
+                                        extra_params=extra_params)
+
+        subnet_name = data_utils.rand_name('l3domain-subnet-')
+
+        if cidr6:
+            # ip_type = "DUALSTACK"
+            vsd_l3domain_subnet = self.create_vsd_l3domain_dualstack_subnet(
+                zone_id=vsd_zone['ID'],
+                subnet_name=subnet_name,
+                cidr=cidr4,
+                gateway=str(IPAddress(cidr4) + 1),
+                cidr6=cidr6,
+                gateway6=str(IPAddress(cidr6) + 1))
+        else:
+            # ip_type = "IPV4"
+            raise NotImplementedError
+
+        return vsd_l3domain, vsd_l3domain_subnet
+
+    def _verify_vport(self, port, vsd_l2domain, **kwargs):
+        nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
+                                                       vsd_l2domain['ID'],
+                                                       filters='externalID',
+                                                       filter_value=port['id'])
+        self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])
+        nuage_vport = nuage_vports[0]
+        self.assertThat(nuage_vport, ContainsDict({'name': Equals(port['id'])}))
+
+        # verify all other kwargs as attributes (key,value) pairs
+        for key, value in kwargs.iteritems():
+            if isinstance(value, dict):
+                # compare dict
+                raise NotImplementedError
+            if isinstance(value, list):
+                # self.assertThat(port, ContainsDict({key: Equals(value)}))
+                self.assertItemsEqual(port[key], value)
+            else:
+                self.assertThat(port, ContainsDict({key: Equals(value)}))
 
 ############################################################
 # Neutron resources
 ############################################################
 class NetworkTestCaseMixin(BaseNuageNetworksTestCase):
+
+    def create_network(self, network_name=None, **kwargs):
+        """Wrapper utility that returns a test network."""
+        network_name = network_name or data_utils.rand_name('test-network')
+
+        body = self.networks_client.create_network(name=network_name, **kwargs)
+        network = body['network']
+        self.addCleanup(self.networks_client.delete_network, network['id'])
+        return network
 
     def create_network(self, network_name=None, **kwargs):
         """Wrapper utility that returns a test network."""
@@ -325,4 +410,11 @@ class NetworkTestCaseMixin(BaseNuageNetworksTestCase):
 
         # verify all other kwargs as attributes (key,value) pairs
         for key, value in kwargs.iteritems():
-            self.assertThat(port, ContainsDict({key: Equals(value)}))
+            if isinstance(value, dict):
+                # compare dict
+                raise NotImplementedError
+            if isinstance(value, list):
+                # self.assertThat(port, ContainsDict({key: Equals(value)}))
+                self.assertItemsEqual(port[key], value)
+            else:
+                self.assertThat(port, ContainsDict({key: Equals(value)}))

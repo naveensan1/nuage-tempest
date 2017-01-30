@@ -22,8 +22,7 @@ MSG_IP_ADDRESS_INVALID_OR_RESERVED = "IP Address is not valid or cannot be in re
 
 
 class TestVSDManagedDualStackSubnetL3(VsdTestCaseMixin,
-                                      NetworkTestCaseMixin,
-                                      BaseNuageNetworksTestCase):
+                                      NetworkTestCaseMixin):
 
     ####################################################################################################################
     # Typical cases

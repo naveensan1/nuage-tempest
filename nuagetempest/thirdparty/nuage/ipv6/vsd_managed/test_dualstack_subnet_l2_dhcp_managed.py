@@ -26,11 +26,11 @@ MSG_INVALID_INPUT_FOR_FIXED_IPS = "Invalid input for fixed_ips. Reason: '%s' is 
 MSG_INVALID_IP_ADDRESS_FOR_SUBNET = "IP address %s is not a valid IP for the specified subnet."
 
 
-class TestVSDManagedDualStackSubnetL2(VsdTestCaseMixin,
-                                      NetworkTestCaseMixin):
+class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
+                                                 NetworkTestCaseMixin):
     @classmethod
     def resource_setup(cls):
-        super(TestVSDManagedDualStackSubnetL2, cls).resource_setup()
+        super(VSDManagedDualStackSubnetL2DHCPManagedTest, cls).resource_setup()
         # cls.cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
         # cls.mask_bits = CONF.network.tenant_network_mask_bits
         cls.cidr4 = IPNetwork('1.2.3.0/24')
@@ -150,198 +150,192 @@ class TestVSDManagedDualStackSubnetL2(VsdTestCaseMixin,
         self._verify_vport(port, vsd_l2domain)
         pass
 
-    #
-    # # See VSD-18415
-    # def test_create_ipv6_subnet_in_vsd_managed_l2domain_dhcp_unmanaged(self):
-    #     """
-    #         OpenStack IPv4 and IPv6 subnets linked to VSD l2 dualstack l2 domain
-    #         - create VSD l2 domain template dualstack
-    #         - create VSD l2 domain
-    #         - create OS network
-    #         - create OS subnets
-    #         - create OS port
-    #     """
-    #
-    #     # create l2domain on VSD
-    #     cidr4 = IPNetwork('10.10.100.0/24')
-    #     self.gateway4 = str(IPAddress(cidr4) + 1)
-    #     self.cidr6 = IPNetwork("2001:5f74:c4a5:b82e::/64")
-    #     self.gateway6 = str(IPAddress(self.cidr6) + 1)
-    #
-    #     vsd_l2domain_template = self.create_vsd_l2domain_template(
-    #         ip_type="DUALSTACK",
-    #         dhcp_managed=False,
-    #         cidr4=cidr4,
-    #         cidr6=self.cidr6,
-    #         gateway=self.gateway4,
-    #         gateway6=self.gateway6)
-    #
-    #     self._verify_vsd_l2domain_template(vsd_l2domain_template,
-    #                                        ip_type="DUALSTACK",
-    #                                        dhcp_managed=False,
-    #                                        cidr4=cidr4,
-    #                                        cidr6=self.cidr6,
-    #                                        IPv6Gateway=self.gateway6,
-    #                                        gateway=self.gateway4)
-    #
-    #     vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
-    #     self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
-    #
-    #     # create Openstack IPv4 subnet on Openstack based on VSD l2domain
-    #     net_name = data_utils.rand_name('network-')
-    #     network = self.create_network(network_name=net_name)
-    #     ipv4_subnet = self.create_subnet(
-    #         network,
-    #         gateway=self.gateway4,
-    #         cidr=cidr4,
-    #         mask_bits=24,
-    #         nuagenet=vsd_l2domain['ID'],
-    #         net_partition=CONF.nuage.nuage_default_netpartition)
-    #     self.assertEqual(ipv4_subnet['cidr'], str(cidr4))
-    #
-    #     # create a port in the network
-    #     port_ipv4_only = self.create_port(network)
-    #     self._verify_port(port_ipv4_only, subnet4=ipv4_subnet, subnet6=None,
-    #                       status='DOWN',
-    #                       nuage_policy_groups=None,
-    #                       nuage_redirect_targets=[],
-    #                       nuage_floatingip=None)
-    #
-    #     nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
-    #                                                    vsd_l2domain['ID'],
-    #                                                    filters='externalID',
-    #                                                    filter_value=port_ipv4_only['id'])
-    #     self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port_ipv4_only['name'])
-    #     nuage_vport = nuage_vports[0]
-    #     self.assertThat(nuage_vport, ContainsDict({'name': Equals(port_ipv4_only['id'])}))
-    #
-    #     # create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet
-    #     ipv6_subnet = self.create_subnet(
-    #         network,
-    #         ip_version=6,
-    #         gateway=vsd_l2domain_template['IPv6Gateway'],
-    #         cidr=IPNetwork(vsd_l2domain_template['IPv6Address']),
-    #         mask_bits=64,
-    #         enable_dhcp=False,
-    #         nuagenet=vsd_l2domain['ID'],
-    #         net_partition=CONF.nuage.nuage_default_netpartition)
-    #
-    #     self.assertEqual(ipv6_subnet['cidr'], vsd_l2domain_template['IPv6Address'])
-    #
-    #     # create a port in the network
-    #     port = self.create_port(network)
-    #     self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
-    #                       status='DOWN',
-    #                       nuage_policy_groups=None,
-    #                       nuage_redirect_targets=[],
-    #                       nuage_floatingip=None)
-    #
-    #     nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
-    #                                                    vsd_l2domain['ID'],
-    #                                                    filters='externalID',
-    #                                                    filter_value=port['id'])
-    #     self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])
-    #     nuage_vport = nuage_vports[0]
-    #     self.assertThat(nuage_vport, ContainsDict({'name': Equals(port['id'])}))
-    #
-    # def test_create_ipv6_subnet_in_vsd_managed_l2domain_with_ipv6_network_first(self):
-    #     """
-    #         OpenStack IPv4 and IPv6 subnets linked to VSD l2 dualstack l2 domain
-    #         - create VSD l2 domain template dualstack
-    #         - create VSD l2 domain
-    #         - create OS network
-    #         - create OS subnets
-    #         -- first the ipv6 network
-    #         -- than the ipv4 network
-    #         - create OS port
-    #     """
-    #
-    #     # create l2domain on VSD
-    #     cidr4 = IPNetwork('10.10.100.0/24')
-    #     self.gateway4 = str(IPAddress(cidr4) + 1)
-    #     self.cidr6 = IPNetwork("2001:5f74:c4a5:b82e::/64")
-    #     self.gateway6 = str(IPAddress(self.cidr6) + 1)
-    #
-    #     vsd_l2domain_template = self.create_vsd_l2domain_template(
-    #         ip_type="DUALSTACK",
-    #         dhcp_managed=True,
-    #         cidr4=cidr4,
-    #         cidr6=self.cidr6,
-    #         gateway=self.gateway4,
-    #         gateway6=self.gateway6)
-    #
-    #     self._verify_vsd_l2domain_template(vsd_l2domain_template,
-    #                                        ip_type="DUALSTACK",
-    #                                        dhcp_managed=True,
-    #                                        cidr4=cidr4,
-    #                                        cidr6=self.cidr6,
-    #                                        IPv6Gateway=self.gateway6,
-    #                                        gateway=self.gateway4)
-    #
-    #     vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
-    #     self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
-    #
-    #     # create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet
-    #     net_name = data_utils.rand_name('network-')
-    #     network = self.create_network(network_name=net_name)
-    #     ipv6_subnet = self.create_subnet(
-    #         network,
-    #         ip_version=6,
-    #         gateway=vsd_l2domain_template['IPv6Gateway'],
-    #         cidr=IPNetwork(vsd_l2domain_template['IPv6Address']),
-    #         mask_bits=IPNetwork(vsd_l2domain_template['IPv6Address'])._prefixlen,
-    #         enable_dhcp=False,
-    #         nuagenet=vsd_l2domain['ID'],
-    #         net_partition=CONF.nuage.nuage_default_netpartition)
-    #
-    #     self.assertEqual(ipv6_subnet['cidr'], vsd_l2domain_template['IPv6Address'])
-    #
-    #     # should not allow to create a port in this network, as we do not have IPv4 network linked
-    #     self.assertRaises(
-    #         tempest_exceptions.ServerFault,
-    #         self.create_port,
-    #         network)
-    #
-    #     # create Openstack IPv4 subnet on Openstack based on VSD l2domain
-    #     ipv4_subnet = self.create_subnet(
-    #         network,
-    #         gateway=self.gateway4,
-    #         cidr=cidr4,
-    #         mask_bits=24,
-    #         nuagenet=vsd_l2domain['ID'],
-    #         net_partition=CONF.nuage.nuage_default_netpartition)
-    #     self.assertEqual(ipv4_subnet['cidr'], str(cidr4))  # create a port in the network - IPAM by OS
-    #     port = self.create_port(network)
-    #     self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
-    #                       status='DOWN',
-    #                       nuage_policy_groups=None,
-    #                       nuage_redirect_targets=[],
-    #                       nuage_floatingip=None)
-    #
-    #     nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
-    #                                                    vsd_l2domain['ID'],
-    #                                                    filters='externalID',
-    #                                                    filter_value=port['id'])
-    #     self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])
-    #     nuage_vport = nuage_vports[0]
-    #     self.assertThat(nuage_vport, ContainsDict({'name': Equals(port['id'])}))
-    #
-    #     # create a port in the network - IPAM by OS
-    #     port = self.create_port(network)
-    #     self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
-    #                       status='DOWN',
-    #                       nuage_policy_groups=None,
-    #                       nuage_redirect_targets=[],
-    #                       nuage_floatingip=None)
-    #
-    #     nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
-    #                                                    vsd_l2domain['ID'],
-    #                                                    filters='externalID',
-    #                                                    filter_value=port['id'])
-    #     self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])
-    #     nuage_vport = nuage_vports[0]
-    #     self.assertThat(nuage_vport, ContainsDict({'name': Equals(port['id'])}))
-    #
+    # See VSD-18415
+    def test_create_vsd_managed_l2domain_dhcp_unmanaged_dualstack(self):
+        """
+            OpenStack IPv4 and IPv6 subnets linked to VSD l2 dualstack l2 domain
+            - create VSD l2 domain template dualstack
+            - create VSD l2 domain
+            - create OS network
+            - create OS subnets
+            - create OS port
+        """
+        # create l2domain on VSD
+        cidr4 = IPNetwork('10.10.100.0/24')
+        self.gateway4 = str(IPAddress(cidr4) + 1)
+        self.cidr6 = IPNetwork("2001:5f74:c4a5:b82e::/64")
+        self.gateway6 = str(IPAddress(self.cidr6) + 1)
+
+        vsd_l2domain_template = self.create_vsd_l2domain_template(
+            ip_type="DUALSTACK",
+            dhcp_managed=False,
+            cidr4=cidr4,
+            cidr6=self.cidr6,
+            gateway=self.gateway4,
+            gateway6=self.gateway6)
+
+        self._verify_vsd_l2domain_template(vsd_l2domain_template,
+                                           ip_type="DUALSTACK",
+                                           dhcp_managed=False,
+                                           cidr4=cidr4,
+                                           cidr6=self.cidr6,
+                                           IPv6Gateway=self.gateway6,
+                                           gateway=self.gateway4)
+
+    def test_create_ipv6_subnet_in_vsd_managed_l2domain_dhcp_unmanaged(self):
+        """
+            OpenStack IPv4 and IPv6 subnets linked to VSD l2 dualstack l2 domain
+            - create VSD l2 domain template dualstack
+            - create VSD l2 domain
+            - create OS network
+            - create OS subnets
+            - create OS port
+        """
+
+        # create l2domain on VSD
+        vsd_l2domain_template = self.create_vsd_l2domain_template(
+            ip_type="IPV4",
+            dhcp_managed=False)
+
+        self._verify_vsd_l2domain_template(vsd_l2domain_template,
+                                           ip_type="IPV4",
+                                           dhcp_managed=False)
+
+        vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
+        self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
+
+        # create Openstack IPv4 subnet on Openstack based on VSD l2domain
+        net_name = data_utils.rand_name('network-')
+        network = self.create_network(network_name=net_name)
+        ipv4_subnet = self.create_subnet(
+            network,
+            gateway=self.gateway4,
+            enable_dhcp=False,
+            cidr=self.cidr4,
+            mask_bits=self.mask_bits,
+            nuagenet=vsd_l2domain['ID'],
+            net_partition=CONF.nuage.nuage_default_netpartition)
+        self.assertEqual(ipv4_subnet['cidr'], str(self.cidr4))
+
+        # create a port in the network
+        port_ipv4_only = self.create_port(network)
+        self._verify_port(port_ipv4_only, subnet4=ipv4_subnet, subnet6=None,
+                          status='DOWN',
+                          nuage_policy_groups=None,
+                          nuage_redirect_targets=[],
+                          nuage_floatingip=None)
+
+        nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
+                                                       vsd_l2domain['ID'],
+                                                       filters='externalID',
+                                                       filter_value=port_ipv4_only['id'])
+        self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port_ipv4_only['name'])
+        nuage_vport = nuage_vports[0]
+        self.assertThat(nuage_vport, ContainsDict({'name': Equals(port_ipv4_only['id'])}))
+
+        # create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet
+        ipv6_subnet = self.create_subnet(
+            network,
+            ip_version=6,
+            gateway=self.gateway6,
+            cidr=self.cidr6,
+            mask_bits=self.cidr6._prefixlen,
+            enable_dhcp=False,
+            nuagenet=vsd_l2domain['ID'],
+            net_partition=CONF.nuage.nuage_default_netpartition)
+
+        # create a port in the network
+        port = self.create_port(network)
+        self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
+                          status='DOWN',
+                          nuage_policy_groups=None,
+                          nuage_redirect_targets=[],
+                          nuage_floatingip=None)
+        self._verify_vport(port, vsd_l2domain)
+
+    def test_create_ipv6_subnet_in_vsd_managed_l2domain_with_ipv6_network_first(self):
+        """
+            OpenStack IPv4 and IPv6 subnets linked to VSD l2 dualstack l2 domain
+            - create VSD l2 domain template dualstack
+            - create VSD l2 domain
+            - create OS network
+            - create OS subnets
+            -- first the ipv6 network
+            -- than the ipv4 network
+            - create OS port
+        """
+        # create l2domain on VSD
+        vsd_l2domain_template = self.create_vsd_l2domain_template(
+            ip_type="DUALSTACK",
+            dhcp_managed=True,
+            cidr4=self.cidr4,
+            cidr6=self.cidr6,
+            gateway=self.gateway4,
+            gateway6=self.gateway6)
+
+        self._verify_vsd_l2domain_template(vsd_l2domain_template,
+                                           ip_type="DUALSTACK",
+                                           dhcp_managed=True,
+                                           cidr4=self.cidr4,
+                                           cidr6=self.cidr6,
+                                           IPv6Gateway=self.gateway6,
+                                           gateway=self.gateway4)
+
+        vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
+        self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
+
+        # create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet
+        net_name = data_utils.rand_name('network-')
+        network = self.create_network(network_name=net_name)
+        ipv6_subnet = self.create_subnet(
+            network,
+            ip_version=6,
+            gateway=vsd_l2domain_template['IPv6Gateway'],
+            cidr=IPNetwork(vsd_l2domain_template['IPv6Address']),
+            mask_bits=IPNetwork(vsd_l2domain_template['IPv6Address'])._prefixlen,
+            enable_dhcp=False,
+            nuagenet=vsd_l2domain['ID'],
+            net_partition=CONF.nuage.nuage_default_netpartition)
+
+        self.assertEqual(ipv6_subnet['cidr'], vsd_l2domain_template['IPv6Address'])
+
+        # should not allow to create a port in this network, as we do not have IPv4 network linked
+        self.assertRaises(
+            tempest_exceptions.ServerFault,
+            self.create_port,
+            network)
+
+        # create Openstack IPv4 subnet on Openstack based on VSD l2domain
+        ipv4_subnet = self.create_subnet(
+            network,
+            gateway=self.gateway4,
+            cidr=self.cidr4,
+            mask_bits=self.mask_bits,
+            nuagenet=vsd_l2domain['ID'],
+            net_partition=CONF.nuage.nuage_default_netpartition)
+        self.assertEqual(ipv4_subnet['cidr'], str(self.cidr4))  # create a port in the network - IPAM by OS
+        port = self.create_port(network)
+        self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
+                          status='DOWN',
+                          nuage_policy_groups=None,
+                          nuage_redirect_targets=[],
+                          nuage_floatingip=None)
+        self._verify_vport(port, vsd_l2domain)
+
+        # create a port in the network - IPAM by OS
+        port = self.create_port(network)
+        self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
+                          status='DOWN',
+                          nuage_policy_groups=None,
+                          nuage_redirect_targets=[],
+                          nuage_floatingip=None)
+
+        nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
+                                                       vsd_l2domain['ID'],
+                                                       filters='externalID',
+                                                       filter_value=port['id'])
+        self._verify_vport(port, vsd_l2domain)
+
     # ####################################################################################################################
     # # Special cases
     # ####################################################################################################################
@@ -399,7 +393,7 @@ class TestVSDManagedDualStackSubnetL2(VsdTestCaseMixin,
                           nuage_policy_groups=None,
                           nuage_redirect_targets=[],
                           nuage_floatingip=None)
-        self._verify_vport(port, vsd_l2domain)
+        self._verify_vport(port_ipv4_only, vsd_l2domain)
 
     def test_ipv4_subnet_linked_to_ipv4_vsd_l2domain_unmanaged(self):
         vsd_l2domain_template = self.create_vsd_l2domain_template(
@@ -607,32 +601,31 @@ class TestVSDManagedDualStackSubnetL2(VsdTestCaseMixin,
                               nuage_floatingip=None)
             self._verify_vport(port, vsd_l2domain)
 
-    # # see  VSD-18509 - VSD does not accept IPv6 address like 2001:5f74:c4a5:b82e:100.12.13.1 has been successfully created
-    # def test_create_vsd_l2domain_template_dualstack_valid_failing_at_vsd(self):
-    #     cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
-    #
-    #     valid_ipv6 = [
-    #         ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e::100.12.13.1"),
-    #         # valid address, gateway at mixed ipv4 and ipv6 format (digit-dot notation)
-    #     ]
-    #
-    #     for ipv6_cidr, ipv6_gateway in valid_ipv6:
-    #         vsd_l2domain_template = self.create_vsd_l2domain_template(
-    #             ip_type="DUALSTACK",
-    #             cidr4=cidr4,
-    #             dhcp_managed=True,
-    #             IPv6Address=ipv6_cidr,
-    #             IPv6Gateway=ipv6_gateway
-    #         )
-    #
-    #         self._verify_vsd_l2domain_template(vsd_l2domain_template,
-    #                                            ip_type="DUALSTACK",
-    #                                            dhcp_managed=True,
-    #                                            cidr4=cidr4,
-    #                                            IPv6Address=ipv6_cidr,
-    #                                            IPv6Gateway=ipv6_gateway)
-    #         # todo create ports in these subnets
-    #
+    # see  VSD-18509 - VSD does not accept IPv6 address like 2001:5f74:c4a5:b82e:100.12.13.1 has been successfully created
+    def test_create_vsd_l2domain_template_dualstack_valid_failing_at_vsd(self):
+        cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
+
+        valid_ipv6 = [
+            ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e::100.12.13.1"),
+            # valid address, gateway at mixed ipv4 and ipv6 format (digit-dot notation)
+        ]
+
+        for ipv6_cidr, ipv6_gateway in valid_ipv6:
+            vsd_l2domain_template = self.create_vsd_l2domain_template(
+                ip_type="DUALSTACK",
+                cidr4=cidr4,
+                dhcp_managed=True,
+                IPv6Address=ipv6_cidr,
+                IPv6Gateway=ipv6_gateway
+            )
+
+            self._verify_vsd_l2domain_template(vsd_l2domain_template,
+                                               ip_type="DUALSTACK",
+                                               dhcp_managed=True,
+                                               cidr4=cidr4,
+                                               IPv6Address=ipv6_cidr,
+                                               IPv6Gateway=ipv6_gateway)
+
     # def test_create_fixed_ipv6_ports_in_vsd_managed_l2domain(self):
     #     """
     #         OpenStack IPv4 and IPv6 subnets linked to VSD l2 dualstack l2 domain
@@ -1048,43 +1041,23 @@ class TestVSDManagedDualStackSubnetL2(VsdTestCaseMixin,
             self.assertRaisesRegex(tempest_exceptions.BadRequest, msg % ipv6, self.create_port,network,**port_args)
 
         pass
-    #
-    # def test_l2domain_template_without_dhcp_management_should_not_have_ipv4_cidr_neg(self):
-    #     """
-    #         On creation of the l2 domain template, we expect the IPv6 address, netmask and gateway to be provisioned
-    #         This will not happen when dhcp_managed attributes is not set to dhcp_managed=True
-    #     """
-    #     cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
-    #
-    #     vsd_l2domain_template = self.create_vsd_l2domain_template(
-    #         ip_type="IPV4",
-    #         cidr4=cidr4)
-    #
-    #     self.assertRaises(
-    #         AssertionError,
-    #         self._verify_vsd_l2domain_template,
-    #         vsd_l2domain_template,
-    #         dhcp_managed=False,
-    #         cidr4=cidr4)
-    #
-    # def test_ipv4_l2domain_should_not_link_to_openstack_ipv4_subnet(self):
-    #     """
-    #
-    #     """
-    #     cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
-    #
-    #     vsd_l2domain_template = self.create_vsd_l2domain_template(
-    #         ip_type="IPV4",
-    #         cidr4=cidr4,
-    #         dhcp_managed=True)
-    #
-    #     self._verify_vsd_l2domain_template(vsd_l2domain_template,
-    #                                        ip_type="IPV4",
-    #                                        dhcp_managed=True,
-    #                                        cidr4=cidr4,
-    #                                        gateway=str(IPAddress(cidr4) + 1),
-    #                                        netmask=str(cidr4.netmask))
-    #
+
+    def test_l2domain_template_without_dhcp_management_should_not_have_ipv4_cidr_neg(self):
+        """
+        If l2domain template has not dhcp management, there should not be cidr info ???
+        """
+        cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
+
+        vsd_l2domain_template = self.create_vsd_l2domain_template(
+            ip_type="IPV4",
+            cidr4=cidr4)
+
+        self.assertRaises(
+            AssertionError,
+            self._verify_vsd_l2domain_template,
+            vsd_l2domain_template,
+            dhcp_managed=False,
+            cidr4=cidr4)
 
     def test_create_vsd_l2domain_template_dualstack_invalid_ipv6_neg(self):
         cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
@@ -1119,67 +1092,68 @@ class TestVSDManagedDualStackSubnetL2(VsdTestCaseMixin,
                 IPv6Address=ipv6_cidr,
                 IPv6Gateway=ipv6_gateway)
 
-            # todo: invalid port IP addresses in valid subnets
+    # VSD-18510 - VSD API should fail on creation of DUALSTACK l2 domain template with cidr ::0 has been successfully created
+    def test_create_vsd_l2domain_template_dualstack_invalid_ipv6_neg_VSD_18510(self):
+        cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
+
+        invalid_ipv6 = [
+            ("::/0", "::1", "")
+        # prefix 0
+        ]
+
+        for ipv6_cidr, ipv6_gateway, msg in invalid_ipv6:
+            self.assertRaisesRegexp(
+                nuage_exceptions.Conflict,
+                msg,
+                self.create_vsd_l2domain_template,
+                ip_type="DUALSTACK",
+                cidr4=cidr4,
+                dhcp_managed=True,
+                IPv6Address=ipv6_cidr,
+                IPv6Gateway=ipv6_gateway)
+
+    # TODO: shared VSD networks use case?
+    # def test_create_vsd_shared_l2domain_dualstack_neg(self):
+    #     # create l2domain on VSD
+    #     vsd_l2domain_template = self.create_vsd_l2domain_template(
+    #         ip_type="DUALSTACK",
+    #         dhcp_managed=False)
     #
-    # # VSD-18510 - VSD API should fail on creation of DUALSTACK l2 domain template with cidr ::0 has been successfully created
-    # def test_create_vsd_l2domain_template_dualstack_invalid_ipv6_neg_VSD_18510(self):
-    #     cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
+    #     vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
+    #     self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
     #
-    #     invalid_ipv6 = [
-    #         ("::/0", "::1", "")
-    #     # prefix 0
-    #     ]
+    #     name = data_utils.rand_name('vsd-l2domain-shared-unmgd')
+    #     vsd_l2_shared_domains = self.nuage_vsd_client.create_vsd_shared_resource(name=name, type='L2DOMAIN')
+    #     vsd_l2_shared_domain = vsd_l2_shared_domains[0]
+    #     self.link_l2domain_to_shared_domain(vsd_l2domain['ID'], vsd_l2_shared_domain['ID'])
     #
-    #     for ipv6_cidr, ipv6_gateway, msg in invalid_ipv6:
-    #         self.assertRaisesRegexp(
-    #             nuage_exceptions.Conflict,
-    #             msg,
-    #             self.create_vsd_l2domain_template,
-    #             ip_type="DUALSTACK",
-    #             cidr4=cidr4,
-    #             dhcp_managed=True,
-    #             IPv6Address=ipv6_cidr,
-    #             IPv6Gateway=ipv6_gateway)
+    #     # create Openstack IPv4 subnet on Openstack based on VSD l2domain
+    #     net_name = data_utils.rand_name('network-')
+    #     network = self.create_network(network_name=net_name)
+    #     ipv4_subnet = self.create_subnet(
+    #         network,
+    #         gateway=self.gateway4,
+    #         cidr=self.cidr4,
+    #         enable_dhcp=False,
+    #         mask_bits=self.mask_bits,
+    #         nuagenet=vsd_l2domain['ID'],
+    #         net_partition=CONF.nuage.nuage_default_netpartition)
     #
-    # @classmethod
-    # def link_l2domain_to_shared_domain(cls, domain_id, shared_domain_id):
-    #     update_params = {
-    #         'associatedSharedNetworkResourceID': shared_domain_id
-    #     }
-    #     cls.nuage_vsd_client.update_l2domain(domain_id, update_params=update_params)
+    #     ipv6_subnet = self.create_subnet(
+    #         network,
+    #         ip_version=6,
+    #         gateway=self.gateway6,
+    #         cidr=self.cidr6,
+    #         mask_bits=self.cidr6._prefixlen,
+    #         enable_dhcp=False,
+    #         nuagenet=vsd_l2domain['ID'],
+    #         net_partition=CONF.nuage.nuage_default_netpartition)
     #
-    # # TODO: under construction
-    # # def test_create_vsd_shared_l2domain_dualstack_neg(self):
-    # #     # create l2domain on VSD
-    # #     cidr4 = IPNetwork('10.10.100.0/24')
-    # #     self.gateway4 = str(IPAddress(cidr4) + 1)
-    # #     self.cidr6 = IPNetwork("2001:5f74:c4a5:b82e::/64")
-    # #     self.gateway6 = str(IPAddress(self.cidr6) + 1)
-    # #
-    # #     vsd_l2domain_template = self.create_vsd_l2domain_template(
-    # #         ip_type="DUALSTACK",
-    # #         dhcp_managed=True,
-    # #         cidr4=cidr4,
-    # #         cidr6=self.cidr6,
-    # #         gateway=self.gateway4,
-    # #         gateway6=self.gateway6)
-    # #
-    # #     self._verify_vsd_l2domain_template(vsd_l2domain_template,
-    # #                                        ip_type="DUALSTACK",
-    # #                                        dhcp_managed=True,
-    # #                                        cidr4=cidr4,
-    # #                                        cidr6=self.cidr6,
-    # #                                        IPv6Gateway=self.gateway6,
-    # #                                        gateway=self.gateway4)
-    # #
-    # #     vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
-    # #     self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
-    # #
-    # #     name = data_utils.rand_name('vsd-l2domain-shared-unmgd')
-    # #     extra_params = { 'IPType': 'DUALSTACK'}
-    # #     vsd_l2_shared_domains = self.nuage_vsd_client.create_vsd_shared_resource(name=name, type='L2DOMAIN',
-    # #                                                                              extra_params=extra_params)
-    # #     vsd_l2_shared_domain = vsd_l2_shared_domains[0]
-    # #     self.link_l2domain_to_shared_domain(vsd_l2domain['ID'], vsd_l2_shared_domain['ID'])
-    # #     pass
+    #     # shall not create port with IP already in use
+    #     port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 10)}, \
+    #                                {'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 10)}]}
+    #
+    #     valid_port = self.create_port(network, **port_args)
+    #
+    #     pass
     #

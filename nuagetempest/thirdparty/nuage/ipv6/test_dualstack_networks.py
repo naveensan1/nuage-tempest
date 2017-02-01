@@ -15,21 +15,15 @@ from nuagetempest.thirdparty.nuage.ipv6.base_nuage_networks import NetworkTestCa
 
 CONF = config.CONF
 
-# ###############################################################################################################
-################################################################################################################
-# MultiVIP . allowed address pairsallowable address pairs)
-################################################################################################################
-################################################################################################################
 
-
-class Ipv6OpenStackManagedTest(NetworkTestCaseMixin):
+class DualStackNetworksTest(NetworkTestCaseMixin):
     @staticmethod
     def mask_to_prefix(mask):
         return sum([bin(int(x)).count('1') for x in mask.split('.')])
 
     @classmethod
     def resource_setup(cls):
-        super(Ipv6OpenStackManagedTest, cls).resource_setup()
+        super(DualStackNetworksTest, cls).resource_setup()
 
         cls.cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
         cls.mask_bits = CONF.network.tenant_network_mask_bits

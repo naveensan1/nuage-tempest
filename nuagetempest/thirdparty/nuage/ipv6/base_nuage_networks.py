@@ -43,7 +43,10 @@ class BaseNuageNetworksTestCase(test.BaseTestCase):
 ############################################################
 # VSD resources
 ############################################################
+
 class VsdTestCaseMixin(test.BaseTestCase):
+    VSD_FIP_POOL_CIDR = IPNetwork('130.130.130.0/24')
+    VSD_FIP_POOL_GW = '130.130.130.1'
 
     @classmethod
     def setup_clients(cls):
@@ -67,6 +70,13 @@ class VsdTestCaseMixin(test.BaseTestCase):
     @classmethod
     def resource_cleanup(cls):
         super(VsdTestCaseMixin, cls).resource_cleanup()
+
+    @classmethod
+    def link_l2domain_to_shared_domain(cls, domain_id, shared_domain_id):
+        update_params = {
+            'associatedSharedNetworkResourceID': shared_domain_id
+        }
+        cls.nuage_vsd_client.update_l2domain(domain_id, update_params=update_params)
 
     def create_vsd_l2domain_template(self, name=None, ip_type=None, dhcp_managed=None,
                                      cidr4=None,
@@ -122,37 +132,38 @@ class VsdTestCaseMixin(test.BaseTestCase):
     def _verify_vsd_l2domain_template(self, l2domain_template,
                                       ip_type="IPV4", dhcp_managed=False,
                                       cidr4=None, cidr6=None, **kwargs):
-        if ip_type == "IPV4":
-            self.assertThat(l2domain_template, ContainsDict({'IPType': Equals("IPV4")}))
-            self.assertIsNone(l2domain_template['IPv6Address'])
-            self.assertIsNone(l2domain_template['IPv6Gateway'])
-        elif ip_type == "DUALSTACK":
-            self.assertThat(l2domain_template, ContainsDict({'IPType': Equals("DUALSTACK")}))
-        else:
-            raise NotImplementedError
-
-        if cidr4:
-            self.assertThat(l2domain_template, ContainsDict({'address': Equals(str(cidr4.ip))}))
-            if "netmask" not in kwargs:
-                netmask = str(cidr4.netmask)
-                self.assertThat(l2domain_template, ContainsDict({'netmask': Equals(netmask)}))
-
-            if "gateway" not in kwargs:
-                gateway_ip = str(IPAddress(cidr4) + 1)
-                self.assertThat(l2domain_template, ContainsDict({'gateway': Equals(gateway_ip)}))
-        else:
-            self.assertIsNone(l2domain_template['address'])
-            self.assertIsNone(l2domain_template['gateway'])
-            self.assertIsNone(l2domain_template['netmask'])
-
-        if cidr6:
-            self.assertThat(l2domain_template, ContainsDict({'IPv6Address': Equals(str(cidr6))}))
-            if "IPv6Gateway" not in kwargs:
-                gateway_ip = str(IPAddress(cidr6) + 1)
-                self.assertThat(l2domain_template, ContainsDict({'IPv6Gateway': Equals(gateway_ip)}))
 
         if dhcp_managed:
             self.assertThat(l2domain_template, ContainsDict({'DHCPManaged': Equals(True)}))
+
+            if ip_type == "IPV4":
+                self.assertThat(l2domain_template, ContainsDict({'IPType': Equals("IPV4")}))
+                self.assertIsNone(l2domain_template['IPv6Address'])
+                self.assertIsNone(l2domain_template['IPv6Gateway'])
+            elif ip_type == "DUALSTACK":
+                self.assertThat(l2domain_template, ContainsDict({'IPType': Equals("DUALSTACK")}))
+            else:
+                raise NotImplementedError
+
+            if cidr4:
+                self.assertThat(l2domain_template, ContainsDict({'address': Equals(str(cidr4.ip))}))
+                if "netmask" not in kwargs:
+                    netmask = str(cidr4.netmask)
+                    self.assertThat(l2domain_template, ContainsDict({'netmask': Equals(netmask)}))
+
+                if "gateway" not in kwargs:
+                    gateway_ip = str(IPAddress(cidr4) + 1)
+                    self.assertThat(l2domain_template, ContainsDict({'gateway': Equals(gateway_ip)}))
+            else:
+                self.assertIsNone(l2domain_template['address'])
+                self.assertIsNone(l2domain_template['gateway'])
+                self.assertIsNone(l2domain_template['netmask'])
+
+            if cidr6:
+                self.assertThat(l2domain_template, ContainsDict({'IPv6Address': Equals(str(cidr6))}))
+                if "IPv6Gateway" not in kwargs:
+                    gateway_ip = str(IPAddress(cidr6) + 1)
+                    self.assertThat(l2domain_template, ContainsDict({'IPv6Gateway': Equals(gateway_ip)}))
         else:
             self.assertThat(l2domain_template, ContainsDict({'DHCPManaged': Equals(False)}))
 
@@ -295,10 +306,64 @@ class VsdTestCaseMixin(test.BaseTestCase):
             else:
                 self.assertThat(port, ContainsDict({key: Equals(value)}))
 
+    def _create_vsd_floatingip_pool(self, fip_pool_cidr=VSD_FIP_POOL_CIDR):
+        name = data_utils.rand_name('fip-pool')
+        address = IPAddress(fip_pool_cidr.first)
+        netmask = fip_pool_cidr.netmask
+        gateway = address + 1
+        extra_params = {
+            "underlay": True
+        }
+        vsd_fip_pool = self.nuage_vsd_client.create_floatingip_pool(name=name,
+                                                                   address=str(address),
+                                                                   gateway=str(gateway),
+                                                                   netmask=str(netmask),
+                                                                   extra_params=extra_params)
+
+        self.addCleanup(self.nuage_vsd_client.delete_vsd_shared_resource, vsd_fip_pool[0]['ID'])
+
+        return vsd_fip_pool[0]
+
+    def _claim_vsd_floating_ip(self, l3domain_id, vsd_fip_pool_id):
+        claimed_fip = self.nuage_vsd_client.claim_floatingip(l3domain_id, vsd_fip_pool_id)
+        return claimed_fip
+
+    def _associate_fip_to_port(self, port, fip_id):
+        kwargs = {"nuage_floatingip": {'id': fip_id }}
+        self.update_port(port, **kwargs)
+
+    def _disassociate_fip_from_port(self, port):
+        kwargs = {"nuage_floatingip": None}
+        self.update_port(port, **kwargs)
+
+    def _check_fip_in_list(self, claimed_fip_id, fip_list):
+        fip_found = False
+        for fip in fip_list['nuage_floatingips']:
+            if fip['id'] == claimed_fip_id:
+                fip_found=True
+        return fip_found
+
+    def _check_fip_in_port_show(self, port_id, claimed_fip_id):
+        fip_found = False
+        show_port = self.ports_client.show_port(port_id)
+        # first check if 'nuage_flaotingip' is not None
+        if show_port['port']['nuage_floatingip'] is not None:
+            if show_port['port']['nuage_floatingip']['id'] == claimed_fip_id:
+                fip_found = True
+        return fip_found
+
+
+
 ############################################################
 # Neutron resources
 ############################################################
 class NetworkTestCaseMixin(BaseNuageNetworksTestCase):
+
+    @classmethod
+    def resource_setup(cls):
+        super(NetworkTestCaseMixin, cls).resource_setup()
+        cls.cidr4 = IPNetwork('1.1.20.0/24')
+        cls.cidr6 = IPNetwork("2001:5f74:1111:b82e::/64")
 
     def create_network(self, network_name=None, **kwargs):
         """Wrapper utility that returns a test network."""
@@ -418,3 +483,48 @@ class NetworkTestCaseMixin(BaseNuageNetworksTestCase):
                 self.assertItemsEqual(port[key], value)
             else:
                 self.assertThat(port, ContainsDict({key: Equals(value)}))
+
+    def _given_network_linked_to_vsd_subnet(self, vsd_subnet, cidr4=None, cidr6=None, enable_dhcp=True, net_partition=None ):
+        # create Openstack IPv4 subnet on Openstack based on VSD l3domain subnet
+        net_name = data_utils.rand_name('network-')
+        network = self.create_network(network_name=net_name)
+
+        if net_partition:
+            actual_net_partition = net_partition
+        else:
+            actual_net_partition = CONF.nuage.nuage_default_netpartition
+
+        subnet4 = self.create_subnet(
+            network,
+            gateway=None,
+            cidr=cidr4,
+            enable_dhcp=enable_dhcp,
+            mask_bits=cidr4.prefixlen,
+            nuagenet=vsd_subnet['ID'],
+            net_partition=actual_net_partition)
+
+        # create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet
+        subnet6 = None
+        if cidr6:
+            subnet6 = self.create_subnet(
+                network,
+                ip_version=6,
+                gateway=None,
+                cidr=cidr6,
+                mask_bits=IPNetwork(cidr6).prefixlen,
+                enable_dhcp=False,
+                nuagenet=vsd_subnet['ID'],
+                net_partition=actual_net_partition)
+
+        return network, subnet4, subnet6
+
+    def _create_redirect_target_in_l3_subnet(self, l3subnet, name=None):
+        if name is None:
+            name = data_utils.rand_name('os-l3-rt')
+        # parameters for nuage redirection target
+        post_body = { 'insertion_mode': 'L3',
+                      'redundancy_enabled': 'False',
+                      'subnet_id': l3subnet['id'],
+                      'name': name}
+        redirect_target = self.nuage_network_client.create_redirection_target(**post_body)
+        return redirect_target

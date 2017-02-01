@@ -199,9 +199,6 @@ class VSDManagedPolicyGroupsCLITest(BaseNuageNetworksCLITestCase, VsdTestCaseMix
             type='SOFTWARE',
             extra_params=None)
 
-        # vsd_l2_subnet_y, l2dom_templ_y = self._create_vsd_l2_managed_subnet()
-        # cli_network_y, cli_subnet_y = self._cli_create_os_l2_vsd_managed_subnet(vsd_l2_subnet_y)
-
         cidr4 = IPNetwork('1.2.20.0/24')
         cidr6 = IPNetwork("2001:5f74:2222:b82e::/64")
         vsd_l2_subnet_y = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6 )
@@ -374,40 +371,62 @@ class VSDManagedPolicyGroupsCLITest(BaseNuageNetworksCLITestCase, VsdTestCaseMix
                                  (ports[i]['id'], policy_groups[j][0]['ID']))
 
     @nuage_test.header()
-    def test_cli_l2_list_policy_group_no_security_group(self):
-        # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD created policy group
+    def test_cli_l2_associate_multiple_ports_to_policygroups_dhcp_managed(self):
+        policy_groups = []
+        ports = []
+        # Given I have a VSD-L2-Managed-Subnet
         cidr4 = IPNetwork('1.1.20.0/24')
-        cidr6 = IPNetwork("2001:5f74:1111:b82e::/64")
-        vsd_l2_subnet = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6 )
+        cidr6 = IPNetwork("2001:5f74:c4a5:b82e::/64")
+        vsd_l2_subnet = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6,dhcp_managed=True )
         cli_network, cli_subnet4, cli_subnet6 = self._cli_create_os_l2_vsd_managed_dualstack_subnet(vsd_l2_subnet)
-        policy_group = self.nuage_vsd_client.create_policygroup(constants.L2_DOMAIN,
-                                                                vsd_l2_subnet['ID'],
-                                                                name='myVSDpg-1',
-                                                                type='SOFTWARE',
-                                                                extra_params=None)
-        # And I have created a security group on the OS subnet
-        security_group = self.create_security_group_with_args('cli-security-group')
-        # # And I have a redirect target
-        # os_redirect_target = self._cli_create_nuage_redirect_target_in_l2_subnet(cli_subnet)
-        # advfw_template = self.nuage_vsd_client.create_advfwd_entrytemplate(
-        #     constants.L2_DOMAIN,
-        #     vsd_l2_subnet[0]['ID']
-        # )
-        # rt_rule = self.cli_create_nuage_redirect_target_rule_with_args(
-        #     '--origin-group-id', security_group['id'],
-        #     '--priority 300',
-        #     '--protocol 1',
-        #     '--remote-ip-prefix 10.0.0.0/24',
-        #     '--action REDIRECT',
-        #     os_redirect_target['id']
-        # )
-        # When I retrieve the VSD-L2-Managed-Subnet
-        policy_group_list = self.list_nuage_policy_group_for_subnet(cli_subnet4['id'])
-        # I expect the only the policyGroup in my list: length may not be greater than one
-        pg_present = self._cli_check_policy_group_in_list(policy_group[0]['ID'], policy_group_list)
-        self.assertTrue(pg_present and len(policy_group_list) == 1,
-                        msg="Security groups are also in the policy group list")
 
-        # self.assertEqual(1,len(policy_group_list),
-        #                  message="Security groups are also in the policy group list")
+        # And I have multiple policy_groups
+        for i in range(SEVERAL_POLICY_GROUPS):
+            policy_groups.append(self.nuage_vsd_client.create_policygroup(constants.L2_DOMAIN,
+                                                                          vsd_l2_subnet['ID'],
+                                                                          name='myVSDpg-%s' % i,
+                                                                          type='SOFTWARE',
+                                                                          extra_params=None))
+        for i in range(SEVERAL_PORTS):
+            # When I create multiple ports
+            port = self.create_port(cli_network)
+            ports.append(port)
+            self.addCleanup(self._delete_port, port['id'])
+            self.ports.remove(port)
 
+        # And associate each port with all these policy groups
+        pg_id_list = []
+        for i in range(SEVERAL_POLICY_GROUPS):
+            pg_id_list.append(policy_groups[i][0]['ID'])
+        for i in range(SEVERAL_PORTS):
+            self.cli_associate_port_with_multiple_policy_group(ports[i], pg_id_list)
+        # When I retrieve each port
+        for i in range(SEVERAL_PORTS):
+            show_port = self.show_port(ports[i]['id'])
+            # Then I expect all policy groups in the response
+            if CONF.nuage_sut.nuage_plugin_mode != 'ml2':
+                all_pg_present = self._cli_check_all_policy_groups_in_show_port(pg_id_list, show_port)
+                self.assertTrue(all_pg_present, "Port does not contain all associated policy groups")
+        # When I retrieve each policy group
+        for i in range(SEVERAL_POLICY_GROUPS):
+            # Then I expect the response to contain all the ports
+            for j in range(SEVERAL_PORTS):
+                port_present = self.cli_check_port_in_show_policy_group(ports[j]['id'], policy_groups[i][0]['ID'])
+                self.assertTrue(port_present, "Port(%s) not present in policy group(%s)" %
+                                (ports[j]['id'], policy_groups[i][0]['ID']))
+        # When I disassociate all policy groups from each port
+        for i in range(SEVERAL_PORTS):
+            self.cli_disassociate_port_from_policy_group(ports[i]['id'])
+            # Then I do NOT expect the policy Groups in the show port response
+            show_port = self.show_port(ports[i]['id'])
+
+            if CONF.nuage_sut.nuage_plugin_mode != 'ml2':
+                self.assertEmpty(show_port['nuage_policy_groups'],
+                                 "Port-show list disassociated ports")
+
+            # And I do not expect this port in any of the policy groups
+            for j in range(SEVERAL_POLICY_GROUPS):
+                port_present = self.cli_check_port_in_show_policy_group(ports[i]['id'], policy_groups[j][0]['ID'])
+                self.assertFalse(port_present, 'disassociated port (%s) still present in policy group(%s)' %
+                                 (ports[i]['id'], policy_groups[j][0]['ID']))
+        pass

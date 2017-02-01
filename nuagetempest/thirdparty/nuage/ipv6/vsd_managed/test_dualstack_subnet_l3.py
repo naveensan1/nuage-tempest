@@ -1,6 +1,5 @@
 # Copyright 2017 - Nokia
 # All Rights Reserved.
-
 from testtools.matchers import Equals
 from testtools.matchers import ContainsDict
 
@@ -10,7 +9,6 @@ from tempest import config
 from tempest.common.utils import data_utils
 
 from nuagetempest.lib.utils import constants as nuage_constants
-from nuagetempest.thirdparty.nuage.ipv6.base_nuage_networks import BaseNuageNetworksTestCase
 from nuagetempest.thirdparty.nuage.ipv6.base_nuage_networks import VsdTestCaseMixin
 from nuagetempest.thirdparty.nuage.ipv6.base_nuage_networks import NetworkTestCaseMixin
 
@@ -21,7 +19,7 @@ MSG_INVALID_IPV6_ADDRESS = "Invalid network IPv6 address"
 MSG_IP_ADDRESS_INVALID_OR_RESERVED = "IP Address is not valid or cannot be in reserved address space"
 
 
-class TestVSDManagedDualStackSubnetL3(VsdTestCaseMixin,
+class VSDManagedDualStackSubnetL3Test(VsdTestCaseMixin,
                                       NetworkTestCaseMixin):
 
     ####################################################################################################################

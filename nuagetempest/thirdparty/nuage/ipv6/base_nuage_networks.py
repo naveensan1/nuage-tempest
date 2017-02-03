@@ -255,6 +255,38 @@ class VsdTestCaseMixin(test.BaseTestCase):
         self.addCleanup(self.nuage_vsd_client.delete_domain_subnet, vsd_subnet['ID'])
         return vsd_subnet
 
+    def create_vsd_l3domain_subnet(self, zone_id, subnet_name,
+                                   cidr, gateway,
+                                   cidr6=None,
+                                   gateway6=None,
+                                   ip_type=None):
+        params = {}
+
+        if ip_type == "IPV4":
+            params.update({'IPType': "IPV4"})
+        elif ip_type == "DUALSTACK":
+            params.update({'IPType': "DUALSTACK"})
+            params.update({'IPv6Address': str(cidr6),
+                           'IPv6Gateway': gateway6})
+        elif ip_type == "IPV6":
+            params.update({'IPType': "IPV6"})
+            params.update({'IPv6Address': str(cidr6),
+                           'IPv6Gateway': gateway6})
+        elif ip_type:
+            params.update({'IPType': ip_type})
+
+        vsd_subnets = self.nuage_vsd_client.create_domain_subnet(
+            parent_id=zone_id,
+            name=subnet_name,
+            net_address=str(cidr.ip),
+            netmask=str(cidr.netmask),
+            gateway=gateway,
+            extra_params=params)
+
+        vsd_subnet = vsd_subnets[0]
+        self.addCleanup(self.nuage_vsd_client.delete_domain_subnet, vsd_subnet['ID'])
+        return vsd_subnet
+
     def _given_vsd_l3subnet(self, cidr4=None, cidr6=None, dhcp_managed=True, **kwargs):
         name = data_utils.rand_name('l3domain-')
         vsd_l3domain_template = self.create_vsd_l3dom_template(
@@ -286,9 +318,29 @@ class VsdTestCaseMixin(test.BaseTestCase):
 
         return vsd_l3domain, vsd_l3domain_subnet
 
-    def _verify_vport(self, port, vsd_l2domain, **kwargs):
+    def _verify_vport_in_l2_domain(self, port, vsd_l2domain, **kwargs):
         nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.L2_DOMAIN,
                                                        vsd_l2domain['ID'],
+                                                       filters='externalID',
+                                                       filter_value=port['id'])
+        self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])
+        nuage_vport = nuage_vports[0]
+        self.assertThat(nuage_vport, ContainsDict({'name': Equals(port['id'])}))
+
+        # verify all other kwargs as attributes (key,value) pairs
+        for key, value in kwargs.iteritems():
+            if isinstance(value, dict):
+                # compare dict
+                raise NotImplementedError
+            if isinstance(value, list):
+                # self.assertThat(port, ContainsDict({key: Equals(value)}))
+                self.assertItemsEqual(port[key], value)
+            else:
+                self.assertThat(port, ContainsDict({key: Equals(value)}))
+
+    def _verify_vport_in_l3_subnet(self, port, vsd_l3_subnet, **kwargs):
+        nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.SUBNETWORK,
+                                                       vsd_l3_subnet['ID'],
                                                        filters='externalID',
                                                        filter_value=port['id'])
         self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])

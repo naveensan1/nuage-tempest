@@ -48,6 +48,12 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
                  'IPV4-VIP': False,
                  'disable-anti-spoofing': False
                 },
+            'case-no-aap-fixed-ip4-no-ip6': # no fixed-ips, no allowed address pairs
+                {'fixed-ips': [],
+                 'allowed-address-pairs': [],
+                 'IPV4-VIP': False,
+                 'disable-anti-spoofing': False
+                },
             'case-aap-ipv4':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
@@ -125,7 +131,7 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
                 break
         return has_ipv6
 
-    def _check_crud_port(self, scenario, network, subnet4, subnet6, vsd_l3_subnet):
+    def _check_crud_port(self, scenario, network, subnet4, subnet6, vsd_subnet, vsd_subnet_type):
         port_config = self.port_configs[scenario]
 
         params = {}
@@ -159,8 +165,8 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
                           nuage_floatingip=None,
                           **kwargs)
 
-        nuage_vports = self.nuage_vsd_client.get_vport(nuage_constants.SUBNETWORK,
-                                                       vsd_l3_subnet['ID'],
+        nuage_vports = self.nuage_vsd_client.get_vport(vsd_subnet_type,
+                                                       vsd_subnet['ID'],
                                                        filters='externalID',
                                                        filter_value=port['id'])
         self.assertEqual(len(nuage_vports), 1, "Must find one VPort matching port: %s" % port['name'])
@@ -187,26 +193,26 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
     @nuage_test.header()
     def test_provision_port_without_address_pairs_in_l2_subnet_unmanaged(self):
         # Given I have a VSD-L2-Unmanaged subnet
-        vsd_l2_subnet = self._given_vsd_l2domain(cidr4=self.cidr4, cidr6=self.cidr6, dhcp_managed=False)
+        vsd_l2_subnet = self._given_vsd_l2domain(dhcp_managed=False)
         network, subnet4, subnet6 = self._given_network_linked_to_vsd_subnet(
             vsd_l2_subnet, cidr4=self.cidr4, cidr6=self.cidr6, enable_dhcp=False )
 
         # scenario = "case-no-aap"    # see OPENSTACK-1669
         # scenario = "case-aap-ipv4-range" # see OPENSTACK-1670
         scenario = "case-aap-ipv4-mac4-ipv6"
-        self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l2_subnet)
+        self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l2_subnet, nuage_constants.L2_DOMAIN)
 
         pass
 
     @nuage_test.header()
     def test_provision_ports_without_address_pairs_in_l2_subnet_unmanaged(self):
         # Given I have a VSD-L2-Unmanaged subnet
-        vsd_l2_subnet = self._given_vsd_l2domain(cidr4=self.cidr4, cidr6=self.cidr6, dhcp_managed=False)
+        vsd_l2_subnet = self._given_vsd_l2domain(dhcp_managed=False)
         network, subnet4, subnet6 = self._given_network_linked_to_vsd_subnet(
             vsd_l2_subnet, cidr4=self.cidr4, cidr6=self.cidr6, enable_dhcp=False )
 
         for scenario, port_config in self.port_configs.iteritems():
-            self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l2_subnet)
+            self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l2_subnet, nuage_constants.L2_DOMAIN)
 
         pass
 
@@ -218,9 +224,10 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
         network, subnet4, subnet6 = self._given_network_linked_to_vsd_subnet(
             vsd_l3_subnet, cidr4=self.cidr4, cidr6=self.cidr6)
 
-        # scenario = "case-no-aap"    # see OPENSTACK-1669
-        scenario = "case-aap-ipv4-range"
-        self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l3_subnet)
+        #scenario = "case-no-aap"
+        scenario = "case-no-aap-fixed-ips"
+        # scenario = "case-aap-ipv4-range"
+        self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l3_subnet, nuage_constants.SUBNETWORK)
 
         pass
 
@@ -233,7 +240,7 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
             vsd_l3_subnet, cidr4=self.cidr4, cidr6=self.cidr6)
 
         for scenario, port_config in self.port_configs.iteritems():
-            self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l3_subnet)
+            self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l3_subnet, nuage_constants.SUBNETWORK)
 
         pass
 

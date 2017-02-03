@@ -152,7 +152,7 @@ class VSDManagedAllowedAddresPairsCLITest(BaseNuageNetworksCLITestCase, VsdTestC
         # Given I have a VSD-L2-Managed subnet
         cidr4 = IPNetwork('1.1.20.0/24')
         cidr6 = IPNetwork("2001:5f74:c4a5:b82e::/64")
-        vsd_l2_subnet = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6 )
+        vsd_l2_subnet = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6,dhcp_managed=True )
         cli_network, cli_subnet4, cli_subnet6 = self._cli_create_os_l2_vsd_managed_dualstack_subnet(vsd_l2_subnet)
 
         # When I create a port in this VSD-L2-Managed-Subnet with

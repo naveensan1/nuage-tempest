@@ -212,7 +212,7 @@ class CLIClient(object):
             'swift', action, flags, params, fail_ok, merge_stderr, timeout)
 
     def neutron(self, action, flags='', params='', fail_ok=False,
-                endpoint_type='publicURL', merge_stderr=False, timeout=10):
+                endpoint_type='publicURL', merge_stderr=False, timeout=20):
         """Executes neutron command for the given action.
         :param action: the cli command to run using neutron
         :type action: string

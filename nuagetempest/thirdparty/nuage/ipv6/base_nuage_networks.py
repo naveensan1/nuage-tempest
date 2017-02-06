@@ -262,6 +262,13 @@ class VsdTestCaseMixin(test.BaseTestCase):
                                    ip_type=None):
         params = {}
 
+        if cidr:
+            net_address = str(cidr.ip)
+            net_mask = str(cidr.netmask)
+        else:
+            net_address = None
+            net_mask = None
+
         if ip_type == "IPV4":
             params.update({'IPType': "IPV4"})
         elif ip_type == "DUALSTACK":
@@ -278,8 +285,8 @@ class VsdTestCaseMixin(test.BaseTestCase):
         vsd_subnets = self.nuage_vsd_client.create_domain_subnet(
             parent_id=zone_id,
             name=subnet_name,
-            net_address=str(cidr.ip),
-            netmask=str(cidr.netmask),
+            net_address=net_address,
+            netmask=net_mask,
             gateway=gateway,
             extra_params=params)
 

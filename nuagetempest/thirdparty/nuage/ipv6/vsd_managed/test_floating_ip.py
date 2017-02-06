@@ -34,7 +34,7 @@ class VSDManagedFloatingIpTest(VsdTestCaseMixin,
     @nuage_test.header()
     def test_create_port_with_vsd_floatingip(self):
         # Given I have a VSD-FloatingIP-pool
-        vsd_fip_pool = self._create_vsd_floatingip_pool(fip_pool_cidr=IPNetwork('120.120.10.0/24'))
+        vsd_fip_pool = self._create_vsd_floatingip_pool(fip_pool_cidr=IPNetwork('110.110.10.0/24'))
 
         # Given I have a VSD-L3-Managed subnet
         vsd_l3_domain, vsd_l3_subnet = self._given_vsd_l3subnet(

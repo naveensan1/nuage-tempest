@@ -16,6 +16,9 @@
 import re
 from netaddr import IPNetwork
 
+from testtools.matchers import Equals
+from testtools.matchers import ContainsDict
+
 from tempest.api.network import base
 from tempest.lib.common.utils import data_utils
 from oslo_log import log as logging
@@ -450,17 +453,24 @@ class NuageFipUnderlayBase(base.BaseAdminNetworkTest,):
                                                   "99.99.99.0/24",
                                                   "--name ", ext_subnet_name,
                                                   underlay_str)
+            self.assertThat(subnet, ContainsDict({'underlay': Equals(str(underlay))}))
+
             # Check OPENSTACK-721: update name of subnet failing
             new_name = ext_subnet_name + "name_upd"
             self.update_subnet_with_args(subnet['id'], "--name ", new_name)
             show_subnet = self.show_subnet(subnet['id'])
             updated_name = show_subnet['name']
+
             self.assertEqual(updated_name, new_name)
+            # Check VSD-18778 - state should not have changed
+            self.assertThat(show_subnet, ContainsDict({'underlay': Equals(str(underlay))}))
+
             new_underlay_str = "--underlay=" + str(False if underlay is True else True)
             exp_message = "Cannot update read-only attribute underlay"
             self.assertRaisesRegexp(exceptions.SSHExecCommandFailed,
                                     exp_message,
                                     self.update_subnet_with_args, subnet['id'], new_underlay_str)
+
         pass
 
     def _cli_list_external_subnets_underlay(self):

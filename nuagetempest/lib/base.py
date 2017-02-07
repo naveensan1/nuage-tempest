@@ -83,6 +83,43 @@ def setup_tempest_tenant_user(osc, tenant, user, password, role):
     LOG.info('Role: {} ID: {}'.format(role, roleid))
 
 
+def setup_tempest_tenant_user_openstack_cli(osc, project, user, password, role):
+
+    def ks_cmd(cmd):
+        ks_base_cmd = 'source ~/admin_rc ; openstack'
+        awk_cmd = 'awk "/ id / {print $4}"'
+        command = '{} {} | {}'.format(ks_base_cmd, cmd, awk_cmd)
+        return osc.cmd(command, timeout=30, strict=False)
+
+    tenantid = ks_cmd('project create {} --or-show'.format(project))
+    tenantid = tenantid[0][0]
+    LOG.info('Project: {}  ID: {}'.format(project, tenantid))
+
+    cmd = 'user create {} --password {} --project {} --or-show'
+    userid = ks_cmd(cmd.format(user, password, project))
+    userid = userid[0][0]
+    LOG.info('User: {} ID: {}'.format(user, userid))
+
+    cmd = 'role create {} --or-show'
+    roleid = ks_cmd(cmd.format(role))
+    roleid = roleid[0][0]
+    LOG.info('Role: {} ID: {}'.format(role, roleid))
+
+    # get role assigments
+    ks_cmd = 'source ~/admin_rc ; openstack role assignment list --project {} --user {} | grep {}'.format(project, user, roleid)
+    awk_cmd = ' awk "/ id / {print $2}"'
+    command = '{} | {}'.format(ks_cmd, awk_cmd)
+    role_assignement_id = osc.cmd(command, timeout=30, strict=False)
+
+    if not role_assignement_id:
+        cmd = 'role add --user {} --project {} {}'
+        role_assignement_id = ks_cmd(cmd.format(user, project, role))
+        role_assignement_id = role_assignement_id[0][0]
+        LOG.info('Role Assignement created for role: {} ID: {}'.format(role, role_assignement_id))
+    else:
+        LOG.info('Role Assignement existed for role: {} ID: {}'.format(role, role_assignement_id))
+
+
 def setup_tempest_tenant_user_v3(osc, tenant, user, password, role):
 
     def ks_cmd(cmd):

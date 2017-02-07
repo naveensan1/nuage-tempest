@@ -49,7 +49,9 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
     ####################################################################################################################
     # Negative cases
     ####################################################################################################################
-    # VSD-18557
+    # VSD-18607 -
+    # see also VSD-18557
+    # see also VSD-18415
     def test_vsd_l2domain_unmanaged_ipv4_only_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,
@@ -58,7 +60,6 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             dhcp_managed=False,
             IPType="IPV4")
 
-    # VSD-18558
     def test_vsd_l2domain_managed_ipv6_only_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,
@@ -67,8 +68,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             dhcp_managed=False,
             IPType="IPV6")
 
-    # VSD-18415
-    def test_vsd_l2domain_managed_ipv6_dualstack_neg(self):
+    def test_vsd_l2domain_unmanaged_ipv6_dualstack_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,
             "TODO: Should not allow DUALSTACK IPType",
@@ -76,7 +76,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             dhcp_managed=False,
             IPType="DUALSTACK")
 
-    def test_vsd_l2domain_managed_with_ipv4_addresses_neg(self):
+    def test_vsd_l2domain_unmanaged_with_ipv4_addresses_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,
             "TODO: Should not allow IPv4 addressing in unmanaged template",
@@ -85,7 +85,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             cidr4=self.cidr4,
             cidr6=None)
 
-    def test_vsd_l2domain_managed_with_ipv6_addresses_neg(self):
+    def test_vsd_l2domain_unmanaged_with_ipv6_addresses_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,
             "TODO: Should not allow IPv6 addressing in unmanaged template",
@@ -220,7 +220,7 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
             ("2001:5F74:c4A5:B82e::/64", "2001:5f74:c4a5:b82e:f483:3427:aB3E:bC21"),
                  # valid address, gateway at random address - mixed case
 
-            ("2001:5f74:c4a5:b82e::/64", "2001:5:005:b82e:f4:00::f"),
+            ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e:f4:00::f"),
                  # valid address, gateway at random address - compressed
             ("3ffe:0b00:0000:0001:5f74:0001:c4a5:b82e/64", "3ffe:0b00:0000:0001:5f74:0001:c4a5:ffff"),
                 # prefix not matching bit mask
@@ -328,7 +328,7 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
             enable_dhcp=False,
             gateway=self.gateway4,
             cidr=self.cidr4,
-            mask_bits=24,
+            mask_bits=self.mask_bits,
             nuagenet=vsd_l2domain['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
         self.assertEqual(ipv4_subnet['cidr'], str(self.cidr4))
@@ -342,13 +342,13 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
             network,
             **port_args)
 
-        # create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet
+        # create Openstack IPv6 subnet
         ipv6_subnet = self.create_subnet(
             network,
             ip_version=6,
             gateway=vsd_l2domain_template['IPv6Gateway'],
-            cidr=IPNetwork(vsd_l2domain_template['IPv6Address']),
-            mask_bits=64,
+            cidr=self.cidr6,
+            mask_bits=self.cidr6.prefixlen,
             enable_dhcp=False,
             nuagenet=vsd_l2domain['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)

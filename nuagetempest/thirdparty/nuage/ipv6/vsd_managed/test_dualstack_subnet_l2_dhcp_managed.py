@@ -17,17 +17,21 @@ from nuagetempest.thirdparty.nuage.ipv6.base_nuage_networks import NetworkTestCa
 
 CONF = config.CONF
 
-MSG_INVALID_GATEWAY = "Invalid IPv6 network gateway"
+MSG_INVALID_GATEWAY = "Invalid network gateway"
 MSG_INVALID_ADDRESS = "Invalid network address"
 
 MSG_INVALID_IPV6_ADDRESS = "Invalid network IPv6 address"
+MSG_INVALID_IPV6_NETMASK = "Invalid IPv6 netmask"
+MSG_INVALID_IPV6_GATEWAY = "Invalid IPv6 network gateway"
+
 MSG_IP_ADDRESS_INVALID_OR_RESERVED = "IP Address is not valid or cannot be in reserved address space"
 
 MSG_INVALID_INPUT_FOR_FIXED_IPS = "Invalid input for fixed_ips. Reason: '%s' is not a valid IP address."
 MSG_INVALID_IP_ADDRESS_FOR_SUBNET = "IP address %s is not a valid IP for the specified subnet."
 
 
-class VSDManagedL2DomainDHCPManagedTest(VsdTestCaseMixin):
+class VSDManagedL2DomainDHCPManagedTest(VsdTestCaseMixin,
+                                        NetworkTestCaseMixin):
     @classmethod
     def resource_setup(cls):
         super(VSDManagedL2DomainDHCPManagedTest, cls).resource_setup()
@@ -90,7 +94,6 @@ class VSDManagedL2DomainDHCPManagedTest(VsdTestCaseMixin):
     ####################################################################################################################
     # Negative cases
     ####################################################################################################################
-    # VSD-18558
     def test_vsd_l2domain_managed_unsupported_ip_type_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,
@@ -175,7 +178,7 @@ class VSDManagedL2DomainDHCPManagedTest(VsdTestCaseMixin):
         cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
 
         invalid_ipv6 = [
-            ('FE80::/8', 'FE80::1', "Invalid Ipv6 address"),
+            ('FE80::/8', 'FE80::1', MSG_INVALID_IPV6_NETMASK),
                 # Link local address
             ("FF00:5f74:c4a5:b82e::/64", "FF00:5f74:c4a5:b82e:ffff:ffff:ffff:ffff", MSG_IP_ADDRESS_INVALID_OR_RESERVED),
                 # multicast
@@ -185,12 +188,20 @@ class VSDManagedL2DomainDHCPManagedTest(VsdTestCaseMixin):
                 # not specified address
             ('::/0', '', "Invalid IPv6 netmask"),
                 # empty string
-            ("2001:5f74:c4a5:b82e::/64", "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff", MSG_INVALID_GATEWAY),
+            ("2001:5f74:c4a5:b82e::/64", "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff", MSG_INVALID_IPV6_GATEWAY),
                 # valid address, invalid gateway - not in cidr
-            ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e:ffff:ffff:ffff", MSG_INVALID_GATEWAY),
+            ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e:ffff:ffff:ffff", MSG_INVALID_IPV6_GATEWAY),
                 # valid address, invalid gateway - seven segments
-            ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e:100.12.13.1", MSG_INVALID_GATEWAY),
+            ("2001:5f74:c4a5:b82e::/64", "2001:5f74:c4a5:b82e:100.12.13.1", MSG_INVALID_IPV6_GATEWAY),
                 # needs :: between hex and decimal part.
+            ("2001:5f74:c4a5:b82e:b000::/63", "2001:5f74:c4a5:b82e:b0:000::1", MSG_INVALID_IPV6_NETMASK),
+                # unsupported netmask
+            ("2001:5f74:c4a5:b82e::/129", "2001:5f74:c4a5:b82e::0", MSG_INVALID_IPV6_ADDRESS),
+                # unsupported netmask
+            ("3ffe:0b00::/32", "3ffe:0b00::1", MSG_INVALID_IPV6_NETMASK),
+                # prefix < 64
+            ("2001::/16", "2001::1", MSG_INVALID_IPV6_NETMASK),
+                # prefix 16
         ]
 
         for ipv6_cidr, ipv6_gateway, msg in invalid_ipv6:
@@ -474,11 +485,6 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
             # valid address, gateway at random address - compressed
             ("3ffe:0b00:0000:0001:5f74:0001:c4a5:b82e/64", "3ffe:0b00:0000:0001:5f74:0001:c4a5:ffff"),
             # prefix not matching bit mask
-
-            ("3ffe:0b00::/32", "3ffe:0b00::1"),
-            # prefix < 64
-            ("2001::/16", "2001::1"),
-            # prefix 16
         ]
 
         for ipv6_cidr, ipv6_gateway in valid_ipv6:
@@ -794,6 +800,7 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
             network,
             **port_args)
 
+        # VSD-18779
         # shall not create port with fixed ip on the IPv6 gateway address
         port_args = dict(fixed_ips=[{'subnet_id': ipv4_subnet['id']},
                                     {'subnet_id': ipv6_subnet['id'], 'ip_address': vsd_l2domain_template['IPv6Gateway']}

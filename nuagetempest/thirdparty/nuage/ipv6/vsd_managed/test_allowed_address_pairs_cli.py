@@ -263,6 +263,9 @@ class VSDManagedAllowedAddresPairsCLITest(BaseNuageNetworksCLITestCase, VsdTestC
             "--name aap-port-1",
             " --fixed-ip ip_address="+str(port_fixed_ip),
             "--allowed_address-pairs type=dict list=true ip_address=" + aap_fixed_ip)
+        self.addCleanup(self._delete_port, addrpair_port['id'])
+        self.ports.remove(addrpair_port)
+
         # Then I expect the allowed-address-pair the port-show response
         # And the allowed-address-pair MACaddress == port MACaddress
         show_port = self.show_port(addrpair_port['id'])

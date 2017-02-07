@@ -5,6 +5,9 @@ from testtools.matchers import Equals
 from testtools.matchers import ContainsDict
 
 from netaddr import *
+
+from oslo_log import log as logging
+
 from tempest import config
 from tempest.lib.common.utils import data_utils
 
@@ -27,6 +30,8 @@ VALID_MAC_ADDRESS_2B = 'fa:fa:3e:e8:e8:2b'
 ################################################################################################################
 ################################################################################################################
 
+LOG = logging.getLogger(__name__)
+
 
 class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
                                        NetworkTestCaseMixin):
@@ -46,65 +51,73 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
                 {'fixed-ips': [],
                  'allowed-address-pairs': [],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': False
+                 'l2-disable-anti-spoofing': False,
+                 'l3-disable-anti-spoofing': False
                 },
             'case-no-aap-fixed-ip4-no-ip6': # no fixed-ips, no allowed address pairs
                 {'fixed-ips': [],
                  'allowed-address-pairs': [],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': False
+                 'l2-disable-anti-spoofing': False,
+                 'l3-disable-anti-spoofing': False
                 },
             'case-aap-ipv4':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
-                      {'ip_address': str(IPAddress(cls.cidr4.first)+10)}
+                      {'ip_address': str(IPAddress(cls.cidr4.first) + 10)}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': False
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': False
                 },
             'case-aap-ipv6':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
-                     {'ip_address': str(IPAddress(cls.cidr6.first)+10)}
+                     {'ip_address': str(IPAddress(cls.cidr6.first) + 10)}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': True
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': True
                 },
             'case-aap-ipv4-ipv6':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
-                     {'ip_address': str(IPAddress(cls.cidr4.first)+10)},
-                     {'ip_address': str(IPAddress(cls.cidr6.first)+10)}
+                     {'ip_address': str(IPAddress(cls.cidr4.first) + 10)},
+                     {'ip_address': str(IPAddress(cls.cidr6.first) + 10)}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': True
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': True
                 },
             'case-aap-ipv4-mac4-ipv6':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
-                     {'ip_address': str(IPAddress(cls.cidr4.first)+10), 'mac_address': VALID_MAC_ADDRESS_2A},
-                     {'ip_address': str(IPAddress(cls.cidr6.first)+10)}
+                     {'ip_address': str(IPAddress(cls.cidr4.first) + 10), 'mac_address': VALID_MAC_ADDRESS_2A},
+                     {'ip_address': str(IPAddress(cls.cidr6.first) + 10)}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': True
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': True
                 },
             'case-aap-ipv4-ipv6-mac6':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
-                     {'ip_address': str(IPAddress(cls.cidr4.first)+10)},
-                     {'ip_address': str(IPAddress(cls.cidr6.first)+10), 'mac_address': VALID_MAC_ADDRESS_2B}
+                     {'ip_address': str(IPAddress(cls.cidr4.first) + 10)},
+                     {'ip_address': str(IPAddress(cls.cidr6.first) + 10), 'mac_address': VALID_MAC_ADDRESS_2B}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': True
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': True
                 },
             'case-aap-ipv4-mac4-ipv6-mac6':
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
-                     {'ip_address': str(IPAddress(cls.cidr4.first)+10), 'mac_address': VALID_MAC_ADDRESS_2A},
-                     {'ip_address': str(IPAddress(cls.cidr6.first)+10), 'mac_address': VALID_MAC_ADDRESS_2B}
+                     {'ip_address': str(IPAddress(cls.cidr4.first) + 10), 'mac_address': VALID_MAC_ADDRESS_2A},
+                     {'ip_address': str(IPAddress(cls.cidr6.first) + 10), 'mac_address': VALID_MAC_ADDRESS_2B}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': True
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': True
                 },
             # AAP is a range of IP addresses
             'case-aap-ipv4-range':
@@ -113,10 +126,11 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
                 {'fixed-ips': [],
                  'allowed-address-pairs': [
                      {'ip_address': str(cls.cidr4.subnet(24, 1).next())},
-                     {'ip_address': str(IPAddress(cls.cidr6.first)+10)}
+                     {'ip_address': str(IPAddress(cls.cidr6.first) + 10)}
                  ],
                  'IPV4-VIP': False,
-                 'disable-anti-spoofing': True
+                 'l2-disable-anti-spoofing': True,
+                 'l3-disable-anti-spoofing': True
                 },
 
         }
@@ -174,15 +188,13 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
         self.assertThat(nuage_vport, ContainsDict({'name': Equals(port['id'])}))
         self.assertThat(nuage_vport, ContainsDict({'multiNICVPortID': Equals(None)}))
 
-        # And anti-address spoofing is disabled on vport in VSD (in VSD addressSpoofing ENABLED)
-        if self._has_ipv6_allowed_address_pairs(port_config['allowed-address-pairs']):
-            expected_address_spoofing = constants.ENABLED
-        else:
-            expected_address_spoofing = constants.INHERITED
-        self.assertThat(nuage_vport, ContainsDict({'addressSpoofing': Equals(expected_address_spoofing)}))
-
         # Check the scenario
-        if port_config['disable-anti-spoofing']:
+        if vsd_subnet_type==nuage_constants.L2_DOMAIN:
+            attr = 'l2-disable-anti-spoofing'
+        else:
+            attr = 'l3-disable-anti-spoofing'
+
+        if port_config[attr]:
             expected_address_spoofing = constants.ENABLED
         else:
             expected_address_spoofing = constants.INHERITED
@@ -212,6 +224,7 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
             vsd_l2_subnet, cidr4=self.cidr4, cidr6=self.cidr6, enable_dhcp=False )
 
         for scenario, port_config in self.port_configs.iteritems():
+            LOG.info("TESTCASE scenario {}".format(scenario))
             self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l2_subnet, nuage_constants.L2_DOMAIN)
 
         pass
@@ -240,6 +253,7 @@ class VSDManagedAllowedAddresPairsTest(VsdTestCaseMixin,
             vsd_l3_subnet, cidr4=self.cidr4, cidr6=self.cidr6)
 
         for scenario, port_config in self.port_configs.iteritems():
+            LOG.info("TESTCASE scenario {}".format(scenario))
             self._check_crud_port(scenario, network, subnet4, subnet6, vsd_l3_subnet, nuage_constants.SUBNETWORK)
 
         pass

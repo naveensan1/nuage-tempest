@@ -64,6 +64,10 @@ class VSDManagedNetworksTestJSONML2(
         pass
 
     @nuage_test.header(tags=['smoke'])
+    def test_link_subnet_l2(self):
+        super(VSDManagedNetworksTestJSONML2, self).test_link_subnet_l2()
+
+    @nuage_test.header(tags=['smoke'])
     def test_create_port_subnet_l2_managed(self):
         net_name = data_utils.rand_name()
 

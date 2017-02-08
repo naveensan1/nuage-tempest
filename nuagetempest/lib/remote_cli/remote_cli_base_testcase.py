@@ -159,6 +159,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
     def _as_admin(self):
         self.me = Role.admin
         self._get_clients()
+        return self
 
     def _as_tenant(self):
         self.me = Role.tenant

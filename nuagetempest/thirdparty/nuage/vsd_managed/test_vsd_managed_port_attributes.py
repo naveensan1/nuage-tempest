@@ -1025,7 +1025,6 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         #self.nuage_vsd_client.apply_l2_policy_changes(l2domain_id)
 
     @nuage_test.header()
-    @testtools.skip('OPENSTACK-1503: [ML2] Fails cleanup redirect_target_rule')
     def test_l2_list_policy_group_no_security_group_neg(self):
         # Given I have a VSD-L2-Managed-Subnet in openstack with a VSD created policy group
         vsd_l2_subnet, l2_domtmpl = self._create_vsd_l2_managed_subnet()
@@ -1044,23 +1043,32 @@ class VSDManagedPolicyGroupsTest(base_vsd_managed_port_attributes.BaseVSDManaged
         os_redirect_target = self._create_redirect_target_in_l2_subnet(subnet)
         self.addCleanup(self.nuage_network_client.delete_redirection_target,os_redirect_target['nuage_redirect_target']['id'])
 
-        advfw_template = self.nuage_vsd_client.create_advfwd_entrytemplate(
-            constants.L2_DOMAIN,
-            vsd_l2_subnet[0]['ID']
-        )
-        self.addCleanup(self._delete_advfwd_entrytemplate, vsd_l2_subnet[0]['ID'], advfw_template[0]['ID'])
+        if CONF.nuage_sut.nuage_plugin_mode != 'ml2':
+            advfw_template = self.nuage_vsd_client.create_advfwd_entrytemplate(
+                constants.L2_DOMAIN,
+                vsd_l2_subnet[0]['ID']
+            )
+            self.addCleanup(self._delete_advfwd_entrytemplate, vsd_l2_subnet[0]['ID'], advfw_template[0]['ID'])
 
-        # When I try to use this security group in a redirect-target-rule-creation
-        rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
-                                                    security_group['id'])
-        self.addCleanup(self.nuage_network_client.delete_redirection_target_rule,
-                        rt_rule['nuage_redirect_target_rule']['id'])
+            # When I try to use this security group in a redirect-target-rule-creation
+            rt_rule = self._create_redirect_target_rule(os_redirect_target['nuage_redirect_target']['id'],
+                                                        security_group['id'])
+            self.addCleanup(self.nuage_network_client.delete_redirection_target_rule,
+                            rt_rule['nuage_redirect_target_rule']['id'])
 
-        # When I retrieve the VSD-L2-Managed-Subnet
-        policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
-        # I expect the only the policyGroup in my list: length may not be greater than one
-        self.assertEqual(1, len(policy_group_list['nuage_policy_groups']),
-                         message="Security groups are also in the policy group list")
+            # When I retrieve the VSD-L2-Managed-Subnet
+            policy_group_list = self.nuage_network_client.list_nuage_policy_group_for_subnet(subnet['id'])
+            # I expect the only the policyGroup in my list: length may not be greater than one
+            self.assertEqual(1, len(policy_group_list['nuage_policy_groups']),
+                             message="Security groups are also in the policy group list")
+        else:
+            # See OPENSTACK-1503: [ML2] Fails cleanup redirect_target_rule
+            self.assertRaisesRegexp(exceptions.NotFound,
+                             "The resource could not be found.",
+                             self._create_redirect_target_rule,
+                             os_redirect_target['nuage_redirect_target']['id'],
+                             security_group['id'])
+
 
 ################################################################################################################
 ################################################################################################################

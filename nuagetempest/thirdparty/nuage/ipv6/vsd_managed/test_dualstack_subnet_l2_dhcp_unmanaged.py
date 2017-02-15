@@ -32,7 +32,6 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
         cls.cidr6 = IPNetwork(CONF.network.tenant_network_v6_cidr)
         cls.gateway6 = str(IPAddress(cls.cidr6) + 1)
 
-    # See VSD-18415
     def test_create_vsd_managed_l2domain_dhcp_unmanaged(self):
         vsd_l2domain_template = self.create_vsd_l2domain_template(
             dhcp_managed=False)

@@ -663,7 +663,6 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
     ####################################################################################################################
     # Negative cases
     ####################################################################################################################
-    # see  OPENSTACK-1667
     def test_ipv6_subnet_linked_to_ipv4_vsd_l2domain_neg(self):
         vsd_l2domain_template = self.create_vsd_l2domain_template(
             ip_type="IPV4",

@@ -159,7 +159,7 @@ class VSDManagedL2DomainDHCPManagedTest(VsdTestCaseMixin,
         cidr4 = IPNetwork(CONF.network.tenant_network_cidr)
 
         invalid_ipv6 = [
-            ("::/0", "::1", "")
+            ("::/0", "::1", "Invalid IPv6 netmask")
             # prefix 0
         ]
 
@@ -799,7 +799,7 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
             network,
             **port_args)
 
-        # VSD-18779
+        # Openstack-17001 - VSD accept openstack port creation in L2 dualstack network with fixed-ip = IPv6Gateway IP
         # shall not create port with fixed ip on the IPv6 gateway address
         port_args = dict(fixed_ips=[{'subnet_id': ipv4_subnet['id']},
                                     {'subnet_id': ipv6_subnet['id'], 'ip_address': vsd_l2domain_template['IPv6Gateway']}

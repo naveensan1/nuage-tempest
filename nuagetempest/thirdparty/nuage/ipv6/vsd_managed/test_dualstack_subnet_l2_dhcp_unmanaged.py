@@ -48,9 +48,9 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
     ####################################################################################################################
     # Negative cases
     ####################################################################################################################
-    # VSD-18607 -
-    # see also VSD-18557
-    # see also VSD-18415
+    # VSD-18557
+    # see (resolved as duplicate ?) VSD-18607 -
+    # see (resolved as duplicate ?) VSD-18415
     def test_vsd_l2domain_unmanaged_ipv4_only_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,

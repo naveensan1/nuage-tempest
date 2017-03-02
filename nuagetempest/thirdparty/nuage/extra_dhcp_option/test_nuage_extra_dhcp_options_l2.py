@@ -353,7 +353,7 @@ class NuageExtraDHCPOptionsOSManagedL2Test(NuageExtraDHCPOptionsBaseL2):
         self._check_nuage_create_show_list_update_port_with_16_extra_dhcp_options()
 
 
-class NuageExtraDHCPOptionsVsdManagedL2Test(NuageExtraDHCPOptionsOSManagedL2Test):
+class NuageExtraDHCPOptionsVsdManagedL2Test(NuageExtraDHCPOptionsBaseL2):
     #
     # VSD Managed Layer 2 networks
     #
@@ -361,3 +361,7 @@ class NuageExtraDHCPOptionsVsdManagedL2Test(NuageExtraDHCPOptionsOSManagedL2Test
         super(NuageExtraDHCPOptionsVsdManagedL2Test, self).__init__(*args, **kwargs)
         self.nuage_network_type = NUAGE_NETWORK_TYPE['VSD_Managed_L2']
         self.vsd_parent_type = constants.L2_DOMAIN
+
+    @nuage_test.header()
+    def test_nuage_openstack_managed_layer2_port_with_extra_dhcp_options_001_netmask(self):
+        self._check_nuage_create_show_list_update_port_with_extra_dhcp_options_001_netmask()

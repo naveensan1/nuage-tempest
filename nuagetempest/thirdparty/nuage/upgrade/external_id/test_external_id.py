@@ -56,7 +56,7 @@ class ReleaseTest(testtools.TestCase):
         self.assertEqual(release.major_release, "4.0")
         self.assertEqual(release.major_list[0], "4")
         self.assertEqual(release.major_list[1], "0")
-        self.assertEqual(release.sub_release, 3)
+        self.assertEqual(release.sub_release, "3")
 
     def test_release_dot_release(self):
         release = Release("4.0R3")
@@ -64,7 +64,7 @@ class ReleaseTest(testtools.TestCase):
         self.assertEqual(release.major_release, "4.0")
         self.assertEqual(release.major_list[0], "4")
         self.assertEqual(release.major_list[1], "0")
-        self.assertEqual(release.sub_release, 3)
+        self.assertEqual(release.sub_release, "3")
 
     def test_release_branch_release(self):
         release = Release("liberty-PROD-2456-plugin-11")

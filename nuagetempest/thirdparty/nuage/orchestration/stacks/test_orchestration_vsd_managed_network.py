@@ -16,6 +16,18 @@ LOG = logging.getLogger(__name__)
 
 
 class OrchestrationVsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
+    @classmethod
+    def resource_setup(cls):
+        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+            # create default netpartition if it is not there
+            netpartition_name = cls.vsd_client.def_netpart_name
+            net_partition = cls.vsd_client.get_net_partition(netpartition_name)
+            if not net_partition:
+                net_partition = cls.vsd_client.create_net_partition(netpartition_name,
+                                                                     fip_quota=100,
+                                                                     extra_params=None)
+        super(OrchestrationVsdManagedNetworkTest, cls).resource_setup()
+
     @test.attr(type='slow')
     @nuage_test.header()
     def test_link_subnet_to_vsd_l2domain_dhcp_managed_minimal(self):
@@ -226,4 +238,5 @@ class OrchestrationVsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
                          "Shall start allocation pool at first address in l2 domain")
         self.assertEqual(pool_end_ip, subnet['allocation_pools'][0]['end'],
                          "Shall start allocation pool at last address in l2 domain")
+
 

@@ -201,7 +201,7 @@ class VSDManagedPolicyGroupsCLITest(BaseNuageNetworksCLITestCase, VsdTestCaseMix
 
         cidr4 = IPNetwork('1.2.20.0/24')
         cidr6 = IPNetwork("2001:5f74:2222:b82e::/64")
-        vsd_l2_subnet_y = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6 )
+        vsd_l2_subnet_y = self._given_vsd_l2domain(cidr4=cidr4, cidr6=cidr6, dhcp_managed=True )
         cli_network_y, cli_subnet4_y, cli_subnet6_y = self._cli_create_os_l2_vsd_managed_dualstack_subnet(vsd_l2_subnet_y)
 
         policy_group_y = self.nuage_vsd_client.create_policygroup(

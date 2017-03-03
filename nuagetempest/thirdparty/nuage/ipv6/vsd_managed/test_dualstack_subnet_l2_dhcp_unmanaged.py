@@ -32,7 +32,6 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
         cls.cidr6 = IPNetwork(CONF.network.tenant_network_v6_cidr)
         cls.gateway6 = str(IPAddress(cls.cidr6) + 1)
 
-    # See VSD-18415
     def test_create_vsd_managed_l2domain_dhcp_unmanaged(self):
         vsd_l2domain_template = self.create_vsd_l2domain_template(
             dhcp_managed=False)
@@ -49,9 +48,9 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
     ####################################################################################################################
     # Negative cases
     ####################################################################################################################
-    # VSD-18607 -
-    # see also VSD-18557
-    # see also VSD-18415
+    # VSD-18557
+    # see (resolved as duplicate ?) VSD-18607 -
+    # see (resolved as duplicate ?) VSD-18415
     def test_vsd_l2domain_unmanaged_ipv4_only_neg(self):
         self.assertRaisesRegex(
             nuage_exceptions.Conflict,

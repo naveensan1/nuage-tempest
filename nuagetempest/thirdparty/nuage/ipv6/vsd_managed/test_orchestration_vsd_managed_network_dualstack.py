@@ -78,8 +78,11 @@ class OrchestrationVsdManagedNetworkDualStackTest(NuageBaseOrchestrationTest,
             'maskbits4': self.mask_bits,
             'cidr6': str(self.cidr6),
             'gateway6': self.gateway6,
-            'maskbits6': IPNetwork(vsd_l2domain_template['IPv6Address'])._prefixlen
+            'maskbits6': IPNetwork(vsd_l2domain_template['IPv6Address'])._prefixlen,
+            'pool_start6': str(IPAddress(self.gateway6) + 1),
+            'pool_end6': str(IPAddress(self.cidr6.last))
         }
+
         self.launch_stack(stack_file_name, stack_parameters)
 
         # Verifies created resources
@@ -122,7 +125,7 @@ class OrchestrationVsdManagedNetworkDualStackTest(NuageBaseOrchestrationTest,
         self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
 
         # launch a heat stack
-        stack_file_name = 'nuage_vsd_managed_network_dualstack_vm_on_port'
+        stack_file_name = 'nuage_vsd_managed_network_dualstack_vm_in_net'
         stack_parameters = {
             'vsd_subnet_id': vsd_l2domain['ID'],
             'netpartition_name': self.net_partition_name,
@@ -184,7 +187,7 @@ class OrchestrationVsdManagedNetworkDualStackTest(NuageBaseOrchestrationTest,
             gateway6=subnet_ipv6_gateway)
 
         # launch a heat stack
-        stack_file_name = 'nuage_vsd_managed_network_dualstack_vm_on_port'
+        stack_file_name = 'nuage_vsd_managed_network_l3_dualstack_vm_on_port'
         stack_parameters = {
             'vsd_subnet_id': vsd_l3domain_subnet['ID'],
             'netpartition_name': self.net_partition_name,

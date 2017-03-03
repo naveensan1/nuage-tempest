@@ -37,12 +37,6 @@ parameters:
   maskbits6:
     type: string
     description: IPv6 net mask bits
-  pool_start6:
-    type: string
-    description: Start of private network IP address allocation pool
-  pool_end6:
-    type: string
-    description: End of private network IP address allocation pool
 
 resources:
   dualstack_net:
@@ -63,16 +57,8 @@ resources:
     properties:
       network_id: { get_resource: dualstack_net }
       cidr: { get_param: cidr6 }
-      #    gateway_ip: {description: 'The gateway IP address. Set to any of [ null | ~ | "" ]
-      #    to create/update a subnet without a gateway. If omitted when creation, neutron
-      #    will assign the first free IP address within the subnet to the gateway automatically.
-      #    If remove this from template when update, the old gateway IP address will be detached.',
-      gateway_ip: null
       enable_dhcp: false
       ip_version: 6
-      allocation_pools:
-        - start: { get_param: pool_start6 }
-          end: { get_param: pool_end6 }
       value_specs: { net_partition: { get_param: netpartition_name }, nuagenet: {get_param: vsd_subnet_id} }
 
   port:

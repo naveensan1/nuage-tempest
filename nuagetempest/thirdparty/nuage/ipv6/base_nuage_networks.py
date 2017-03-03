@@ -109,6 +109,7 @@ class VsdTestCaseMixin(test.BaseTestCase):
 
             if "gateway6" in kwargs:
                 gateway6_ip = kwargs['gateway6']
+                kwargs.pop('gateway6')
             else:
                 gateway6_ip = str(IPAddress(cidr6) + 1)
             params.update({'IPv6Gateway': gateway6_ip})

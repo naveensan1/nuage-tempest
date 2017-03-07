@@ -97,7 +97,7 @@ def execute(cmd, action, flags='', params='', fail_ok=False,
 
     while (retry and (count < 3)):
         try:
-             retry = False
+            retry = False
             response = ssh_client.exec_command(cmd)
             LOG.debug("Response: \n'%s'" % response)
         except NotImplementedError:

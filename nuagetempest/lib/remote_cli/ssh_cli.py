@@ -93,15 +93,26 @@ def execute(cmd, action, flags='', params='', fail_ok=False,
 
     count = 0
     retry = True
+    response = None
+
     while (retry and (count < 3)):
         try:
-            retry = False
+             retry = False
             response = ssh_client.exec_command(cmd)
+            LOG.debug("Response: \n'%s'" % response)
         except NotImplementedError:
+            LOG.warning("Could not execute command: '%s'" % cmd)
             retry = True
             count = count + 1
 
-    LOG.debug("Response: \n'%s'" % response)
+            LOG.debug("Check connection")
+            connection = ssh_client._get_ssh_connection()
+            connection.close()
+
+            LOG.debug("Reset client")
+            ssh_client = ssh.Client(ip_address, username, password,
+                            ssh_timeout,
+                            channel_timeout=ssh_channel_timeout)
 
     return response
 

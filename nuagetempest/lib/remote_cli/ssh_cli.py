@@ -67,25 +67,27 @@ LOG = logging.getLogger(__name__)
 #     return result
 
 def execute(cmd, action, flags='', params='', fail_ok=False,
-            merge_stderr=False):
+            merge_stderr=False, cli_dir='', ssh_client=None):
+
     """Executes specified command for the given action."""
     LOG.info("Executing CLI: '%s %s %s'", cmd, action, params)
     LOG.debug("using flags: '%s'", flags)
 
-    ssh_timeout = 10
-    ssh_channel_timeout = 10
+    if not ssh_client:
+        ssh_timeout = 10
+        ssh_channel_timeout = 10
 
-    uri = CONF.identity.uri
-    uri_object = urlparse.urlparse(uri)
-    netloc_parts = uri_object.netloc.rsplit(':')
-    ip_address = netloc_parts[0]
+        uri = CONF.identity.uri
+        uri_object = urlparse.urlparse(uri)
+        netloc_parts = uri_object.netloc.rsplit(':')
+        ip_address = netloc_parts[0]
 
-    username = CONF.nuage_sut.controller_user
-    password = CONF.nuage_sut.controller_password
+        username = CONF.nuage_sut.controller_user
+        password = CONF.nuage_sut.controller_password
 
-    ssh_client = ssh.Client(ip_address, username, password,
-                            ssh_timeout,
-                            channel_timeout=ssh_channel_timeout)
+        ssh_client = ssh.Client(ip_address, username, password,
+                                ssh_timeout,
+                                channel_timeout=ssh_channel_timeout)
 
     cmd = ' '.join([os.path.join(cmd),
                     flags, action, params])
@@ -142,6 +144,22 @@ class CLIClient(object):
         self.password = password
         self.uri = uri
 
+        ssh_timeout = 10
+        ssh_channel_timeout = 10
+
+        uri = CONF.identity.uri
+        uri_object = urlparse.urlparse(uri)
+        netloc_parts = uri_object.netloc.rsplit(':')
+        ip_address = netloc_parts[0]
+
+        username = CONF.nuage_sut.controller_user
+        password = CONF.nuage_sut.controller_password
+
+        self.ssh_client = ssh.Client(ip_address, username, password,
+                                ssh_timeout,
+                                channel_timeout=ssh_channel_timeout)
+
+
     def nova(self, action, flags='', params='', fail_ok=False,
              endpoint_type='publicURL', merge_stderr=False):
         """Executes nova command for the given action.
@@ -180,7 +198,7 @@ class CLIClient(object):
         """
         return execute(
             'nova-manage', action, flags, params, fail_ok, merge_stderr,
-            self.cli_dir)
+            self.cli_dir, ssh_client=self.ssh_client)
 
     def keystone(self, action, flags='', params='', fail_ok=False,
                  merge_stderr=False):
@@ -414,7 +432,7 @@ class CLIClient(object):
         flags = creds + ' ' + flags
         # return execute(cmd, action, flags, params, fail_ok, merge_stderr,
         #                self.cli_dir)
-        return execute(cmd, action, flags, params, fail_ok, merge_stderr)
+        return execute(cmd, action, flags, params, fail_ok, merge_stderr, ssh_client=self.ssh_client)
 
 
 class ClientTestBase(test.BaseTestCase):

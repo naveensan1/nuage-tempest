@@ -32,7 +32,6 @@ from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_port_attr
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
-#class BaseVSDManagedSRIOV(base_vsd_managed_networks.BaseVSDManagedNetwork):
 class BaseVSDManagedSRIOV(base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
     @classmethod
     def setup_clients(cls):

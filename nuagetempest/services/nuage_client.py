@@ -421,6 +421,12 @@ class NuageRestClient(object):
         else:
             return self.get_global_resource(constants.SUBNETWORK, filters,
                                             filter_value)
+
+    def get_l3_subnet_vports(self,subnet_id):
+        res_path = self.build_resource_path(
+            constants.SUBNETWORK, subnet_id,"vports")
+        return self.get(res_path)
+
     def update_domain_subnet(self, subnet_id, externalId=None,
                              update_params=None, netpart_name=None):
         data = {}
@@ -572,7 +578,7 @@ class NuageRestClient(object):
             constants.L2_DOMAIN_TEMPLATE, l2dom_tid,
             constants.APPLY_JOBS)
         return self.post(res_path, data)
-
+    
     # L2Domain
     def create_l2domain(self, name, templateId=None, externalId=None,
                         extra_params=None, netpart_name=None):
@@ -621,6 +627,14 @@ class NuageRestClient(object):
     def get_l2domain(self, filters=None, filter_value=None, netpart_name=None):
         return self.get_resource(constants.L2_DOMAIN,
                                  filters, filter_value, netpart_name)
+    def get_l2domain_vports(self,l2domain_id):
+        res_path = self.build_resource_path(
+            constants.L2_DOMAIN, l2domain_id,"vports")
+        return self.get(res_path)
+    
+    def get_bridge_port_gateway_vlan(self,port): 
+        res_path2 = self.build_resource_path("vlans" , port['VLANID']) 
+        return self.get(res_path2) 
 
     def create_vsd_shared_resource(self, name, externalId=None, extra_params=None, type=None):
         if type is None:

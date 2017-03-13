@@ -987,6 +987,14 @@ class VSDManagedAllowedAddresPairsCLITest(remote_cli_base_testcase.RemoteCliBase
 class VSDManagedAssociateFIPCLITest(remote_cli_base_testcase.RemoteCliBaseTestCase,
                                     base_vsd_managed_port_attributes.BaseVSDManagedPortAttributes):
 
+    # @classmethod
+    # def setup_clients(cls):
+    #     cls.TB = topology.initialize_topology()
+    #     topology.open_session(cls.TB)
+    #     cls._osc = cls.TB.osc_1
+    #
+    #     super(VSDManagedAssociateFIPCLITest, cls).setup_clients()
+    #
     @classmethod
     def resource_setup(cls):
         super(VSDManagedAssociateFIPCLITest, cls).resource_setup()

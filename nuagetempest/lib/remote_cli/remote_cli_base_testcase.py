@@ -6,11 +6,12 @@ import re
 import netaddr
 from enum import Enum
 
+from tempest import test
 from tempest import config
-from tempest import exceptions
 
 from oslo_log import log as logging
 from tempest.lib.common.utils import data_utils
+from nuagetempest.lib import topology
 
 import ssh_cli
 import output_parser as cli_output_parser
@@ -26,7 +27,7 @@ class Role(Enum):
     nonadmin = 3
 
 
-class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
+class RemoteCliBaseTestCase(test.BaseTestCase):
     credentials = ['primary', 'admin']
 
     """
@@ -44,6 +45,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
 
     # Default to ipv4.
     _ip_version = 4
+    _osc = None
 
     @classmethod
     def skip_checks(cls):
@@ -56,25 +58,24 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         cls.users_client = cls.os_adm.users_client
         cls.tenants_client = cls.os_adm.tenants_client
 
+        cls.TB = topology.initialize_topology()
+        topology.open_session(cls.TB)
+        cls._osc = cls.TB.osc_1
+
+        cls.cli = ssh_cli.CLIClient(
+            cls._osc,
+            username=CONF.auth.admin_username,
+            tenant_name=CONF.auth.admin_tenant_name,
+            password=CONF.auth.admin_password,
+            uri=CONF.identity.uri)
+
     @classmethod
     def resource_setup(cls):
         # Create no network resources for these test.
         cls.set_network_resources()
         super(RemoteCliBaseTestCase, cls).resource_setup()
 
-        cls.client_manager
         cls.network_cfg = CONF.network
-
-        # cls.cli = ssh_cli.CLIClient(
-        #     username=CONF.auth.admin_username,
-        #     tenant_name=CONF.auth.admin_tenant_name,
-        #     password=CONF.auth.admin_password,
-        #     uri=CONF.identity.uri)
-        cls.cli = ssh_cli.CLIClient(
-            username=CONF.auth.admin_username,
-            tenant_name=CONF.auth.admin_tenant_name,
-            password=CONF.auth.admin_password,
-            uri=CONF.identity.uri)
         cls.parser = cli_output_parser
 
         cls.networks = []
@@ -113,6 +114,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         # make the uri point to the one of osc-1
         cls.uri = cls.uri_1
         cls.admin_cli = ssh_cli.CLIClient(
+            cls._osc,
             username=CONF.auth.admin_username,
             tenant_name=CONF.auth.admin_tenant_name,
             password=CONF.auth.admin_password,
@@ -120,6 +122,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         cls.nonadmin_cli = ssh_cli.CLIClient(
             # Todo Hendrik: make sure a non-admin user is created in the admin project
             # username=CONF.identity.nonadmin_username,
+            cls._osc,
             username="nonadmin",
             tenant_name=CONF.auth.admin_tenant_name,
             password=CONF.auth.admin_password,
@@ -132,6 +135,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
                                                 cls.tenant['id'],
                                                 "")['user']
         cls.tenant_cli = ssh_cli.CLIClient(
+            cls._osc,
             username=cls.user['name'],
             tenant_name=cls.tenant['name'],
             password="tigris",
@@ -258,7 +262,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         return self.create_network_with_args(network_name)
 
     def delete_network(self, network_id):
-        response = self.cli.delete_network(network_id)
+        response = self.cli.neutron('net-delete', params=network_id)
         self.assertFirstLineStartsWith(response.split('\n'), 'Deleted network:')
         self.assertNotIn(network_id, response)
         # TODO: parse response for network id
@@ -474,7 +478,7 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
     def associate_floating_ip(self, floating_ip_id, port_id, **kwargs):
         the_params = self._kwargs_to_cli(**kwargs)
 
-        return self.cli.neutron('floatingip-associate', params=floating_ip_id+' ' + port_id + the_params)
+        return self.cli.neutron('floatingip-associate', params=floating_ip_id + ' ' + port_id + the_params)
 
     def disassociate_floating_ip(self, floating_ip_id):
         return self.cli.neutron('floatingip-disassociate', params=floating_ip_id)
@@ -674,18 +678,3 @@ class RemoteCliBaseTestCase(ssh_cli.ClientTestBase):
         response = self.cli.neutron('nuage-floatingip-show ', params=fp_id)
         show_fp = self.parser.details(response)
         return show_fp
-
-
-class RemoteCliAdminBaseTestCase(RemoteCliBaseTestCase):
-
-    def __init__(self, *args, **kwargs):
-        super(RemoteCliAdminBaseTestCase, self, *args, **kwargs)
-
-    def _get_clients(self):
-        self.cli = ssh_cli.CLIClient(
-            username=CONF.auth.admin_username,
-            tenant_name=CONF.auth.admin_tenant_name,
-            password=CONF.auth.admin_password,
-            uri=CONF.identity.uri)
-
-        return self.cli

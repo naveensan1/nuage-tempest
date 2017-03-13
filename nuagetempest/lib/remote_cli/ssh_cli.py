@@ -15,108 +15,10 @@
 
 import logging
 import os
-import urlparse
-
-from tempest import test
 from tempest import config
 
-#from tempest.thirdparty.nuage.common import ssh as ssh
-from tempest.lib.common import ssh
-import output_parser as cli_output_parser
-
 CONF = config.CONF
-
 LOG = logging.getLogger(__name__)
-
-
-# def execute(cmd, action, flags='', params='', fail_ok=False,
-#             merge_stderr=False, cli_dir='/usr/bin'):
-#     """Executes specified command for the given action.
-#     :param cmd: command to be executed
-#     :type cmd: string
-#     :param action: string of the cli command to run
-#     :type action: string
-#     :param flags: any optional cli flags to use
-#     :type flags: string
-#     :param params: string of any optional positional args to use
-#     :type params: string
-#     :param fail_ok: boolean if True an exception is not raised when the
-#                     cli return code is non-zero
-#     :type fail_ok: boolean
-#     :param merge_stderr: boolean if True the stderr buffer is merged into
-#                          stdout
-#     :type merge_stderr: boolean
-#     :param cli_dir: The path where the cmd can be executed
-#     :type cli_dir: string
-#     """
-#     cmd = ' '.join([os.path.join(cli_dir, cmd),
-#                     flags, action, params])
-#     LOG.info("running: '%s'" % cmd)
-#     cmd = shlex.split(cmd.encode('utf-8'))
-#     result = ''
-#     result_err = ''
-#     stdout = subprocess.PIPE
-#     stderr = subprocess.STDOUT if merge_stderr else subprocess.PIPE
-#     proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr)
-#     result, result_err = proc.communicate()
-#     if not fail_ok and proc.returncode != 0:
-#         raise exceptions.CommandFailed(proc.returncode,
-#                                        cmd,
-#                                        result,
-#                                        result_err)
-#     return result
-
-def execute(cmd, action, flags='', params='', fail_ok=False,
-            merge_stderr=False, cli_dir='', ssh_client=None):
-
-    """Executes specified command for the given action."""
-    LOG.info("Executing CLI: '%s %s %s'", cmd, action, params)
-    LOG.debug("using flags: '%s'", flags)
-
-    if not ssh_client:
-        ssh_timeout = 10
-        ssh_channel_timeout = 10
-
-        uri = CONF.identity.uri
-        uri_object = urlparse.urlparse(uri)
-        netloc_parts = uri_object.netloc.rsplit(':')
-        ip_address = netloc_parts[0]
-
-        username = CONF.nuage_sut.controller_user
-        password = CONF.nuage_sut.controller_password
-
-        ssh_client = ssh.Client(ip_address, username, password,
-                                ssh_timeout,
-                                channel_timeout=ssh_channel_timeout)
-
-    cmd = ' '.join([os.path.join(cmd),
-                    flags, action, params])
-    LOG.debug("running: '%s'" % cmd)
-
-    count = 0
-    retry = True
-    response = None
-
-    while (retry and (count < 3)):
-        try:
-            retry = False
-            response = ssh_client.exec_command(cmd)
-            LOG.debug("Response: \n'%s'" % response)
-        except NotImplementedError:
-            LOG.warning("Could not execute command: '%s'" % cmd)
-            retry = True
-            count = count + 1
-
-            LOG.debug("Check connection")
-            connection = ssh_client._get_ssh_connection()
-            connection.close()
-
-            LOG.debug("Reset client")
-            ssh_client = ssh.Client(ip_address, username, password,
-                            ssh_timeout,
-                            channel_timeout=ssh_channel_timeout)
-
-    return response
 
 
 class CLIClient(object):
@@ -129,39 +31,19 @@ class CLIClient(object):
     :type tenant_name: string
     :param uri: The auth uri for the OpenStack Deployment
     :type uri: string
-    :param cli_dir: The path where the python client binaries are installed.
-                    defaults to /usr/bin
-    :type cli_dir: string
     """
 
-    def __init__(self, username='', password='', tenant_name='', uri='',
-                 cli_dir='', *args, **kwargs):
+    def __init__(self, osc, username='', password='', tenant_name='', uri=''):
         """Initialize a new CLIClient object."""
         super(CLIClient, self).__init__()
-        self.cli_dir = cli_dir if cli_dir else '/usr/bin'
         self.username = username
         self.tenant_name = tenant_name
         self.password = password
         self.uri = uri
-
-        ssh_timeout = 10
-        ssh_channel_timeout = 10
-
-        uri = CONF.identity.uri
-        uri_object = urlparse.urlparse(uri)
-        netloc_parts = uri_object.netloc.rsplit(':')
-        ip_address = netloc_parts[0]
-
-        username = CONF.nuage_sut.controller_user
-        password = CONF.nuage_sut.controller_password
-
-        self.ssh_client = ssh.Client(ip_address, username, password,
-                                ssh_timeout,
-                                channel_timeout=ssh_channel_timeout)
-
+        self.osc = osc
 
     def nova(self, action, flags='', params='', fail_ok=False,
-             endpoint_type='publicURL', merge_stderr=False):
+             endpoint_type='publicURL'):
         """Executes nova command for the given action.
         :param action: the cli command to run using nova
         :type action: string
@@ -174,15 +56,12 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'nova', action, flags, params, fail_ok, merge_stderr)
+            'nova', action, flags, params, fail_ok)
 
-    def nova_manage(self, action, flags='', params='', fail_ok=False,
-                    merge_stderr=False):
+    def nova_manage(self, action, flags='', params='', fail_ok=False, timeout=20):
         """Executes nova-manage command for the given action.
         :param action: the cli command to run using nova-manage
         :type action: string
@@ -193,15 +72,29 @@ class CLIClient(object):
         :param fail_ok: if True an exception is not raised when the
                         cli return code is non-zero
         :type fail_ok: boolean
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
-        return execute(
-            'nova-manage', action, flags, params, fail_ok, merge_stderr,
-            self.cli_dir, ssh_client=self.ssh_client)
+        creds = ('--os-username %s --os-tenant-name %s --os-password %s '
+                 '--os-auth-url %s' %
+                 (self.username,
+                  self.tenant_name,
+                  self.password,
+                  self.uri))
+        flags = creds + ' ' + flags
+        cmd = 'nova-manage'
+        cmd = ' '.join([os.path.join(cmd),
+                        flags, action, params])
+        if fail_ok:
+            response = self.osc.cmd(cmd, strict=False, timeout=timeout)
+            assert response[2] == 1
+            return response[1]
+        response = self.osc.cmd(cmd, timeout=timeout)
+        response = response[0]
+        resp = ''
+        for line in response:
+            resp = resp + line + '\n'
+        return resp
 
-    def keystone(self, action, flags='', params='', fail_ok=False,
-                 merge_stderr=False):
+    def keystone(self, action, flags='', params='', fail_ok=False):
         """Executes keystone command for the given action.
         :param action: the cli command to run using keystone
         :type action: string
@@ -212,11 +105,9 @@ class CLIClient(object):
         :param fail_ok: if True an exception is not raised when the
                         cli return code is non-zero
         :type fail_ok: boolean
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         return self.cmd_with_auth(
-            'keystone', action, flags, params, fail_ok, merge_stderr)
+            'keystone', action, flags, params, fail_ok)
 
     def glance(self, action, flags='', params='', fail_ok=False,
                endpoint_type='publicURL', merge_stderr=False):
@@ -232,12 +123,10 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'glance', action, flags, params, fail_ok, merge_stderr)
+            'glance', action, flags, params, fail_ok)
 
     def ceilometer(self, action, flags='', params='',
                    fail_ok=False, endpoint_type='publicURL',
@@ -254,15 +143,13 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'ceilometer', action, flags, params, fail_ok, merge_stderr)
+            'ceilometer', action, flags, params, fail_ok)
 
     def heat(self, action, flags='', params='',
-             fail_ok=False, endpoint_type='publicURL', merge_stderr=False):
+             fail_ok=False, endpoint_type='publicURL'):
         """Executes heat command for the given action.
         :param action: the cli command to run using heat
         :type action: string
@@ -275,15 +162,13 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'heat', action, flags, params, fail_ok, merge_stderr)
+            'heat', action, flags, params, fail_ok)
 
     def cinder(self, action, flags='', params='', fail_ok=False,
-               endpoint_type='publicURL', merge_stderr=False):
+               endpoint_type='publicURL'):
         """Executes cinder command for the given action.
         :param action: the cli command to run using cinder
         :type action: string
@@ -296,15 +181,13 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'cinder', action, flags, params, fail_ok, merge_stderr)
+            'cinder', action, flags, params, fail_ok)
 
     def swift(self, action, flags='', params='', fail_ok=False,
-              endpoint_type='publicURL', merge_stderr=False):
+              endpoint_type='publicURL'):
         """Executes swift command for the given action.
         :param action: the cli command to run using swift
         :type action: string
@@ -317,15 +200,13 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --os-endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'swift', action, flags, params, fail_ok, merge_stderr)
+            'swift', action, flags, params, fail_ok)
 
     def neutron(self, action, flags='', params='', fail_ok=False,
-                endpoint_type='publicURL', merge_stderr=False):
+                endpoint_type='publicURL'):
         """Executes neutron command for the given action.
         :param action: the cli command to run using neutron
         :type action: string
@@ -338,37 +219,13 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'neutron', action, flags, params, fail_ok, merge_stderr)
-
-    def neutron_debug(self, action, flags='', params='', fail_ok=False,
-                      endpoint_type='publicURL', merge_stderr=False):
-        """Executes neutron-debug command for the given action.
-        :param action: the cli command to run using neutron
-        :type action: string
-        :param flags: any optional cli flags to use
-        :type flags: string
-        :param params: any optional positional args to use
-        :type params: string
-        :param fail_ok: if True an exception is not raised when the
-                        cli return code is non-zero
-        :type fail_ok: boolean
-        :param endpoint_type: the type of endpoint for the service
-        :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
-        """
-
-        return execute(
-            'neutron-debug', action, flags, params, fail_ok, merge_stderr,
-            self.cli_dir)
+            'neutron', action, flags, params, fail_ok)
 
     def sahara(self, action, flags='', params='',
-               fail_ok=False, endpoint_type='publicURL', merge_stderr=True):
+               fail_ok=False, endpoint_type='publicURL'):
         """Executes sahara command for the given action.
         :param action: the cli command to run using sahara
         :type action: string
@@ -381,12 +238,10 @@ class CLIClient(object):
         :type fail_ok: boolean
         :param endpoint_type: the type of endpoint for the service
         :type endpoint_type: string
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         flags += ' --endpoint-type %s' % endpoint_type
         return self.cmd_with_auth(
-            'sahara', action, flags, params, fail_ok, merge_stderr)
+            'sahara', action, flags, params, fail_ok)
 
     def openstack(self, action, flags='', params='', fail_ok=False,
                   merge_stderr=False):
@@ -400,14 +255,12 @@ class CLIClient(object):
         :param fail_ok: if True an exception is not raised when the
                         cli return code is non-zero
         :type fail_ok: boolean
-        :param merge_stderr: if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         return self.cmd_with_auth(
-            'openstack', action, flags, params, fail_ok, merge_stderr)
+            'openstack', action, flags, params, fail_ok)
 
     def cmd_with_auth(self, cmd, action, flags='', params='',
-                      fail_ok=False, merge_stderr=False):
+                      fail_ok=False, timeout=20):
         """Executes given command with auth attributes appended.
         :param cmd: command to be executed
         :type cmd: string
@@ -420,8 +273,6 @@ class CLIClient(object):
         :param fail_ok: if True an exception is not raised when the cli return
                         code is non-zero
         :type fail_ok: boolean
-        :param merge_stderr:  if True the stderr buffer is merged into stdout
-        :type merge_stderr: boolean
         """
         creds = ('--os-username %s --os-tenant-name %s --os-password %s '
                  '--os-auth-url %s' %
@@ -432,44 +283,16 @@ class CLIClient(object):
         flags = creds + ' ' + flags
         # return execute(cmd, action, flags, params, fail_ok, merge_stderr,
         #                self.cli_dir)
-        return execute(cmd, action, flags, params, fail_ok, merge_stderr, ssh_client=self.ssh_client)
-
-
-class ClientTestBase(test.BaseTestCase):
-    """Base test class for testing the OpenStack client CLI interfaces."""
-
-    def setUp(self):
-        super(ClientTestBase, self).setUp()
-        self.clients = self._get_clients()
-        self.parser = cli_output_parser
-
-    def _get_clients(self):
-        """Abstract method to initialize CLIClient object.
-        This method must be overloaded in child test classes. It should be
-        used to initialize the CLIClient object with the appropriate
-        credentials during the setUp() phase of tests.
-        """
-        raise NotImplementedError
-
-    def assertTableStruct(self, items, field_names):
-        """Verify that all items has keys listed in field_names.
-        :param items: items to assert are field names in the output table
-        :type items: list
-        :param field_names: field names from the output table of the cmd
-        :type field_names: list
-        """
-        for item in items:
-            for field in field_names:
-                self.assertIn(field, item)
-
-    def assertFirstLineStartsWith(self, lines, beginning):
-        """Verify that the first line starts with a string
-        :param lines: strings for each line of output
-        :type lines: list
-        :param beginning: verify this is at the beginning of the first line
-        :type beginning: string
-        """
-        self.assertTrue(lines[0].startswith(beginning),
-                        msg=('Beginning of first line has invalid content: %s'
-                             % lines[:3]))
-
+        cmd = ' '.join([os.path.join(cmd),
+                        flags, action, params])
+        LOG.debug("running: '%s'" % cmd)
+        if fail_ok:
+            response = self.osc.cmd(cmd, strict=False, timeout=timeout)
+            assert response[2] == 1
+            return response[1]
+        response = self.osc.cmd(cmd, timeout=timeout)
+        response = response[0]
+        resp = ''
+        for line in response:
+            resp = resp + line + '\n'
+        return resp

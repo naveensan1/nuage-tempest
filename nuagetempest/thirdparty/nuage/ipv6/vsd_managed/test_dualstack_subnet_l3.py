@@ -259,7 +259,7 @@ class VSDManagedDualStackSubnetL3Test(VsdTestCaseMixin,
             nuagenet=vsd_l3domain_subnet['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
 
-    # see VSD-18779 - VSD should not allow creation of a l3 subnet with IPType=IPV6 h
+    # see VSD-18779 (CLOSED) - VSD should not allow creation of a l3 subnet with IPType=IPV6
     def test_create_vsd_managed_l3domain_subnet_ipv6_neg(self):
         name = data_utils.rand_name('l3domain-')
         vsd_l3domain_template = self.create_vsd_l3dom_template(

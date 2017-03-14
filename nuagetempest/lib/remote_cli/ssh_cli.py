@@ -16,6 +16,7 @@
 import logging
 import os
 from tempest import config
+from tempest.lib import exceptions
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -286,11 +287,9 @@ class CLIClient(object):
         cmd = ' '.join([os.path.join(cmd),
                         flags, action, params])
         LOG.debug("running: '%s'" % cmd)
-        if fail_ok:
-            response = self.osc.cmd(cmd, strict=False, timeout=timeout)
-            assert response[2] == 1
-            return response[1]
         response = self.osc.cmd(cmd, timeout=timeout)
+        if not fail_ok and (response[2] >= 1):
+            raise exceptions.SSHExecCommandFailed(response[1])
         response = response[0]
         resp = ''
         for line in response:

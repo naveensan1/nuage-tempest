@@ -59,8 +59,9 @@ class RemoteCliBaseTestCase(test.BaseTestCase):
         cls.tenants_client = cls.os_adm.tenants_client
 
         cls.TB = topology.initialize_topology()
-        topology.open_session(cls.TB)
         cls._osc = cls.TB.osc_1
+        if not cls._osc.ssh.is_connected:
+            topology.open_session(cls.TB)
 
         cls.cli = ssh_cli.CLIClient(
             cls._osc,

@@ -1,7 +1,8 @@
 import itertools
 import libVSD
 from tempest import config
-from libduts import sros, linux
+#from libduts import sros, linux
+from libduts import SROS, Linux, VRS, NSG, VSD, VSC, VSG, OSC, CentOS7
 from nuagetempest.lib.openstackcli import openstackcli_base
 from nuagetempest.lib.openstackapi import openstackapi_base
 import re
@@ -35,7 +36,7 @@ class Topology(object):
     def _vrs(self):
         vrs = {}
         for dutname, dut in self.duts.iteritems():
-            if isinstance(dut, linux.VRS):
+            if isinstance(dut, VRS):
                 vrs[dutname] = dut
 
     def parse_topologyfile(self):
@@ -157,7 +158,7 @@ class Topology(object):
         component = dut['component']
 
         if self._is_ovs(component):
-            return linux.vrs.VRS(ip, id=name, password=dut['password'], user=dut['username'])
+            return VRS(ip, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsd(component):
             vsd_ip = CONF.nuage.nuage_vsd_server.split(':')[0]
@@ -168,16 +169,16 @@ class Topology(object):
             return helper
 
         if self._is_7750(component):
-            return sros.SROS(ip, name, id=name, password=dut['password'], user=dut['username'])
+            return SROS(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsg(component):
-            return sros.VSG(ip, name, id=name, password=dut['password'], user=dut['username'])
+            return VSG(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_vsc(component):
-            return sros.VSC(ip, name, id=name, password=dut['password'], user=dut['username'])
+            return VSC(ip, name, id=name, password=dut['password'], user=dut['username'])
 
         if self._is_osc(component):
-            osc = linux.OSC(ip, id=name, password=dut['password'], user=dut['username'])
+            osc = OSC(ip, id=name, password=dut['password'], user=dut['username'])
             setattr(osc, 'cli', openstackcli_base.OpenstackCliClient(osc))
             setattr(osc, 'api', openstackapi_base.OpenstackAPIClient())
             return osc
@@ -195,7 +196,7 @@ class Topology(object):
         osc_counter = itertools.count()
         osc_counter.next()
         testbed = CONF.nuagext.exec_server
-        self.testbed = linux.Linux(testbed, id='testbed')
+        self.testbed = Linux(testbed, id='testbed')
         self.duts = {}
         for dut in self.duts_list:
             if dut['component'] == "VRS" and 'vrs' in CONF.nuagext.nuage_components:

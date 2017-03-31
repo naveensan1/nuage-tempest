@@ -1,8 +1,18 @@
 import itertools
+import sys
+import traceback
+import threading
+
 import libVSD
 from tempest import config
-#from libduts import sros, linux
-from libduts import SROS, Linux, VRS, NSG, VSD, VSC, VSG, OSC, CentOS7
+
+from libduts.linux import Linux
+from libduts.sros import SROS
+from libduts.sros.vsc import VSC
+from libduts.sros.vsg import VSG
+from libduts.linux import OSC
+from libduts.linux.vrs import VRS
+
 from nuagetempest.lib.openstackcli import openstackcli_base
 from nuagetempest.lib.openstackapi import openstackapi_base
 import re
@@ -220,7 +230,30 @@ class Topology(object):
                 setattr(self, dutobjname, dutobj)
                 self.duts[dutobjname] = getattr(self, dutobjname)
 
-def open_session(TB):
+# def open_session(TB):
+#     for dut in dir(TB):
+#         if dut.split('_')[0] in CONF.nuagext.nuage_components + ['osc']:
+#             if dut.split('_')[0] == 'vsd':
+#                 obj = getattr(TB, dut)
+#                 obj.api.new_session()
+#                 obj.update_vsd_session()
+#             else:
+#                 obj = getattr(TB, dut)
+#                 obj.ssh.open()
+
+
+def open_session(TB, timeout=1):
+
+    def _open_ssh_session(dut):
+        try:
+            dut.ssh.open()
+        except:
+            exc = ''.join(traceback.format_exception(*sys.exc_info()))
+            dut.ssh.log.error(exc)
+            failed.append(dut)
+
+    threads = []
+    failed = []
     for dut in dir(TB):
         if dut.split('_')[0] in CONF.nuagext.nuage_components + ['osc']:
             if dut.split('_')[0] == 'vsd':
@@ -228,8 +261,14 @@ def open_session(TB):
                 obj.api.new_session()
                 obj.update_vsd_session()
             else:
-                obj = getattr(TB, dut)
-                obj.ssh.open()
+                adut = getattr(TB, dut)
+                t = threading.Thread(target=_open_ssh_session, args=(adut,))
+                t.is_daemon = True
+                t.start()
+                threads.append(t)
+
+    [thread.join() for thread in threads]
+
 
 def initialize_topology():
     return Topology()

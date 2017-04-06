@@ -204,9 +204,16 @@ class VSDManagedDualStackSubnetL3Test(VsdTestCaseMixin,
         subnet_ipv6_gateway = str(IPAddress(subnet_ipv6_cidr) + 1)
 
         # shall not create Openstack IPv6 subnet on Openstack based on VSD l3domain subnet with type IPV4
-        self.assertRaisesRegex(
-            tempest_exceptions.ServerFault,
-            "create_subnet_postcommit failed.",
+        if CONF.nuage_sut.openstack_version >= 'newton':
+            expected_exception = tempest_exceptions.BadRequest
+            expected_message = "Subnet with ip_version 6 can't be linked to vsd subnet with IPType IPV4"
+        else:
+            expected_exception = tempest_exceptions.ServerFault
+            expected_message = "create_subnet_postcommit failed."
+
+        self.assertRaisesRegexp(
+            expected_exception,
+            expected_message,
             self.create_subnet,
             network,
             ip_version=6,
@@ -247,9 +254,16 @@ class VSDManagedDualStackSubnetL3Test(VsdTestCaseMixin,
         network = self.create_network(network_name=net_name)
 
         # create Openstack IPv4 subnet on Openstack based on VSD l3domain subnet
-        self.assertRaisesRegex(
-            tempest_exceptions.ServerFault,
-            "create_subnet_postcommit failed.",
+        if CONF.nuage_sut.openstack_version >= 'newton':
+            expected_exception = tempest_exceptions.BadRequest
+            expected_message = "enable_dhcp in subnet must be True"
+        else:
+            expected_exception = tempest_exceptions.ServerFault
+            expected_message = "create_subnet_postcommit failed."
+
+        self.assertRaisesRegexp(
+            expected_exception,
+            expected_message,
             self.create_subnet,
             network,
             gateway=subnet_gateway,
@@ -281,7 +295,7 @@ class VSDManagedDualStackSubnetL3Test(VsdTestCaseMixin,
         subnet_ipv6_cidr = IPNetwork("2001:5f74:c4a5:b82e::/64")
         subnet_ipv6_gateway = str(IPAddress(subnet_ipv6_cidr) + 1)
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "Invalid IP type",
             self.create_vsd_l3domain_subnet,

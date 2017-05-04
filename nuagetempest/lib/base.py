@@ -153,7 +153,7 @@ def setup_tempest_tenant_user_v3(osc, tenant, user, password, role):
 
 def setup_cmsid(osc):
     plugin_file = "/etc/neutron/plugins/nuage/plugin.ini"
-    audit_cmd = ('python generate_cms_id.py -config ' + plugin_file)
+    audit_cmd = ('python generate_cms_id.py --config ' + plugin_file)
     path = '/opt/upgrade-script/upgrade-scripts'
     cmd = 'cd {} ; {}'.format(path, audit_cmd)
     osc.cmd(cmd, timeout=30, strict=False)

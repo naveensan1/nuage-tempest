@@ -13,6 +13,7 @@
 #    under the License.
 
 import six
+
 from tempest import config
 from tempest import exceptions
 from tempest.lib.common.utils import data_utils
@@ -21,11 +22,11 @@ from tempest import test
 from tempest.api.network import base
 from nuagetempest.lib import test_base
 
-
 from nuagetempest.services.fwaas import fwaas_mixins
 from nuagetempest.services.nuage_network_client import NuageNetworkClientJSON
 from nuagetempest.lib import topology
 from nuagetempest.lib.test import nuage_test
+from nuagetempest.tests import nuage_ext
 
 
 CONF = config.CONF
@@ -46,14 +47,12 @@ class BaseFWaaSTest(fwaas_mixins.FWaaSClientMixin, base.BaseNetworkTest):
         cls.TB = topology.initialize_topology()
         topology.open_session(cls.TB)
         cls.def_net_partition = CONF.nuage.nuage_default_netpartition
-            
-            
-    def get_def_ent_obj(cls):
-        return cls.TB.vsd_1.get_enterprise(filter='name == "%s"' % cls.def_net_partition)
+        
 
     @classmethod
     def resource_cleanup(cls):
         pass
+        
 
 class FWaaSExtensionTestJSON(BaseFWaaSTest):
 
@@ -126,6 +125,37 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
 
         self.firewalls_client.wait_for_resource_deletion(fw_id)
 
+
+    def _get_def_ent_obj(self):
+        return self.TB.vsd_1.get_enterprise(
+            filter='name == "%s"' % self.def_net_partition)
+        
+    def _verify_fw_rule(self, firewall_acl_os, firewall_acl_vsd):
+        
+        VSD_TO_OS_ACTION = {
+            'allow': "FORWARD",
+            'deny': "DROP"
+        }
+        
+        firewall_acl_vsd = firewall_acl_vsd.to_dict()
+        #Protocol and externalID cannot be verified VSD-18219
+        self.assertEqual(firewall_acl_os['name'], firewall_acl_vsd['description'])
+        if firewall_acl_os['action'] == "allow":
+            self.assertEqual(firewall_acl_vsd['stateful'], True)
+        else:
+            self.assertEqual(firewall_acl_vsd['stateful'], False)
+        if firewall_acl_vsd['sourcePort']:
+            firewall_acl_vsd['sourcePort'] = firewall_acl_vsd['sourcePort'].replace('-', ':')
+        if firewall_acl_vsd['destinationPort']:
+            firewall_acl_vsd['destinationPort'] = firewall_acl_vsd['destinationPort'].replace('-', ':')
+        self.assertEqual(firewall_acl_os['source_port'], firewall_acl_vsd['sourcePort'])
+        self.assertEqual(firewall_acl_os['destination_port'], firewall_acl_vsd['destinationPort'])
+        self.assertEqual(firewall_acl_os['source_ip_address'], firewall_acl_vsd['addressOverride'])
+        self.assertEqual(firewall_acl_os['destination_ip_address'], firewall_acl_vsd['networkID'])
+        self.assertEqual(VSD_TO_OS_ACTION.get(firewall_acl_os['action']), firewall_acl_vsd['action'])
+        if firewall_acl_os['firewall_policy_id'] is not None:
+            self.assertEqual(firewall_acl_vsd['associatedfirewallACLID'], not None)
+
     def _wait_until_ready(self, fw_id):
         target_states = ('ACTIVE', 'CREATED')
 
@@ -157,13 +187,10 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
                         m['protocol'],
                         m['ip_version'],
                         m['enabled']) for m in fw_rules])
-        #import pdb;pdb.set_trace()
-        pass
-        #ext_id = test_base.get_external_id(fw_rules[0]['id'])
-        #ext_id = test_base.get_external_id(obj.os_data.get_resource(name).os_data['id'])
-        #fw_acl = obj.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(obj),
-        #            filter=test_base.get_filter_str('externalID', ext_id))
-        #obj.os_data.get_resource(name).vsd_data = fw_acl
+        ext_id = test_base.get_external_id(fw_rules[0]['id'])
+        vsd_acl = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
+                    filter=test_base.get_filter_str('externalID', ext_id))
+        self._verify_fw_rule(fw_rules[0], vsd_acl)
 
     @test.idempotent_id('563564f7-7077-4f5e-8cdc-51f37ae5a2b9')
     def test_create_update_delete_firewall_rule(self):
@@ -173,6 +200,11 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
             action="allow",
             protocol="tcp")
         fw_rule_id = body['firewall_rule']['id']
+        ext_id = test_base.get_external_id(fw_rule_id)
+        vsd_acl = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
+                    filter=test_base.get_filter_str('externalID', ext_id))
+        self._verify_fw_rule(body['firewall_rule'], vsd_acl)
+        
         # Update firewall rule
         body = self.firewall_rules_client.update_firewall_rule(fw_rule_id,
                                                                shared=True,
@@ -181,6 +213,9 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
                                                                source_ip_address='1.1.1.1/32',
                                                                destination_ip_address='2.2.2.2/32')
         self.assertTrue(body["firewall_rule"]['shared'])
+        vsd_acl = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
+                    filter=test_base.get_filter_str('externalID', ext_id))
+        self._verify_fw_rule(body['firewall_rule'], vsd_acl)
 
         # Delete firewall rule
         self.firewall_rules_client.delete_firewall_rule(fw_rule_id)
@@ -196,7 +231,10 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
             action="allow",
             protocol="tcp")
         fw_rule_id = body['firewall_rule']['id']
-
+        ext_id = test_base.get_external_id(fw_rule_id)
+        vsd_acl = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
+                    filter=test_base.get_filter_str('externalID', ext_id))
+        self._verify_fw_rule(body['firewall_rule'], vsd_acl)
         
         # Update firewall rule
         updated_dict = {'action': 'deny',
@@ -208,7 +246,9 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
         body = self.firewall_rules_client.update_firewall_rule(fw_rule_id,
                                                                **updated_dict)
         rule = body['firewall_rule']
-        
+        vsd_acl = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
+                    filter=test_base.get_filter_str('externalID', ext_id))
+        self._verify_fw_rule(body['firewall_rule'], vsd_acl)
         
         self.assertEqual((updated_dict['action'],
                       updated_dict['protocol'],
@@ -309,6 +349,12 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
                         m['protocol'],
                         m['ip_version'],
                         m['enabled']) for m in fw_rules])
+            
+        for rule in all_rules:
+            ext_id = test_base.get_external_id(rule['id'])
+            vsd_acl = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
+                    filter=test_base.get_filter_str('externalID', ext_id))
+            self._verify_fw_rule(rule, vsd_acl)
 
         #Delete all rules
         for rule in all_rules:

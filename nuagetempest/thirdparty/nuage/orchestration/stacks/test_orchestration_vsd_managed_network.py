@@ -102,7 +102,7 @@ class OrchestrationVsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
             'private_net_name': self.private_net_name,
             'private_net_cidr': str(cidr),
             'private_net_dhcp': True,
-            'private_net_pool_start': str(cidr[+1]),
+            'private_net_pool_start': str(cidr[+2]),
             'private_net_pool_end': str(cidr[-2])}
 
         # TODO: verify the usage of gateway_ip for vsd-managed networks

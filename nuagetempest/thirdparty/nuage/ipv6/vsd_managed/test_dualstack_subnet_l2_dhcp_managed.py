@@ -293,17 +293,8 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
 
         self.assertEqual(ipv6_subnet['cidr'], vsd_l2domain_template['IPv6Address'])
 
-        # create a port in the network
-        port = self.create_port(network)
-        self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
-                          status='DOWN',
-                          nuage_policy_groups=None,
-                          nuage_redirect_targets=[],
-                          nuage_floatingip=None)
-        self._verify_vport_in_l2_domain(port, vsd_l2domain)
-
         # create a port with fixed-ip in the IPv4 subnet, and no IP in IPv6
-        port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 10)}]}
+        port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 7)}]}
         port = self.create_port(network, **port_args)
         self._verify_port(port, subnet4=ipv4_subnet, subnet6=None),
         self._verify_vport_in_l2_domain(port, vsd_l2domain)
@@ -323,7 +314,7 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
         self._verify_vport_in_l2_domain(port, vsd_l2domain)
 
         # can have multiple fixed ip's in same subnet
-        port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 1)},
+        port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 33)},
                                    {'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 33)},
                                    {'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 34)}]}
         port = self.create_port(
@@ -331,6 +322,17 @@ class VSDManagedDualStackSubnetL2DHCPManagedTest(VsdTestCaseMixin,
             **port_args)
         self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet, status='DOWN')
         self._verify_vport_in_l2_domain(port, vsd_l2domain)
+
+        # create a port in the network
+        # OpenStack now chooses a random IP address. To avoid conflict with the above fixed IP's, do this case last
+        port = self.create_port(network)
+        self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
+                          status='DOWN',
+                          nuage_policy_groups=None,
+                          nuage_redirect_targets=[],
+                          nuage_floatingip=None)
+        self._verify_vport_in_l2_domain(port, vsd_l2domain)
+
         pass
 
     def test_create_ipv6_subnet_in_vsd_managed_l2domain_with_ipv6_network_first(self):

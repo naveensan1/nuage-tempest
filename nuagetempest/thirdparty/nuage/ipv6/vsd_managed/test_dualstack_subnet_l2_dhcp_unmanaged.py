@@ -59,7 +59,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             dhcp_managed=False,
             IPType="IPV4")
 
-    def test_vsd_l2domain_managed_ipv6_only_neg(self):
+    def test_vsd_l2domain_unmanaged_ipv6_only_neg(self):
         self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "TODO: Should not allow unsupported IPType",

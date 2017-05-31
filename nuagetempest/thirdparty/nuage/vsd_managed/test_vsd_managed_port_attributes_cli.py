@@ -23,6 +23,7 @@ from tempest.lib import exceptions
 
 from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
+from nuagetempest.lib.features import NUAGE_FEATURES
 from nuagetempest.lib.remote_cli import remote_cli_base_testcase
 
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
@@ -410,12 +411,12 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
         self.assertTrue(port_present,
                         "Associated port not present in show nuage redirect target response")
         # When I disassociate the red0rect-target from the port        #
-        #  When I try to create associate another port to the same redirect target, which has redundancy disabled (l2)
+        #  When I try to create associate another port to the same redirect target, which has redundancy disabled (l2)ml
 
         # I expect this to fail
         rtport_2 = self.create_port(cli_network)
         msg = "Cannot have more than 1 vPort under a redirectiontarget with redundancy disabled"
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+        if NUAGE_FEATURES.ml2_limited_exceptions:
             if CONF.nuage_sut.openstack_version == 'kilo':
                 msg = "update_port_postcommit failed"
             else:
@@ -504,11 +505,12 @@ class VSDManagedRedirectTargetCLITest(remote_cli_base_testcase.RemoteCliBaseTest
         # Then I expect a failure
         rtport = self.create_port(cli_network)
         msg = 'Bad request: Multiple redirect targets on a port not supported'
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+        if NUAGE_FEATURES.ml2_limited_exceptions:
             if CONF.nuage_sut.openstack_version == 'kilo':
                 msg = "update_port_postcommit failed"
             else:
                 msg = "update_port_precommit failed"
+
         self.assertRaisesRegexp(
             exceptions.SSHExecCommandFailed,
             msg,
@@ -1243,11 +1245,12 @@ class VSDManagedAssociateFIPCLITest(remote_cli_base_testcase.RemoteCliBaseTestCa
         # I expect a failure
         expected_exception = exceptions.SSHExecCommandFailed
         msg = 'Bad request: Floating IP %s is already in use' % claimed_fip[0]['address']
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+        if NUAGE_FEATURES.ml2_limited_exceptions:
             if CONF.nuage_sut.openstack_version == 'kilo':
                 msg = "update_port_postcommit failed"
             else:
                 msg = "update_port_precommit failed"
+
         self.assertRaisesRegexp(
             expected_exception,
             msg,

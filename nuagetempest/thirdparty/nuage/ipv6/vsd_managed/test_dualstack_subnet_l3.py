@@ -64,7 +64,7 @@ class VSDManagedDualStackSubnetL3Test(VsdTestCaseMixin,
         network = self.create_network(network_name=net_name)
         ipv4_subnet = self.create_subnet(
             network,
-            gateway=None,
+            gateway=subnet_gateway,
             cidr=subnet_cidr,
             enable_dhcp=True,
             mask_bits=IPNetwork(subnet_cidr).prefixlen,

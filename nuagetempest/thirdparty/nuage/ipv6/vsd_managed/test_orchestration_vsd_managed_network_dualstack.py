@@ -32,7 +32,7 @@ class OrchestrationVsdManagedNetworkDualStackTest(NuageBaseOrchestrationTest,
                                                                      fip_quota=100,
                                                                      extra_params=None)
         super(OrchestrationVsdManagedNetworkDualStackTest, cls).resource_setup()
-        cls.cidr4 = IPNetwork('1.2.3.0/24')
+        cls.cidr4 = IPNetwork('10.20.30.0/24')
         cls.mask_bits = cls.cidr4._prefixlen
         cls.gateway4 = str(IPAddress(cls.cidr4) + 1)
 

@@ -1,4 +1,3 @@
-from nuagetempest.thirdparty.nuage import test_allowed_addr_pair_nuage
 from tempest.common.utils import data_utils
 from tempest.api.network import base
 from tempest import test

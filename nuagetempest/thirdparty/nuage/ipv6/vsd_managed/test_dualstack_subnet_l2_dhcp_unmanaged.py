@@ -52,15 +52,15 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
     # see (resolved as duplicate ?) VSD-18607 -
     # see (resolved as duplicate ?) VSD-18415
     def test_vsd_l2domain_unmanaged_ipv4_only_neg(self):
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "TODO: Should not allow IPType IPv4",
             self.create_vsd_l2domain_template,
             dhcp_managed=False,
             IPType="IPV4")
 
-    def test_vsd_l2domain_managed_ipv6_only_neg(self):
-        self.assertRaisesRegex(
+    def test_vsd_l2domain_unmanaged_ipv6_only_neg(self):
+        self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "TODO: Should not allow unsupported IPType",
             self.create_vsd_l2domain_template,
@@ -68,7 +68,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             IPType="IPV6")
 
     def test_vsd_l2domain_unmanaged_ipv6_dualstack_neg(self):
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "TODO: Should not allow DUALSTACK IPType",
             self.create_vsd_l2domain_template,
@@ -76,7 +76,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             IPType="DUALSTACK")
 
     def test_vsd_l2domain_unmanaged_with_ipv4_addresses_neg(self):
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "TODO: Should not allow IPv4 addressing in unmanaged template",
             self.create_vsd_l2domain_template,
@@ -85,7 +85,7 @@ class VSDManagedL2DomainDHCPUnmanagedTest(VsdTestCaseMixin):
             cidr6=None)
 
     def test_vsd_l2domain_unmanaged_with_ipv6_addresses_neg(self):
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             nuage_exceptions.Conflict,
             "TODO: Should not allow IPv6 addressing in unmanaged template",
             self.create_vsd_l2domain_template,
@@ -299,9 +299,16 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
             nuagenet=vsd_l2domain['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)
 
-        self.assertRaisesRegex(
-            tempest_exceptions.ServerFault,
-            "Got server fault",
+        if CONF.nuage_sut.openstack_version >= 'newton':
+            expected_exception = tempest_exceptions.BadRequest
+            expected_message = "Port can't be a pure ipv6 port. Need ipv4 fixed ip."
+        else:
+            expected_exception = tempest_exceptions.ServerFault
+            expected_message = "Got server fault"
+
+        self.assertRaisesRegexp(
+            expected_exception,
+            expected_message,
             self.create_port,
             network)
 
@@ -334,7 +341,7 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
 
         # shall not create a port with fixed-ip IPv6 in ipv4 subnet
         port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 21)}]}
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             tempest_exceptions.BadRequest,
             "IP address %s is not a valid IP for the specified subnet" % (IPAddress(self.cidr6.first + 21)),
             self.create_port,
@@ -361,10 +368,19 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
 
         port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 11)},
                                    {'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 10)}]}
-        self.assertRaisesRegex(
-            tempest_exceptions.Conflict,
-            "Unable to complete operation for network %s. The IP address %s is in use."
-            % (network['id'], IPAddress(self.cidr6.first + 10)),
+
+        if CONF.nuage_sut.openstack_version >= 'newton':
+            expected_exception = tempest_exceptions.Conflict
+            expected_message = "IP address %s already allocated in subnet %s" \
+                % (IPAddress(self.cidr6.first + 10), ipv6_subnet['id'])
+        else:
+            expected_exception = tempest_exceptions.Conflict
+            expected_message = "Unable to complete operation for network %s. The IP address %s is in use." \
+                % (network['id'], IPAddress(self.cidr6.first + 10))
+
+        self.assertRaisesRegexp(
+            expected_exception,
+            expected_message,
             self.create_port,
             network,
             **port_args)
@@ -372,7 +388,7 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
         # shall not create port with fixed ip in outside cidr
         port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 201)},
                                    {'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first - 20)}]}
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             tempest_exceptions.BadRequest,
             "IP address %s is not a valid IP for the specified subnet" % (IPAddress(self.cidr6.first - 20)),
             self.create_port,
@@ -381,18 +397,33 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
 
         # shall not create a port with no ip in the IPv4 subnet but only fixed-ip IPv6
         port_args = {'fixed_ips': [{'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 21)}]}
-        self.assertRaisesRegex(
+
+        if CONF.nuage_sut.openstack_version >= 'newton':
+            expected_exception = tempest_exceptions.BadRequest
+            expected_message = "Port can't be a pure ipv6 port. Need ipv4 fixed ip."
+        else:
             tempest_exceptions.ServerFault,
-            "Got server fault",
+            expected_message = "Got server fault"
+
+        self.assertRaisesRegexp(
+            expected_exception,
+            expected_message,
             self.create_port,
             network,
             **port_args)
 
         # shall not create a port with no ip in the IPv4 subnet but only fixed-ip IPv6
         port_args = {'fixed_ips': [{'subnet_id': ipv6_subnet['id'], 'ip_address': IPAddress(self.cidr6.first + 21)}]}
-        self.assertRaisesRegex(
+        if CONF.nuage_sut.openstack_version >= 'newton':
+            expected_exception = tempest_exceptions.BadRequest
+            expected_message = "Port can't be a pure ipv6 port. Need ipv4 fixed ip."
+        else:
             tempest_exceptions.ServerFault,
-            "Got server fault",
+            expected_message = "Got server fault"
+
+        self.assertRaisesRegexp(
+            expected_exception,
+            expected_message,
             self.create_port,
             network,
             **port_args)
@@ -468,6 +499,6 @@ class VSDManagedDualStackSubnetL2DHCPUnmanagedTest(VsdTestCaseMixin,
         for ipv6, msg in invalid_ipv6:
             port_args = {'fixed_ips': [{'subnet_id': ipv4_subnet['id'], 'ip_address': IPAddress(self.cidr4.first + 40)},
                                        {'subnet_id': ipv6_subnet['id'], 'ip_address': ipv6}]}
-            self.assertRaisesRegex(tempest_exceptions.BadRequest, msg % ipv6, self.create_port, network, **port_args)
+            self.assertRaisesRegexp(tempest_exceptions.BadRequest, msg % ipv6, self.create_port, network, **port_args)
 
         pass

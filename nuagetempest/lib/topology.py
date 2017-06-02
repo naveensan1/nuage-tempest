@@ -161,6 +161,14 @@ class Topology(object):
             return True
         return False
 
+    @staticmethod
+    def _base_uri_to_version(base_uri):
+        pattern = re.compile(r'(\d+_\d+)')
+        match =  pattern.search(base_uri)
+        version = match.group()
+        version = str(version).replace('_','.')
+        return version
+
     def make_dut(self, name):
 
         dut = self.get_dut_from_topologyfile(name)
@@ -173,7 +181,9 @@ class Topology(object):
         if self._is_vsd(component):
             vsd_ip = CONF.nuage.nuage_vsd_server.split(':')[0]
             vsd_port = CONF.nuage.nuage_vsd_server.split(':')[1]
-            api = libVSD.client.ApiClient(vsd_ip, port=vsd_port, version="4.0")
+            vsd_api_version = self._base_uri_to_version(CONF.nuage.nuage_base_uri)
+
+            api = libVSD.client.ApiClient(vsd_ip, port=vsd_port, version=vsd_api_version)
             helper = libVSD.helpers.VSDHelpers(api)
             setattr(helper, 'api', api)
             return helper

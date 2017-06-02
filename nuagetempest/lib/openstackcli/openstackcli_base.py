@@ -54,7 +54,7 @@ class NetworkClient(openstack_cliclient.ClientTestBase):
 
     def delete_network(self, network_id):
         response = self._delete_network(network_id)
-        self.assertFirstLineStartsWith(response.split('\n'), 'Deleted network:')
+        self.assertFirstLineStartsWith(response.split('\n'), 'Deleted network')
 
     def show_network(self, network_id):
         response = self.cli.neutron('net-show', params=network_id)
@@ -246,7 +246,7 @@ class PortClient(openstack_cliclient.ClientTestBase):
 
     def delete_port(self, port_id):
         response = self._delete_port(port_id)
-        self.assertFirstLineStartsWith(response.split('\n'), 'Deleted port:')
+        self.assertFirstLineStartsWith(response.split('\n'), 'Deleted port')
 
     def show_port(self, port_id):
         response = self.cli.neutron('port-show', params=port_id)

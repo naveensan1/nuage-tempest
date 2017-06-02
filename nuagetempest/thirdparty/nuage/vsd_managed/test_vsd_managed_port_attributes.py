@@ -26,6 +26,9 @@ from nuagetempest.lib.utils import constants
 from nuagetempest.lib.test import nuage_test
 from nuagetempest.lib.test import tags
 from nuagetempest.lib.nuage_tempest_test_loader import Release
+
+from nuagetempest.lib.features import NUAGE_FEATURES
+
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_networks
 from nuagetempest.thirdparty.nuage.vsd_managed import base_vsd_managed_port_attributes
 from nuagetempest.thirdparty.nuage.upgrade.external_id.external_id import ExternalId
@@ -439,16 +442,17 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         msg = "Cannot have more than 1 vPort under a redirectiontarget with redundancy disabled"
         expected_exception = exceptions.BadRequest
 
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+        if NUAGE_FEATURES.ml2_limited_exceptions:
             expected_exception = exceptions.ServerFault
             if CONF.nuage_sut.openstack_version == 'kilo':
                 msg = "update_port_postcommit failed"
             else:
                 msg = "update_port_precommit failed"
         else:
-            # Todo: VSD-14419 change expected exceptions once the VSD adapts pro[perly
-            LOG.warning("VSD-14419: throws wrong http error code: ServerFault iso BadRequest")
-            expected_exception = exceptions.ServerFault
+            # VSD-14419 - VSD throws wrong error
+            if  Release(CONF.nuage_sut.release) < Release('4.0R5'):
+                expected_exception = exceptions.ServerFault
+                LOG.warning("VSD-14419: throws wrong http error code: ServerFault iso BadRequest")
 
         self.assertRaisesRegexp(
             expected_exception,
@@ -561,7 +565,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
         # Then I expect a failure
         rtport = self.create_port(network)
 
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+        if NUAGE_FEATURES.ml2_limited_exceptions:
             msg = "Got server fault"
             expected_exception = exceptions.ServerFault
         else:
@@ -1562,7 +1566,7 @@ class VSDManagedAssociateFIPTest(base_vsd_managed_port_attributes.BaseVSDManaged
         expected_exception = exceptions.BadRequest
         msg = 'Bad request: Floating IP %s is already in use' % claimed_fip[0]['address']
 
-        if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
+        if NUAGE_FEATURES.ml2_limited_exceptions:
             expected_exception = exceptions.ServerFault
             if CONF.nuage_sut.openstack_version == 'kilo':
                 msg = "update_port_postcommit failed"

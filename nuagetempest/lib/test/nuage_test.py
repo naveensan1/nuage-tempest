@@ -257,30 +257,24 @@ class NuageBaseTest(test.BaseTestCase):
         if not isinstance(vsd_l2domain, self.vsd.vspk.NUL2Domain):
             self.fail("Must have an VSD L2 domain")
 
-        if dhcp_managed:
-            if ip_version == 4:
-                cidr = IPNetwork(vsd_l2domain.address + "/" + vsd_l2domain.netmask),
-                gateway = vsd_l2domain.gateway,
-            elif ip_version == 6:
-                gateway = vsd_l2domain.ipv6_gateway,
-                cidr = IPNetwork(vsd_l2domain.ipv6_address),
-            else:
-                self.fail("IP version {} is not supported".format(ip_version))
-
-            subnet = self.create_subnet(
-                network,
-                enable_dhcp=True,
-                ip_version=ip_version,
-                cidr=cidr[0],
-                gateway=gateway[0],
-                nuagenet=vsd_l2domain.id,
-                net_partition=vsd_l2domain.parent_object.name)
+        if ip_version == 4:
+            cidr = IPNetwork(vsd_l2domain.address + "/" + vsd_l2domain.netmask),
+            gateway = vsd_l2domain.gateway,
+        elif ip_version == 6:
+            gateway = vsd_l2domain.ipv6_gateway,
+            cidr = IPNetwork(vsd_l2domain.ipv6_address),
         else:
-            subnet = self.create_subnet(
-                network,
-                enable_dhcp=False,
-                nuagenet=vsd_l2domain.id,
-                net_partition=vsd_l2domain.parent_object.name)
+            self.fail("IP version {} is not supported".format(ip_version))
+
+        subnet = self.create_subnet(
+            network,
+            enable_dhcp=dhcp_managed,
+            ip_version=ip_version,
+            cidr=cidr[0],
+            gateway=gateway[0],
+            nuagenet=vsd_l2domain.id,
+            net_partition=vsd_l2domain.parent_object.name)
+
         return subnet
 
     def create_l3_vsd_managed_subnet(self, network, vsd_subnet, dhcp_managed=True, ip_version=4):

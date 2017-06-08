@@ -79,7 +79,9 @@ class VsdHelper(object):
                                  dhcp_managed=True,
                                  ip_type=None,
                                  cidr4=None,
+                                 gateway4=None,
                                  cidr6=None,
+                                 gateway6=None,
                                  **kwargs):
         if not enterprise:
             enterprise = self.get_default_enterprise()
@@ -104,21 +106,14 @@ class VsdHelper(object):
                 netmask = str(cidr4.netmask)
             params.update({'netmask': netmask})
 
-            if "gateway" in kwargs:
-                gateway_ip = kwargs['gateway']
-            else:
-                gateway_ip = str(IPAddress(cidr4) + 1)
-            params.update({'gateway': gateway_ip})
+            if gateway4:
+                params.update({'gateway': gateway4})
 
-        if cidr6:
-            params.update({'IPv6Address': str(cidr6)})
+        if ip_type == self.vspk.NUSubnet.CONST_IP_TYPE_DUALSTACK:
+            params.update({'ipv6_address': str(cidr6)})
 
-            if "gateway6" in kwargs:
-                gateway6_ip = kwargs['gateway6']
-                kwargs.pop('gateway6')
-            else:
-                gateway6_ip = str(IPAddress(cidr6) + 1)
-            params.update({'IPv6Gateway': gateway6_ip})
+            if gateway6:
+                params.update({'ipv6_gateway': gateway6})
 
         # add all other kwargs as attributes (key,value) pairs
         for key, value in kwargs.iteritems():

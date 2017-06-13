@@ -93,7 +93,7 @@ class DualStackNetworksTest(NetworkTestCaseMixin):
     ####################################################################################################################
 
     @nuage_test.header()
-    def test_os_managed_dual_stack_subnet_with_net_partition(self):
+    def test_os_managed_dual_stack_subnet_with_net_partition_neg(self):
         # create Openstack IPv4 subnet on Openstack based on VSD l2domain
         net_name = data_utils.rand_name('network-')
         network = self.create_network(network_name=net_name)
@@ -118,7 +118,7 @@ class DualStackNetworksTest(NetworkTestCaseMixin):
         pass
 
     @nuage_test.header()
-    def test_os_managed_ipv6_subnet_with_net_partition(self):
+    def test_os_managed_ipv6_subnet_with_net_partition_neg(self):
         net_name = data_utils.rand_name('network-')
         network = self.create_network(network_name=net_name)
 

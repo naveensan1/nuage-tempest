@@ -181,6 +181,7 @@ class Topology(object):
         if self._is_vsd(component):
             vsd_ip = CONF.nuage.nuage_vsd_server.split(':')[0]
             vsd_port = CONF.nuage.nuage_vsd_server.split(':')[1]
+
             vsd_api_version = self._base_uri_to_version(CONF.nuage.nuage_base_uri)
 
             api = libVSD.client.ApiClient(vsd_ip, port=vsd_port, version=vsd_api_version)

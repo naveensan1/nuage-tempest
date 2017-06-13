@@ -43,6 +43,8 @@ class NuageFeatures(object):
             self.dualstack_subnets = self.current_release == Release('4.0VZ')
 
         if self.current_release.major_release == "5.0":
+            self.full_external_id_support = True
+            self.bidrectional_fip_rate_limit = True
             self.ml2_limited_exceptions = False
             self.dualstack_subnets = CONF.nuage_sut.nuage_plugin_mode == 'ml2'
 

@@ -149,11 +149,6 @@ class NuageBaseTest(test.BaseTestCase):
 
     @classmethod
     def setup_credentials(cls):
-        # if CONF.nuage.run_verification_test:
-        #     CONF.allow_tenant_isolation = False
-        #     cls.force_tenant_isolation = False
-        #     force_tenant_isolation = False
-        #     CONF.test_accounts_file = CONF.nuage.user_file
         super(NuageBaseTest, cls).setup_credentials()
 
     @classmethod
@@ -162,9 +157,6 @@ class NuageBaseTest(test.BaseTestCase):
         cls.manager = cls.get_client_manager()
         cls.admin_manager = cls.get_client_manager(credential_type='admin')
 
-        # we need to replace below line with vspk client
-        cls.nuage_vsd_client = nuage_client.NuageRestClient()
-
         # TODO: fetch version from tempest.conf
         version = "v5_0"
         address = CONF.nuage.nuage_vsd_server
@@ -172,7 +164,6 @@ class NuageBaseTest(test.BaseTestCase):
 
     @classmethod
     def resource_cleanup(cls):
-        # cleanup the OpenStack managed objects first
         super(NuageBaseTest, cls).resource_cleanup()
 
     def setUp(self):

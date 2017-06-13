@@ -29,7 +29,9 @@ class DualStackConnectivityTest(NuageBaseTest):
 
     def test_icmp_connectivity_vsd_managed_l2_domain(self):
         # Provision VSD managed network resources
-        l2domain_template = self.vsd.create_l2domain_template(cidr4=self.cidr4, mask_bits=self.mask_bits)
+        l2domain_template = self.vsd.create_l2domain_template(cidr4=self.cidr4,
+                                                              gateway4=self.gateway4,
+                                                              mask_bits=self.mask_bits)
         self.addCleanup(l2domain_template.delete)
 
         l2domain = self.vsd.create_l2domain(template=l2domain_template)
@@ -134,16 +136,22 @@ class DualStackConnectivityTest(NuageBaseTest):
 
         # Allow IPv6 only
         self.vsd.define_any_to_any_acl(vsd_l2domain, allow_ipv4=False, allow_ipv6=True)
+        time.sleep(3)
+
         self.assert_ping(server1, server2, network, should_pass=False)
         self.assert_ping6(server1, server2, network, should_pass=True)
 
         # Allow IPv4 only
         self.vsd.define_any_to_any_acl(vsd_l2domain, allow_ipv4=True, allow_ipv6=False)
+        time.sleep(3)
+
         self.assert_ping(server1, server2, network, should_pass=True)
         self.assert_ping6(server1, server2, network, should_pass=False)
 
         # Allow IPv4 and IPv6 again
         self.vsd.define_any_to_any_acl(vsd_l2domain, allow_ipv4=True, allow_ipv6=True)
+        time.sleep(3)
+
         self.assert_ping(server1, server2, network, should_pass=True)
         self.assert_ping6(server1, server2, network, should_pass=True)
         pass

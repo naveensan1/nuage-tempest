@@ -77,7 +77,7 @@ class VsdHelper(object):
 
     def create_l2domain_template(self, name=None, enterprise=None,
                                  dhcp_managed=True,
-                                 ip_type=None,
+                                 ip_type="IPV4",
                                  cidr4=None,
                                  gateway4=None,
                                  cidr6=None,

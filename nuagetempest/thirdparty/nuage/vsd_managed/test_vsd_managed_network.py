@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from netaddr import IPNetwork
+from netaddr import IPNetwork, IPAddress
 
 from nuagetempest.lib.nuage_tempest_test_loader import Release
 from nuagetempest.lib.test import nuage_test
@@ -109,6 +109,42 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             net_partition=CONF.nuage.nuage_default_netpartition)
         self.assertEqual(subnet['cidr'], str(cidr))
         self.assertTrue(self._verify_vm_ip(network['id'], net_name))
+
+    @nuage_test.header(tags=['smoke'])
+    # OPENSTACK-1809
+    # TODO: add testcases for various allocation pool values
+    def test_link_subnet_l2_allocation_pool(self):
+        # create l2domain on VSD
+        name = data_utils.rand_name('l2domain-')
+        cidr = IPNetwork('10.10.100.0/24')
+        vsd_l2dom_tmplt = self.create_vsd_dhcpmanaged_l2dom_template(
+            name=name,
+            cidr=cidr, gateway='10.10.100.1')
+        vsd_l2dom = self.create_vsd_l2domain(name=name,
+                                             tid=vsd_l2dom_tmplt[0]['ID'])
+
+        self.assertEqual(vsd_l2dom[0][u'name'], name)
+        # create subnet on OS with nuagenet param set to l2domain UUID
+        net_name = data_utils.rand_name('network-')
+        network = self.create_network(network_name=net_name)
+
+        start_ip = IPAddress(cidr) + 3
+        end_ip = IPAddress(cidr) + 5
+        pool_dict = [{'start': start_ip, 'end': end_ip}]
+
+        subnet = self.create_subnet(
+            network,
+            cidr=cidr,
+            mask_bits=24,
+            gateway=vsd_l2dom[0]['gateway'],
+            allocation_pools=pool_dict,
+            nuagenet=vsd_l2dom[0]['ID'],
+            net_partition=CONF.nuage.nuage_default_netpartition)
+        self.assertEqual(subnet['cidr'], str(cidr))
+        pool=subnet['allocation_pools'][0]
+        self.assertEqual(pool['start'], start_ip.format())
+        self.assertEqual(pool['end'], end_ip.format())
+      #  self.assertTrue(self._verify_vm_ip(network['id'], net_name))
 
     @nuage_test.header(tags=['smoke'])
     def test_link_vsd_managed_sharedsubnet_l2(self):

@@ -616,20 +616,17 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
         #Get rule1 from VSD
         ext_id = test_base.get_external_id(fw_rule_id1)
         rule1 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(), 
-                                                                                   filter=test_base.get_filter_str('externalID',
-                                                                                                                    ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertEqual(rule1.priority,  0)
         ext_id = test_base.get_external_id(fw_rule_id2)
         rule2 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(), 
-                                                                                   filter=test_base.get_filter_str('externalID',
-                                                                                                                    ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertEqual(rule2.priority,  1)
         
         #Verify rule association to acl on VSD.
         ext_id = test_base.get_external_id(fw_policy_id)
         policy1 = self.TB.vsd_1.get_firewallacl(self._get_def_ent_obj(),
-                                                                              filter=test_base.get_filter_str('externalID',
-                                                                                                               ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertIn(rule1.id, policy1._rule_ids)
         self.assertIn(rule2.id, policy1._rule_ids)
         
@@ -658,25 +655,21 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
         #Verify Positions on VSD:
         ext_id = test_base.get_external_id(fw_rule_id1)
         rule1 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(), 
-                                                                                   filter=test_base.get_filter_str('externalID',
-                                                                                                                    ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertEqual(rule1.priority,  0)
         ext_id = test_base.get_external_id(fw_rule_id2)
         rule2 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(), 
-                                                                                   filter=test_base.get_filter_str('externalID',
-                                                                                                                    ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertEqual(rule2.priority,  2)
         ext_id = test_base.get_external_id(fw_rule_id3)
         rule3 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(), 
-                                                                                   filter=test_base.get_filter_str('externalID',
-                                                                                                                    ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertEqual(rule3.priority,  1)
         
         #Verify rule association to acl on VSD.
         ext_id = test_base.get_external_id(fw_policy_id)
         policy1 = self.TB.vsd_1.get_firewallacl(self._get_def_ent_obj(),
-                                                                              filter=test_base.get_filter_str('externalID',
-                                                                                                               ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertIn(rule1.id, policy1._rule_ids)
         self.assertIn(rule2.id, policy1._rule_ids)
         self.assertIn(rule3.id, policy1._rule_ids)
@@ -746,13 +739,11 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
             fw_policy_id)
         ext_id = test_base.get_external_id(fw_policy_id)
         policy1 = self.TB.vsd_1.get_firewallacl(self._get_def_ent_obj(),
-                                                                                    filter=test_base.get_filter_str('externalID',
-                                                                                                               ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         
         ext_id = test_base.get_external_id(fw_rule_id)
         rule1 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(),
-                                                                                 filter=test_base.get_filter_str('externalID',
-                                                                                                               ext_id))
+						filter=test_base.get_filter_str('externalID',ext_id))
         self.assertIn(rule1.id, policy1._rule_ids)
         self.assertFalse(body['firewall_policy']['audited'])
 

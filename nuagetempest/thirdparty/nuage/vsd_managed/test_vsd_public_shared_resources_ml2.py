@@ -42,9 +42,12 @@ VALID_CIDR_GW = '3.22.111.1'
 #
 EXPECT_DHCP_ENABLE_TRUE = "enable_dhcp in subnet must be True"
 EXPECT_DHCP_ENABLE_FALSE = "enable_dhcp in subnet must be False"
+EXPECT_CIDR_MATCH = "do not match"
+
 EXPECT_GATEWAY_IP_MISMATCH = "Bad subnet request: Provided gateway-ip does not match VSD configuration"
 EXPECT_CIDR_IN_RANGE = "Bad request: cidr in subnet must be"
 EXPECT_GATEWAY_IN_CIDR = "Invalid input for operation: Gateway is not valid on subnet."
+CREATE_DHCP_PORT=True
 
 
 @nuage_test.class_header(tags=[tags.ML2, tags.VSD_MANAGED])
@@ -208,7 +211,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to None
             expected_gateway_ip=None,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the valid CIDR range
@@ -269,7 +272,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to None
             expected_gateway_ip=None,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -299,7 +302,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             # gateway_ip equal DHCP-options-3 of VSD-L2-Shared-domain
             expected_gateway_ip=VSD_L2_SHARED_MGD_OPT3,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -331,7 +334,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to DHCP-options-3 of VSD-L2-Shared-domain
             expected_gateway_ip=VSD_L2_SHARED_MGD_OPT3,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -385,7 +388,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the  CIDR range
@@ -419,7 +422,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -485,7 +488,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=VSD_L3_SHARED_MGD_OPT3_GW,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the  CIDR range
@@ -518,7 +521,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=VSD_L3_SHARED_MGD_OPT3_GW,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -552,7 +555,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=VSD_L3_SHARED_MGD_OPT3_GW,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -576,9 +579,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedunmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_FALSE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -602,9 +604,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedunmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_FALSE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -630,9 +631,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedunmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_FALSE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -658,9 +658,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -685,9 +684,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -713,9 +711,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -741,9 +738,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -768,8 +764,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -795,8 +791,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -823,8 +819,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -849,8 +845,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -876,8 +872,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -903,8 +899,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -929,8 +925,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -956,8 +952,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -999,7 +995,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
             #   gateway_ip equal to gateway-ip of VSD-L3-Shared-domain
             expected_gateway_ip=base_vsd_managed_networks.VSD_L3_SHARED_MGD_GW,
             #   and no network:dhcp:nuage port
-            expect_network_dhcp_nuage_port=False,
+            expect_network_dhcp_nuage_port=CREATE_DHCP_PORT,
 
             # When I spin a VM in this network
             # Then the OS  VM-IPaddress is in the CIDR range
@@ -1017,9 +1013,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1045,9 +1040,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1073,9 +1067,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1101,9 +1094,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1128,9 +1120,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1155,9 +1146,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgdopt3_linkedto_vsdl3subnetunmgd(VSD_L3_SHARED_MGD_OPT3)
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_DHCP_ENABLE_TRUE,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1185,9 +1175,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1213,9 +1202,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1241,9 +1229,8 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
 
         self.assertRaisesRegex(
-            exceptions.ServerFault,
-            "Details: create_subnet_postcommit failed.",
-
+            exceptions.BadRequest,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -1270,7 +1257,7 @@ class VSDPublicResourcesSharedNetworksML2Test(base_vsd_public_resources.BaseVSDP
 
         self.assertRaisesRegex(
             exceptions.BadRequest,
-            EXPECT_GATEWAY_IN_CIDR,
+            EXPECT_CIDR_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,

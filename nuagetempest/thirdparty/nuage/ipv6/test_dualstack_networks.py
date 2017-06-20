@@ -29,8 +29,11 @@ class DualStackNetworksTest(NetworkTestCaseMixin):
         cls.mask_bits = CONF.network.tenant_network_mask_bits
         cls.cidr6 = IPNetwork(CONF.network.tenant_network_v6_cidr)
 
+    ####################################################################################################################
+    # Negative cases
+    ####################################################################################################################
     @nuage_test.header()
-    def test_os_managed_dual_stack_subnet(self):
+    def test_os_managed_dual_stack_subnet_neg(self):
         net_name = data_utils.rand_name('network-')
         network = self.create_network(network_name=net_name)
         # create Openstack IPv4 subnet
@@ -42,55 +45,31 @@ class DualStackNetworksTest(NetworkTestCaseMixin):
         self.assertThat(ipv4_subnet, ContainsDict({'vsd_managed': Equals(False)}))
 
         # create Openstack IPv6 subnet
-        ipv6_subnet = self.create_subnet(
+        self.assertRaisesRegexp(
+            exceptions.BadRequest,
+            "Subnet with ip_version 6 is currently not supported for OpenStack managed subnets.",
+            self.create_subnet,
             network,
             ip_version=6,
             cidr=self.cidr6,
             mask_bits=self.cidr6._prefixlen,
             enable_dhcp=False)
 
-        self.assertThat(ipv6_subnet, ContainsDict({'vsd_managed': Equals(False)}))
-
-        # create a port in the network
-        port = self.create_port(network)
-        self._verify_port(port, subnet4=ipv4_subnet, subnet6=ipv6_subnet,
-                          status='DOWN')
-
-        # port has no nuage port-options
-        self.assertFalse('nuage_policy_groups' in port)
-        self.assertFalse('nuage_redirect_targets' in port)
-        self.assertFalse('nuage_floatingip' in port)
-        pass
-
     @nuage_test.header()
-    def test_os_managed_ipv6_subnet(self):
+    def test_os_managed_ipv6_subnet_neg(self):
         net_name = data_utils.rand_name('network-')
         network = self.create_network(network_name=net_name)
 
         # create Openstack IPv6 subnet
-        ipv6_subnet = self.create_subnet(
+        self.assertRaisesRegexp(
+            exceptions.BadRequest,
+            "Subnet with ip_version 6 is currently not supported for OpenStack managed subnets.",
+            self.create_subnet,
             network,
             ip_version=6,
             cidr=self.cidr6,
             mask_bits=self.cidr6._prefixlen,
             enable_dhcp=False)
-
-        self.assertThat(ipv6_subnet, ContainsDict({'vsd_managed': Equals(False)}))
-
-        # create a port in the network
-        port = self.create_port(network)
-        self._verify_port(port, subnet4=None, subnet6=ipv6_subnet,
-                          status='DOWN')
-
-        # port has no nuage port-options
-        self.assertFalse('nuage_policy_groups' in port)
-        self.assertFalse('nuage_redirect_targets' in port)
-        self.assertFalse('nuage_floatingip' in port)
-        pass
-
-    ####################################################################################################################
-    # Negative cases
-    ####################################################################################################################
 
     @nuage_test.header()
     def test_os_managed_dual_stack_subnet_with_net_partition_neg(self):
@@ -105,8 +84,8 @@ class DualStackNetworksTest(NetworkTestCaseMixin):
         # create Openstack IPv6 subnet
         # In serverlog: "NuageBadRequest: Bad request: nuagenet is required in subnet"
         self.assertRaisesRegexp(
-            exceptions.ServerFault,
-            "create_subnet_precommit failed.",
+            exceptions.BadRequest,
+            "Subnet with ip_version 6 is currently not supported for OpenStack managed subnets.",
             self.create_subnet,
             network,
             ip_version=6,
@@ -125,8 +104,8 @@ class DualStackNetworksTest(NetworkTestCaseMixin):
         # create Openstack IPv6 subnet
         # In serverlog: "NuageBadRequest: Bad request: nuagenet is required in subnet"
         self.assertRaisesRegexp(
-            exceptions.ServerFault,
-            "create_subnet_precommit failed.",
+            exceptions.BadRequest,
+            "Subnet with ip_version 6 is currently not supported for OpenStack managed subnets.",
             self.create_subnet,
             network,
             ip_version=6,

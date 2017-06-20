@@ -489,7 +489,6 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
         self.addCleanup(self._try_delete_firewall, firewall_id)
 
         self.assertEqual([router1['id']], created_firewall['router_ids'])
-
         # Wait for the firewall resource to become ready
         self._wait_until_ready(firewall_id)
 
@@ -840,4 +839,73 @@ class FWaaSExtensionTestJSON(BaseFWaaSTest):
                                                  filter=test_base.get_filter_str('externalID', ext_id))
          self.assertIn(rule2.id, policy2._rule_ids)
          
-         
+    def test_create_firewall_rule_and_add_remove_router(self):
+         # Create firewall rule
+        body = self.firewall_rules_client.create_firewall_rule(
+            name=data_utils.rand_name("fw-rule"),
+            action="allow",
+            protocol="tcp")
+        fw_rule_id1 = body['firewall_rule']['id']
+        self.addCleanup(self._try_delete_rule, fw_rule_id1)
+        # Create firewall policy
+        body = self.firewall_policies_client.create_firewall_policy(
+            name=data_utils.rand_name("fw-policy"))
+        fw_policy_id = body['firewall_policy']['id']
+        self.addCleanup(self._try_delete_policy, fw_policy_id)
+
+        # Insert rule to firewall policy
+        self.firewall_policies_client.insert_firewall_rule_in_policy(
+            fw_policy_id, fw_rule_id1, '', '')
+        # Verify insertion of rule in policy
+        self.assertIn(fw_rule_id1, self._get_list_fw_rule_ids(fw_policy_id))
+         # Verify On VSD
+        ext_id = test_base.get_external_id(fw_rule_id1)
+        rule1 = self.TB.vsd_1.get_firewallrule(self._get_def_ent_obj(), 
+                                               filter=test_base.get_filter_str('externalID', ext_id))
+        ext_id = test_base.get_external_id(fw_policy_id)
+        policy1 = self.TB.vsd_1.get_firewallacl(self._get_def_ent_obj(),
+                                                filter=test_base.get_filter_str('externalID', ext_id))
+        self.assertIn(rule1.id, policy1._rule_ids)
+        
+        #Create a router1 
+        router1 = self.create_router(
+            data_utils.rand_name('router-'),
+            admin_state_up=True)
+ 
+        # Create firewall on a router1
+        body = self.firewalls_client.create_firewall(
+            name=data_utils.rand_name("firewall"),
+            firewall_policy_id=fw_policy_id,
+            router_ids=[router1['id']])
+        created_firewall = body['firewall']
+        firewall_id = created_firewall['id']
+        self.addCleanup(self._try_delete_firewall, firewall_id)
+
+        self.assertEqual([router1['id']], created_firewall['router_ids'])
+        # Wait for the firewall resource to become ready
+        self._wait_until_ready(firewall_id)
+        #Also verify on VSD whether association is created or not
+        domains = self.TB.vsd_1.get_firewallacl_domains(policy1)
+        ext_id = test_base.get_external_id(router1['id'])
+        self.assertEqual(domains[0].external_id, ext_id)
+
+        #create a router2
+        router2 = self.create_router(
+            data_utils.rand_name('router-'),
+            admin_state_up=True)
+        
+        body = self.firewalls_client.update_firewall(
+            firewall_id, router_ids=[router1['id'], router2['id']])
+        updated_firewall = body['firewall']
+        self.assertIn(router2['id'], updated_firewall['router_ids'])
+        self.assertEqual(2, len(updated_firewall['router_ids']))
+        self._wait_until_ready(firewall_id)
+
+        #Also verify on VSD whether association is created or not
+        domains = self.TB.vsd_1.get_firewallacl_domains(policy1)
+        ext_id1 = test_base.get_external_id(router1['id'])
+        ext_id2 = test_base.get_external_id(router2['id'])
+        list_of_ext_ids = [dom.external_id for dom in domains]
+        self.assertIn(ext_id1, list_of_ext_ids)
+        self.assertIn(ext_id2, list_of_ext_ids)
+ 

@@ -343,7 +343,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
         if "expect_network_dhcp_nuage_port" in kwargs_expect:
             self.assertEqual(network_dhcp_port_present,
                              kwargs_expect['expect_network_dhcp_nuage_port'],
-                             message="Mismatch for neytwork:dhcp:nuage port, expect %s " % kwargs_expect[
+                             message="Mismatch for network:dhcp:nuage port, expect %s " % kwargs_expect[
                                  'expect_network_dhcp_nuage_port'])
 
         if "expected_gateway_ip" in kwargs_expect:
@@ -406,7 +406,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
         if "expect_network_dhcp_nuage_port" in kwargs_expect:
             self.assertEqual(network_dhcp_port_present,
                              kwargs_expect['expect_network_dhcp_nuage_port'],
-                             message="Mismatch for neytwork:dhcp:nuage port, expect %s " % kwargs_expect['expect_network_dhcp_nuage_port'])
+                             message="Mismatch for network:dhcp:nuage port, expect %s " % kwargs_expect['expect_network_dhcp_nuage_port'])
 
         # And gateway_ip equals to expected_gateway_ip
         if "expected_gateway_ip" in kwargs_expect:

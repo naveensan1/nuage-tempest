@@ -249,10 +249,12 @@ class FloatingIPTestAdminNuage(base.BaseAdminNetworkTest):
                   'ip_version': 4,
                   'cidr': '172.40.0.0/24',
                   'nuage_uplink' : nuage_fipsubnet1[0]['parentID']}
-        self.assertRaises(exceptions.ServerFault,
-                          self.admin_subnets_client.create_subnet,
-                          **kwargs)
-       
+
+        self.assertRaisesRegexp(exceptions.BadRequest,
+                                "Network 172.40.0.0/255.255.255.0 overlaps with existing network ",
+                                self.admin_subnets_client.create_subnet,
+                                **kwargs)
+
         # Update of nuage_uplink is should not be allowed
         # Will Fail due to OPENSTACK-1083
         self.assertRaises(exceptions.BadRequest,

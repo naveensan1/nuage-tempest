@@ -47,22 +47,26 @@ class OrchestrationVsdManagedNetworkDualStackTest(NuageBaseOrchestrationTest,
 
         OpenStack network is created with minimal attributes.
         """
+        cidr4 = IPNetwork('10.0.1.0/24')
+        mask_bits = cidr4._prefixlen
+        gateway4 = str(IPAddress(cidr4) + 1)
+
         # create l2domain on VSD
         vsd_l2domain_template = self.create_vsd_l2domain_template(
             ip_type="DUALSTACK",
             dhcp_managed=True,
-            cidr4=self.cidr4,
+            cidr4=cidr4,
             cidr6=self.cidr6,
-            gateway=self.gateway4,
+            gateway=gateway4,
             gateway6=self.gateway6)
 
         self._verify_vsd_l2domain_template(vsd_l2domain_template,
                                            ip_type="DUALSTACK",
                                            dhcp_managed=True,
-                                           cidr4=self.cidr4,
+                                           cidr4=cidr4,
                                            cidr6=self.cidr6,
                                            IPv6Gateway=self.gateway6,
-                                           gateway=self.gateway4)
+                                           gateway=gateway4)
 
         vsd_l2domain = self.create_vsd_l2domain(vsd_l2domain_template['ID'])
         self._verify_vsd_l2domain_with_template(vsd_l2domain, vsd_l2domain_template)
@@ -73,9 +77,9 @@ class OrchestrationVsdManagedNetworkDualStackTest(NuageBaseOrchestrationTest,
             'vsd_subnet_id': vsd_l2domain['ID'],
             'netpartition_name': self.net_partition_name,
             'net_name': self.private_net_name,
-            'cidr4': str(self.cidr4),
-            'gateway4': self.gateway4,
-            'maskbits4': self.mask_bits,
+            'cidr4': str(cidr4),
+            'gateway4': gateway4,
+            'maskbits4': mask_bits,
             'cidr6': str(self.cidr6),
             'gateway6': self.gateway6,
             'maskbits6': IPNetwork(vsd_l2domain_template['IPv6Address'])._prefixlen,

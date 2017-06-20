@@ -25,8 +25,6 @@ class VsdHelper(object):
     CONST_ETHER_TYPE_IPV4 = "0x0800"
     CONST_ETHER_TYPE_IPV6 = "0x86DD"
 
-    cms_id = CONF.nuage.nuage_cms_id
-    default_netpartition_name = CONF.nuage.nuage_default_netpartition
 
     def __init__(self, base_url, user='csproot', password='csproot',
                  enterprise='csp', version=None):
@@ -40,6 +38,8 @@ class VsdHelper(object):
 
         self.session = None
         self.default_enterprise = None
+        self.cms_id = CONF.nuage.nuage_cms_id
+        self.default_netpartition_name = CONF.nuage.nuage_default_netpartition
 
     def new_session(self):
         """

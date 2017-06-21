@@ -450,7 +450,7 @@ class VSDManagedRedirectTargetTest(base_vsd_managed_port_attributes.BaseVSDManag
                 msg = "update_port_precommit failed"
         else:
             # VSD-14419 - VSD throws wrong error
-            if  Release(CONF.nuage_sut.release) < Release('4.0R5'):
+            if Release(CONF.nuage_sut.release) < Release('4.0R5'):
                 expected_exception = exceptions.ServerFault
                 LOG.warning("VSD-14419: throws wrong http error code: ServerFault iso BadRequest")
 

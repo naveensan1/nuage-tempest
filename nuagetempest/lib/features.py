@@ -31,21 +31,21 @@ class NuageFeatures(object):
     """
 
     def _set_features(self):
+        # ML2-plugin has limited exception handling until mitaka
+        if (CONF.nuage_sut.nuage_plugin_mode == 'ml2') & (CONF.nuage_sut.openstack_version <= 'mitaka'):
+            self.ml2_limited_exceptions = True
+
         if self.current_release.major_release == "3.2":
             self.bidrectional_fip_rate_limit = self.current_release >= Release('3.2R10')
-            if CONF.nuage_sut.nuage_plugin_mode == 'ml2':
-                self.ml2_limited_exceptions = True
 
         if self.current_release.major_release == "4.0":
             self.full_external_id_support = self.current_release >= Release('4.0R5')
             self.bidrectional_fip_rate_limit = self.current_release >= Release('4.0R6')
-            self.ml2_limited_exceptions = CONF.nuage_sut.nuage_plugin_mode == 'ml2'
             self.dualstack_subnets = self.current_release == Release('4.0VZ')
 
         if self.current_release.major_release == "5.0":
             self.full_external_id_support = True
             self.bidrectional_fip_rate_limit = True
-            self.ml2_limited_exceptions = False
             self.dualstack_subnets = CONF.nuage_sut.nuage_plugin_mode == 'ml2'
 
     def __init__(self):

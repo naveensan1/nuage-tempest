@@ -558,8 +558,9 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
 
     def _create_server(self, name, network_id, port_id=None):
 
-        keypair = self.create_keypair()
-        self.keypairs[keypair['name']] = keypair
+        # See QA-617 : fails to use keypairs on MitakaUbuntu1404
+        #keypair = self.create_keypair()
+        #self.keypairs[keypair['name']] = keypair
         self.security_groups = \
             self._create_security_group_for_nuage(tenant_id=self.tenant_id)
         security_groups = [{'name': self.security_groups['name']}]
@@ -568,7 +569,7 @@ class BaseVSDPublicResourcesTest(base_vsd_managed_networks.BaseVSDManagedNetwork
             name=name,
             image_id=self.image_ref,
             flavor=self.flavor_ref,
-            key_name=keypair['name'],
+        #    key_name=keypair['name'],
             security_groups=security_groups,
             networks=[{'uuid': network_id}],
             wait_until='ACTIVE')

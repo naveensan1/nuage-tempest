@@ -117,18 +117,18 @@ class Release(object):
         if self.major_release == '0.0':
             return False
         if other.major_list and self.major_list:
-            comparison = cmp(other.major_list, self.major_list)
+            comparison = cmp(int(other.major_list[0]), int(self.major_list[0]))
             if comparison == 0:
                 if self.labelled:
                     if other.labelled:
-                        return cmp(other.sub_list, self.sub_list) > 0
+                        return cmp(int(other.sub_list[0]), int(self.sub_list[0])) > 0
                     else:
                         return True
                 else:
                     if other.labelled:
                         return False
                     else:
-                        return cmp(other.sub_list, self.sub_list) > 0
+                        return cmp(int(other.sub_list[0]), int(self.sub_list[0])) > 0
 
             return comparison > 0
         else:

@@ -123,11 +123,10 @@ class OrchestrationVsdManagedNetworkTest(nuage_base.NuageBaseOrchestrationTest):
         self.assertTrue(subnet['enable_dhcp'], "Shall have DHCP enabled from the l2 domain template")
         self.assertEqual(str(cidr), subnet['cidr'], "Shall get the CIDR from the l2 domain")
         self.assertIsNone(subnet['gateway_ip'], "Shall get null")
-        self.assertEqual(str(cidr[1]), subnet['allocation_pools'][0]['start'],
+        self.assertEqual(str(cidr[+2]), subnet['allocation_pools'][0]['start'],
                          "Shall start allocation pool at first address in l2 domain")
         self.assertEqual(str(cidr[-2]), subnet['allocation_pools'][0]['end'],
                          "Shall start allocation pool at last address in l2 domain")
-
         pass
 
     @test.attr(type='slow')

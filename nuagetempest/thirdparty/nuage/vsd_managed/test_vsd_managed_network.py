@@ -136,7 +136,8 @@ class VSDManagedTestNetworks(base_vsdman.BaseVSDManagedNetworksTest,
             network,
             cidr=cidr,
             mask_bits=24,
-            gateway=vsd_l2dom[0]['gateway'],
+            gateway=vsd_l2dom[0]['gateway'], ## This fails !!!
+            #gateway=None,                   ## This passes !!!
             allocation_pools=pool_dict,
             nuagenet=vsd_l2dom[0]['ID'],
             net_partition=CONF.nuage.nuage_default_netpartition)

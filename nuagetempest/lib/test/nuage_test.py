@@ -344,12 +344,15 @@ class NuageBaseTest(test.BaseTestCase):
             self.addCleanup(client.floating_ips_client.delete_floatingip, fip['id'])
         return fip
 
-    def create_router_interface(self, router_id, subnet_id, client=None):
+    def create_router_interface(self, router_id, subnet_id, client=None,cleanup=True):
         """Wrapper utility that returns a router interface."""
         if not client:
             client = self.manager
         interface = client.routers_client.add_router_interface(
             router_id, subnet_id=subnet_id)
+        if cleanup:
+            self.addCleanup(client.routers_client.remove_router_interface,router_id,
+                                                        subnet_id=subnet_id)
         return interface
 
     def osc_list_networks(self, client=None, *args, **kwargs):
@@ -512,6 +515,17 @@ class NuageBaseTest(test.BaseTestCase):
         server.init_console()
         self.addCleanup(server.close_console)
         return server
+
+    def stop_tenant_server(self,server_id,client=None,wait_until=None):
+        if not client:
+            client = self.manager
+        client.servers_client.stop_server(server_id)
+        if wait_until:
+            try:
+               waiters.wait_for_server_status(client.servers_client,server_id, wait_until)
+            except Exception:
+              LOG.exception("Stopping server %s failed" % server_id)
+
 
     def assert_ping(self, server1, server2, network, should_pass=True):
         # get IP address for <server2> in <network>

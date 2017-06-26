@@ -250,7 +250,7 @@ class FloatingIPTestAdminNuage(base.BaseAdminNetworkTest):
                   'cidr': '172.40.0.0/24',
                   'nuage_uplink' : nuage_fipsubnet1[0]['parentID']}
 
-        self.assertRaisesRegexp(exceptions.BadRequest,
+        self.assertRaisesRegexp(exceptions.ServerFault,
                                 "Network 172.40.0.0/255.255.255.0 overlaps with existing network ",
                                 self.admin_subnets_client.create_subnet,
                                 **kwargs)

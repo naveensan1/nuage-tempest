@@ -19,6 +19,7 @@ from nuagetempest.lib.test.nuage_test import NuageBaseTest
 CONF = config.CONF
 CMS_ID = CONF.nuage.nuage_cms_id
 
+
 class nuage_sfc(NuageBaseTest):
     _interface = 'json'
     LOG = logging.getLogger(__name__)
@@ -69,6 +70,42 @@ class nuage_sfc(NuageBaseTest):
                 filters='externalID', filter_value=router_ext_id)
         )
         return domain[0]['ID']
+
+    def _get_vsd_l2domain_id(self, subnet, netpart_name=None):
+        subnet_ext_id = (
+            self.nuage_vsd_client.get_vsd_external_id(
+                subnet['id'])
+        )
+
+        vsd_subnet = self.nuage_vsd_client.get_l2domain(
+            filters='externalID', filter_value=subnet_ext_id, netpart_name=netpart_name)
+        return vsd_subnet[0]['ID']
+
+    def _verify_flow_classifier_l2(
+            self, network, subnet, FC1, ingressport, egressport, netpart_name=None):
+        vsd_l2domain_id = self._get_vsd_l2domain_id(subnet, netpart_name)
+        redirect_targets = self.nuage_vsd_client.get_redirection_target(
+            'l2domains', vsd_l2domain_id)
+        rt_src_ext_id = 'fc_%s@%s' % (ingressport['id'], CMS_ID)
+        rt_src = self.nuage_vsd_client.get_redirection_target(
+            'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_src_ext_id)
+        rt_dest_ext_id = 'fc_%s@%s' % (egressport['id'], CMS_ID)
+        rt_dest = self.nuage_vsd_client.get_redirection_target(
+            'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_dest_ext_id)
+        self.assertNotEquals(
+            rt_src, '', "expected that source port rt is created but it is not")
+        self.assertNotEquals(
+            rt_dest,
+            '',
+            "expected that destination port rt is created but it is not")
+        src_pg = self.nuage_vsd_client.get_policygroup(
+            'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_src_ext_id)
+        dest_pg = self.nuage_vsd_client.get_policygroup(
+            'l2domains',
+            vsd_l2domain_id,
+            filters='externalID',
+            filter_value=rt_dest_ext_id)
+        return rt_src, rt_dest, src_pg, dest_pg
 
     def _verify_flow_classifier(
             self, network, subnet, FC1, ingressport, egressport, router=None, vsd_domain_id=None):
@@ -131,6 +168,45 @@ class nuage_sfc(NuageBaseTest):
             port_pair_group_egress_pg = self.nuage_vsd_client.get_policygroup(
                 n_constants.DOMAIN, vsd_domainid, filters='externalID', filter_value=rt_egress_ext_id)
             return rt_ingress, rt_egress, port_pair_group_ingress_pg, port_pair_group_egress_pg
+
+    def _get_l2_port_pair_group_redirect_target_pg(
+            self, port_pair_group, subnet, bidirectional_port=None, netpart_name=None):
+        vsd_l2domain_id = self._get_vsd_l2domain_id(subnet, netpart_name)
+        if bidirectional_port == 'true':
+            rt_ingress_egress_ext_id = 'ingress_egress_%s@%s' % (
+                port_pair_group['port_pair_group']['id'], CMS_ID)
+            rt_ingress_egress = self.nuage_vsd_client.get_redirection_target(
+                'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_ingress_egress_ext_id)
+            port_pair_group_ingress_pg = self.nuage_vsd_client.get_policygroup(
+                'l2domains',
+                vsd_l2domain_id,
+                filters='externalID',
+                filter_value=rt_ingress_egress_ext_id)
+            return rt_ingress_egress, port_pair_group_ingress_pg
+        else:
+            rt_ingress_ext_id = 'ingress_%s@%s' % (
+                port_pair_group['port_pair_group']['id'], CMS_ID)
+            rt_ingress = self.nuage_vsd_client.get_redirection_target(
+                'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_ingress_ext_id)
+            rt_egress_ext_id = 'egress_%s@%s' % (
+                port_pair_group['port_pair_group']['id'], CMS_ID)
+            rt_egress = self.nuage_vsd_client.get_redirection_target(
+                'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_egress_ext_id)
+            port_pair_group_ingress_pg = self.nuage_vsd_client.get_policygroup(
+                'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_ingress_ext_id)
+            port_pair_group_egress_pg = self.nuage_vsd_client.get_policygroup(
+                'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_egress_ext_id)
+            return rt_ingress, rt_egress, port_pair_group_ingress_pg, port_pair_group_egress_pg
+
+    def _get_adv_fwd_rules_port_chain_l2(
+            self, PC, subnet, netpart_name=None):
+        vsd_l2domain_id = self._get_vsd_l2domain_id(subnet, netpart_name)
+        pc_ext_id = '%s@%s' % (PC['port_chain']['id'], CMS_ID)
+        adv_fwd_template = self.nuage_vsd_client.get_advfwd_template(
+            'l2domains', vsd_l2domain_id, 'externalID', pc_ext_id)
+        rules = self.nuage_vsd_client.get_advfwd_entrytemplate(
+            'ingressadvfwdtemplates', adv_fwd_template[0]['ID'])
+        return rules
 
     def _get_adv_fwd_rules_port_chain(
             self, PC, router=None, vsd_domain_id=None):
@@ -522,6 +598,62 @@ class nuage_sfc(NuageBaseTest):
         self.assertIsNotNone(rev_rule_dest_egsfcvm2)
         self.assertIsNotNone(rev_rule_sfcvm2_sfcvm1)
         self.assertIsNotNone(rev_rule_sfcvm1_src)
+
+    def test_create_delete_port_chain_one_ppg_l2(self):
+        network = self.create_network()
+        subnet = self.create_subnet(network)
+        src_port = self.create_port(network=network, name='src_port')
+        dest_port = self.create_port(network=network, name='dest_port')
+
+        FC1 = self._create_flow_classifier('FC1', src_port['id'], dest_port['id'], '10', 'tcp',
+                                           source_port_range_max='23', source_port_range_min='23',
+                                           destination_port_range_min='100', destination_port_range_max='100')
+        p1 = self.create_port(
+            network=network,
+            name='p1',
+            port_security_enabled=False)
+        p2 = self.create_port(
+            network=network,
+            name='p2',
+            port_security_enabled=False)
+
+        sfcvm1 = self.create_tenant_server(
+            ports=[p1, p2], wait_until='ACTIVE', name='sfc-vm1')
+        time.sleep(5)
+        pp1 = self._create_port_pair('pp1', p1, p2)
+        ppg1 = self._create_port_pair_group('ppg1', pp1)
+        import pdb
+        pdb.set_trace()
+        PC1 = self. _create_port_chain('PC1', [ppg1], [FC1])
+        # verify
+        self.assertNotEquals(
+            PC1, '', 'port chain is empty')
+        rt_src, rt_dest, src_pg, dest_pg = self._verify_flow_classifier_l2(
+            network, subnet, FC1, src_port, dest_port)
+
+        ppg1_rt_ingress, ppg1_rt_egress, ppg1_ingress_pg, ppg1_egress_pg = self._get_l2_port_pair_group_redirect_target_pg(
+            ppg1, subnet)
+        rules = self._get_adv_fwd_rules_port_chain_l2(PC1, subnet)
+        for rule in rules:
+            if (rule['locationID'] == src_pg[0]['ID']):
+                rule_src_insfcvm1 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg1_rt_ingress[0]['ID'],
+                    "src to sfc-vm1 adv fwd rule redirect vport is wrong")
+                self.assertEquals(
+                    rule['vlanRange'],
+                    '10-10',
+                    "sfc to sfc-vm1 vlan range is wrong")
+                self.assertEquals(rule['redirectRewriteType'], 'VLAN')
+            if (rule['locationID'] == ppg1_egress_pg[0]['ID']):
+                rule_sfcvm1_dest = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    rt_dest[0]['ID'],
+                    "sfcvm1 to dest adv fwd rule redirect target is wrong")
+        self.assertIsNotNone(rule_src_insfcvm1)
+        self.assertIsNotNone(rule_sfcvm1_dest)
 
     def test_create_delete_port_chain_one_ppg(self):
         network = self.create_network()
@@ -1005,3 +1137,247 @@ class nuage_sfc(NuageBaseTest):
         self.assertIsNotNone(rule_sfcvm2_dest)
         self.assertIsNotNone(rule_src1_insfcvm1)
         self.assertIsNotNone(rule_sfcvm2_dest1)
+
+    def test_port_chain_create_delete_non_def_netpart(self):
+        import pdb
+        pdb.set_trace()
+        netpart_body = self.client.create_netpartition(
+            data_utils.rand_name('Enterprise-'))
+        nondef_netpart = netpart_body['net_partition']
+        self.addCleanup(self.client.delete_netpartition, nondef_netpart['id'])
+        nondef_network = self.create_network()
+        nondef_subnet = self.create_subnet(
+            nondef_network, net_partition=nondef_netpart['id'])
+        src_port = self.create_port(network=nondef_network, name='src_port')
+        dest_port = self.create_port(network=nondef_network, name='dest_port')
+
+        FC1 = self._create_flow_classifier('FC1', src_port['id'], dest_port['id'], '10', 'tcp',
+                                           source_port_range_max='23', source_port_range_min='23',
+                                           destination_port_range_min='100', destination_port_range_max='100')
+        p1 = self.create_port(
+            network=nondef_network,
+            name='p1',
+            port_security_enabled=False)
+        p2 = self.create_port(
+            network=nondef_network,
+            name='p2',
+            port_security_enabled=False)
+
+        sfcvm1 = self.create_tenant_server(
+            ports=[p1, p2], wait_until='ACTIVE', name='sfc-vm1')
+        time.sleep(5)
+        pp1 = self._create_port_pair('pp1', p1, p2)
+        ppg1 = self._create_port_pair_group('ppg1', pp1)
+        import pdb
+        pdb.set_trace()
+        PC1 = self. _create_port_chain('PC1', [ppg1], [FC1])
+        # verify
+        self.assertNotEquals(
+            PC1, '', 'port chain is empty')
+        rt_src, rt_dest, src_pg, dest_pg = self._verify_flow_classifier_l2(
+            nondef_network, nondef_subnet, FC1, src_port, dest_port, netpart_name=nondef_netpart['name'])
+
+        ppg1_rt_ingress, ppg1_rt_egress, ppg1_ingress_pg, ppg1_egress_pg = self._get_l2_port_pair_group_redirect_target_pg(
+            ppg1, nondef_subnet, netpart_name=nondef_netpart['name'])
+        rules = self._get_adv_fwd_rules_port_chain_l2(
+            PC1, nondef_subnet, netpart_name=nondef_netpart['name'])
+        for rule in rules:
+            if (rule['locationID'] == src_pg[0]['ID']):
+                rule_src_insfcvm1 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg1_rt_ingress[0]['ID'],
+                    "src to sfc-vm1 adv fwd rule redirect vport is wrong")
+                self.assertEquals(
+                    rule['vlanRange'],
+                    '10-10',
+                    "sfc to sfc-vm1 vlan range is wrong")
+                self.assertEquals(rule['redirectRewriteType'], 'VLAN')
+            if (rule['locationID'] == ppg1_egress_pg[0]['ID']):
+                rule_sfcvm1_dest = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    rt_dest[0]['ID'],
+                    "sfcvm1 to dest adv fwd rule redirect target is wrong")
+        self.assertIsNotNone(rule_src_insfcvm1)
+        self.assertIsNotNone(rule_sfcvm1_dest)
+
+    def test_multi_PC_with_overlap_ppg(self):
+        network = self.create_network()
+        subnet = self.create_subnet(network)
+        router = self.create_router(data_utils.rand_name('router-'))
+        self.create_router_interface(router['id'], subnet['id'])
+
+        src_port = self.create_port(network=network, name='src_port')
+        dest_port = self.create_port(network=network, name='dest_port')
+        FC1 = self._create_flow_classifier(
+            'FC1', src_port['id'], dest_port['id'], '11', 'icmp')
+        src_port2 = self.create_port(network=network, name='src_port2')
+        dest_port2 = self.create_port(network=network, name='dest_port2')
+        FC2 = self._create_flow_classifier(
+            'FC2', src_port2['id'], dest_port2['id'], '12', 'icmp')
+
+        src_port3 = self.create_port(network=network, name='src_port3')
+        dest_port3 = self.create_port(network=network, name='dest_port3')
+        FC3 = self._create_flow_classifier(
+            'FC3', src_port3['id'], dest_port3['id'], '14', 'icmp')
+
+        p1 = self.create_port(
+            network=network,
+            name='p1',
+            port_security_enabled=False)
+        p2 = self.create_port(
+            network=network,
+            name='p2',
+            port_security_enabled=False)
+        p3 = self.create_port(
+            network=network,
+            name='p3',
+            port_security_enabled=False)
+        p4 = self.create_port(
+            network=network,
+            name='p4',
+            port_security_enabled=False)
+        p5 = self.create_port(
+            network=network,
+            name='p5',
+            port_security_enabled=False)
+        p6 = self.create_port(
+            network=network,
+            name='p6',
+            port_security_enabled=False)
+        sfcvm1 = self.create_tenant_server(
+            ports=[p1, p2], wait_until='ACTIVE', name='sfc-vm1')
+        sfcvm2 = self.create_tenant_server(
+            ports=[p3, p4], wait_until='ACTIVE', name='sfc-vm2')
+        sfcvm3 = self.create_tenant_server(
+            ports=[p5, p6], wait_until='ACTIVE', name='sfc-vm3')
+
+        time.sleep(5)
+
+        pp1 = self._create_port_pair('pp1', p1, p2)
+        ppg1 = self._create_port_pair_group('ppg1', pp1)
+        pp2 = self._create_port_pair('pp2', p3, p4)
+        ppg2 = self._create_port_pair_group('ppg2', pp2)
+        pp3 = self._create_port_pair('pp3', p5, p6)
+        ppg3 = self._create_port_pair_group('ppg3', pp3)
+        PC1 = self. _create_port_chain('PC1', [ppg1, ppg2, ppg3], [FC1])
+        PC2 = self. _create_port_chain('PC2', [ppg1, ppg2], [FC2])
+        PC3 = self. _create_port_chain('PC3', [ppg1, ppg3], [FC3])
+        rules = self._get_adv_fwd_rules_port_chain(PC1, router=router)
+        rt_src, rt_dest, src_pg, dest_pg = self._verify_flow_classifier(
+            network, subnet, FC1, src_port, dest_port, router=router)
+        rt_src2, rt_dest2, src_pg2, dest_pg2 = self._verify_flow_classifier(
+            network, subnet, FC2, src_port2, dest_port2, router=router)
+        rt_src3, rt_dest3, src_pg3, dest_pg3 = self._verify_flow_classifier(
+            network, subnet, FC3, src_port3, dest_port3, router=router)
+        ppg1_rt_ingress, ppg1_rt_egress, ppg1_ingress_pg, ppg1_egress_pg = self._get_l3_port_pair_group_redirect_target_pg(
+            ppg1, router=router)
+        ppg2_rt_ingress, ppg2_rt_egress, ppg2_ingress_pg, ppg2_egress_pg = self._get_l3_port_pair_group_redirect_target_pg(
+            ppg2, router=router)
+        ppg3_rt_ingress, ppg3_rt_egress, ppg3_ingress_pg, ppg3_egress_pg = self._get_l3_port_pair_group_redirect_target_pg(
+            ppg3, router=router)
+        import pdb
+        pdb.set_trace()
+        rules = self._get_adv_fwd_rules_port_chain(PC1, router=router)
+        for rule in rules:
+            if (rule['locationID'] == src_pg[0]['ID']):
+                rule_src_insfcvm1 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg1_rt_ingress[0]['ID'],
+                    "src to sfc-vm1 adv fwd rule redirect vport is wrong")
+                self.assertEquals(
+                    rule['vlanRange'],
+                    '11-11',
+                    "sfc to sfc-vm1 vlan range is wrong")
+                self.assertEquals(rule['redirectRewriteType'], 'VLAN')
+            if (rule['locationID'] == ppg1_egress_pg[0]['ID']):
+                rule_sfcvm1_sfcvm2 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg2_rt_ingress[0]['ID'],
+                    "sfcvm1 to sfcvm2 adv fwd rule redirect target is wrong")
+            if (rule['locationID'] == ppg2_egress_pg[0]['ID']):
+                rule_sfcvm2_sfcvm3 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg3_rt_ingress[0]['ID'],
+                    "sfcvm2 to sfcvm3 adv fwd rule redirect target is wrong")
+            if (rule['locationID'] == ppg3_egress_pg[0]['ID']):
+                rule_sfcvm3_dest = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    rt_dest[0]['ID'],
+                    "sfcvm1 to dest adv fwd rule redirect target is wrong")
+
+        self.assertIsNotNone(rule_src_insfcvm1)
+        self.assertIsNotNone(rule_sfcvm1_sfcvm2)
+        self.assertIsNotNone(rule_sfcvm2_sfcvm3)
+        self.assertIsNotNone(rule_sfcvm3_dest)
+        import pdb
+        pdb.set_trace()
+        rules = self._get_adv_fwd_rules_port_chain(PC2, router=router)
+        for rule in rules:
+            if (rule['locationID'] == src_pg2[0]['ID']):
+                rule2_src_insfcvm1 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg1_rt_ingress[0]['ID'],
+                    "src to sfc-vm1 adv fwd rule redirect vport is wrong")
+                self.assertEquals(
+                    rule['vlanRange'],
+                    '12-12',
+                    "sfc to sfc-vm1 vlan range is wrong")
+                self.assertEquals(rule['redirectRewriteType'], 'VLAN')
+                self.assertEquals(
+                    rule['redirectRewriteValue'], str(
+                        PC2['port_chain']['chain_parameters']['correlation_id']))
+            if (rule['locationID'] == ppg1_egress_pg[0]['ID']):
+                rule2_sfcvm1_sfcvm2 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg2_rt_ingress[0]['ID'],
+                    "sfcvm1 to sfcvm2 adv fwd rule redirect target is wrong")
+            if (rule['locationID'] == ppg2_egress_pg[0]['ID']):
+                rule2_sfcvm2_dest = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    rt_dest2[0]['ID'],
+                    "sfcvm1 to dest adv fwd rule redirect target is wrong")
+        self.assertIsNotNone(rule2_src_insfcvm1)
+        self.assertIsNotNone(rule2_sfcvm1_sfcvm2)
+        self.assertIsNotNone(rule2_sfcvm2_dest)
+        import pdb
+        pdb.set_trace()
+        rules = self._get_adv_fwd_rules_port_chain(PC3, router=router)
+        for rule in rules:
+            if (rule['locationID'] == src_pg3[0]['ID']):
+                rule3_src_insfcvm1 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg1_rt_ingress[0]['ID'],
+                    "src to sfc-vm1 adv fwd rule redirect vport is wrong")
+                self.assertEquals(
+                    rule['vlanRange'],
+                    '14-14',
+                    "sfc to sfc-vm1 vlan range is wrong")
+                self.assertEquals(rule['redirectRewriteType'], 'VLAN')
+                self.assertEquals(
+                    rule['redirectRewriteValue'], str(
+                        PC3['port_chain']['chain_parameters']['correlation_id']))
+            if (rule['locationID'] == ppg1_egress_pg[0]['ID']):
+                rule3_sfcvm1_sfcvm3 = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    ppg3_rt_ingress[0]['ID'],
+                    "sfcvm1 to sfcvm3 adv fwd rule redirect target is wrong")
+            if (rule['locationID'] == ppg3_egress_pg[0]['ID']):
+                rule3_sfcvm3_dest = rule
+                self.assertEquals(
+                    rule['redirectVPortTagID'],
+                    rt_dest3[0]['ID'],
+                    "sfcvm1 to dest adv fwd rule redirect target is wrong")
+        self.assertIsNotNone(rule3_src_insfcvm1)
+        self.assertIsNotNone(rule3_sfcvm1_sfcvm3)
+        self.assertIsNotNone(rule3_sfcvm3_dest)

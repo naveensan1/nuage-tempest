@@ -44,6 +44,7 @@ EXPECT_DHCP_ENABLE_FALSE = "enable_dhcp in subnet must be False"
 EXPECT_GATEWAY_IP_MISMATCH = "Bad subnet request: Provided gateway-ip does not match VSD configuration"
 EXPECT_CIDR_IN_RANGE = "Bad request: cidr in subnet must be"
 EXPECT_GATEWAY_IN_CIDR = "Bad request: Gateway IP outside of the subnet CIDR"
+EXPECT_DO_NOT_MATCH = "do not match"
 
 
 @nuage_test.class_header(tags=[tags.VSD_MANAGED, tags.MONOLITHIC])
@@ -679,7 +680,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=False,
@@ -705,7 +706,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=False,
@@ -732,7 +733,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=False,
@@ -839,7 +840,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=False,
@@ -865,7 +866,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=False,
@@ -892,7 +893,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=False,
@@ -1122,7 +1123,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=False,
@@ -1149,7 +1150,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=False,
@@ -1177,7 +1178,7 @@ class VSDPublicResourcesTest(base_vsd_public_resources.BaseVSDPublicResourcesTes
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=False,
@@ -1888,7 +1889,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -1914,7 +1915,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -1941,7 +1942,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l2dom = self._given_vsdl2sharedmgd_linkedto_vsdl2domunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -2048,7 +2049,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -2074,7 +2075,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -2101,7 +2102,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l2dom = self._given_vsdl2sharedmgdopt3_linkedto_vsdl2domunmgd(VSD_L2_SHARED_MGD_OPT3)
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l2_shared_l2_unmgd,
             vsd_l2dom_unmgd=vsd_l2dom,
             os_shared_network=True,
@@ -2119,8 +2120,6 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
             expect_vm_ip_addresses_equal=True
         )
         pass
-
-    #
 
     @test.attr(type=['negative'])
     @nuage_test.header()
@@ -2332,7 +2331,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -2359,7 +2358,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,
@@ -2387,7 +2386,7 @@ class VSDPublicResourcesSharedNetworksTest(base_vsd_public_resources.BaseVSDPubl
         vsd_l3_unmgd_subnet = self._given_vsdl3sharedmgd_linkedto_vsdl2subnetunmgd()
         self.assertRaisesRegexp(
             exceptions.BadRequest,
-            EXPECT_CIDR_IN_RANGE,
+            EXPECT_DO_NOT_MATCH,
             self._check_vsd_l3_shared_l2_unmgd,
             vsd_l3_dom_subnet=vsd_l3_unmgd_subnet,
             os_shared_network=True,

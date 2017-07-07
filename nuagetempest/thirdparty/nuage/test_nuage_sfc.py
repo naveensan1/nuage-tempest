@@ -24,8 +24,11 @@ CMS_ID = None
 class nuage_sfc(NuageBaseTest):
     _interface = 'json'
     LOG = logging.getLogger(__name__)
-    global CMS_ID
-    CMS_ID = CONF.nuage.nuage_cms_id 
+
+    def __init__(self):
+        global CMS_ID
+        CMS_ID = CONF.nuage.nuage_cms_id 
+
     @classmethod
     def setup_clients(cls):
         super(nuage_sfc, cls).setup_clients()

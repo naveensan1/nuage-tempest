@@ -344,12 +344,15 @@ class NuageBaseTest(test.BaseTestCase):
             self.addCleanup(client.floating_ips_client.delete_floatingip, fip['id'])
         return fip
 
-    def create_router_interface(self, router_id, subnet_id, client=None):
+    def create_router_interface(self, router_id, subnet_id, client=None,cleanup=True):
         """Wrapper utility that returns a router interface."""
         if not client:
             client = self.manager
         interface = client.routers_client.add_router_interface(
             router_id, subnet_id=subnet_id)
+        if cleanup:
+            self.addCleanup(client.routers_client.remove_router_interface,router_id,
+                                                        subnet_id=subnet_id)
         return interface
 
     def osc_list_networks(self, client=None, *args, **kwargs):
@@ -391,6 +394,16 @@ class NuageBaseTest(test.BaseTestCase):
         server_list = client.servers_client.show_server(server_id)
         return server_list['server']
 
+    def osc_get_image_id(self,image_name,client=None):
+        if not client:
+            client = self.manager
+        image_id = ''
+        images = client.image_client_v2.list_images()
+        for i in images['images']:
+            if i['name'] == image_name:
+               return i['id']
+        return image_id   
+
     # noinspection PyBroadException
     def osc_create_test_server(self, client=None, tenant_networks=None, ports=None, wait_until=None,
                                volume_backed=False, name=None, flavor=None,
@@ -406,7 +419,6 @@ class NuageBaseTest(test.BaseTestCase):
         """
         if not client:
             client = self.manager
-
         name = name
         flavor = flavor
         image_id = image_id
@@ -494,7 +506,7 @@ class NuageBaseTest(test.BaseTestCase):
 
     def create_tenant_server(self, client=None, tenant_networks=None, ports=None, wait_until=None,
                              volume_backed=False, name=None, flavor=None,
-                             image_id=None, cleanup=True, **kwargs):
+                             image_id=None, cleanup=True, guest_user=None, guest_password=None, guest_prompt=None,**kwargs):
 
         name = name or data_utils.rand_name('test-server')
 
@@ -509,15 +521,26 @@ class NuageBaseTest(test.BaseTestCase):
                                                             wait_until=wait_until,
                                                             cleanup=cleanup,
                                                             **kwargs)
-        server.init_console()
+        server.init_console(username=guest_user,password=guest_password,prompt=guest_prompt)
         self.addCleanup(server.close_console)
         return server
 
-    def assert_ping(self, server1, server2, network, should_pass=True):
+    def stop_tenant_server(self,server_id,client=None,wait_until=None):
+        if not client:
+            client = self.manager
+        client.servers_client.stop_server(server_id)
+        if wait_until:
+            try:
+               waiters.wait_for_server_status(client.servers_client,server_id, wait_until)
+            except Exception:
+              LOG.exception("Stopping server %s failed" % server_id)
+
+
+    def assert_ping(self, server1, server2, network, should_pass=True,interface=None,count=2):
         # get IP address for <server2> in <network>
         ipv4_address = server2.get_server_ip_in_network(network['name'])
 
-        ping_result = server1.ping(ipv4_address, should_pass=should_pass)
+        ping_result = server1.ping(ipv4_address, should_pass=should_pass,interface=interface,count=count)
 
         if should_pass:
             if ping_result:

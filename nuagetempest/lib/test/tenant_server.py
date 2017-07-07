@@ -13,17 +13,26 @@ class Console(object):
         self.is_initialized = False
         self.session = None
 
-    def init_telnet(self, host, port, username=None, password=None):
+    def init_telnet(self, host, port, username=None, password=None,prompt=None):
         self.telnet_port = port
         self.telnet_host = host
 
         if not username:
             self.username = 'cirros'
+        else:
+            self.username = username
         if not password:
             self.password = 'cubswin:)'
-
+        else :
+            self.password = password
+        
+        if not prompt:
+            self.login_prompt = '\$'
+        else:
+            self.login_prompt = prompt
         self.is_initialized = True
-
+        
+        
     def close(self):
         if self.session:
             self.session.close()
@@ -38,7 +47,7 @@ class Console(object):
                     user=self.username,
                     password=self.password,
                     port=self.telnet_port,
-                    prompt="\$")
+                    prompt=self.login_prompt)
 
                 self.session.open_while(timeout=180, retry_interval=5)
 
@@ -107,23 +116,46 @@ class TenantServer(object):
                 break
         return ip_address
 
-    def init_console(self):
+    def init_console(self,username=None,password=None,prompt=None):
         # TODO: initialize the default console flavor supported by the actual configuration
         host, port = self.get_telnet_host_port()
-        self.console.init_telnet(host, port)
+        self.console.init_telnet(host, port,username=username,password=password,prompt=prompt)
 
     def close_console(self):
         self.console.close()
 
-    def ping(self, ip_address, should_pass=True):
-        output = self.console().send(cmd='ping -c 2 ' + ip_address, timeout=50)
+    def ping(self, ip_address, should_pass=True,count=2,interface=None):
+        if interface:
+            cmd_sent = 'ping -c %s %s -I %s' % (count,ip_address,interface)
+            output = self.console().send(cmd=cmd_sent,timeout=50)
+        else:
+            output = self.console().send(cmd='ping -c %s %s ' % (count,ip_address), timeout=50)
         complete_output = str(output).strip('[]')
         if should_pass:
-            expectedresult = "2 packets received"
+            expectedresult = "%s packets received" % count
         else:
             expectedresult = "0 packets received"
 
         return expectedresult in complete_output
+
+    def configure_vlan_interface(self,ip,interface,vlan):
+        
+        cmd = 'ip link add link %s name %s.%s type vlan id %s ' % (interface,interface,vlan,vlan)
+        self.console().send(cmd=cmd, timeout=5)
+        cmd = 'ifconfig %s.%s %s  up' % (interface,vlan,ip)
+        self.console().send(cmd=cmd, timeout=5)
+        cmd = 'ifconfig'
+        self.console().send(cmd=cmd, timeout=5)
+
+    def configure_ip_fwd(self):
+        cmd = 'sysctl -w net.ipv4.ip_forward=1'
+        self.console().send(cmd=cmd, timeout=10)
+
+    def bringdown_interface(self,interface):
+        cmd = 'ifconfig %s 0.0.0.0' % interface
+        self.console().send(cmd=cmd, timeout=10)
+        cmd = 'ifconfig'
+        self.console().send(cmd=cmd, timeout=5)
 
     def configure_dualstack_interface(self, ip, subnet, device="eth0"):
         maskbits=IPNetwork(subnet['cidr']).prefixlen

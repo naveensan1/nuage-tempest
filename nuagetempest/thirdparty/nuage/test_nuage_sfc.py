@@ -19,15 +19,10 @@ from nuagetempest.lib.test.nuage_test import NuageBaseTest
 from testtools.matchers import Contains
 
 CONF = config.CONF
-CMS_ID = None
 
 class nuage_sfc(NuageBaseTest):
     _interface = 'json'
     LOG = logging.getLogger(__name__)
-
-    def __init__(self):
-        global CMS_ID
-        CMS_ID = CONF.nuage.nuage_cms_id 
 
     @classmethod
     def setup_clients(cls):
@@ -90,10 +85,15 @@ class nuage_sfc(NuageBaseTest):
         vsd_l2domain_id = self._get_vsd_l2domain_id(subnet, netpart_name)
         redirect_targets = self.nuage_vsd_client.get_redirection_target(
             'l2domains', vsd_l2domain_id)
-        rt_src_ext_id = 'fc_%s@%s' % (ingressport['id'], CMS_ID)
+        #rt_src_ext_id = 'fc_%s@%s' % (ingressport['id'], CMS_ID)
+        pre_rt_src = 'fc_%s' % ingressport['id']
+        rt_src_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_src)
         rt_src = self.nuage_vsd_client.get_redirection_target(
             'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_src_ext_id)
-        rt_dest_ext_id = 'fc_%s@%s' % (egressport['id'], CMS_ID)
+        #rt_dest_ext_id = 'fc_%s@%s' % (egressport['id'], CMS_ID)
+        pre_rt_dest_ext_id = 'fc_%s' % egressport['id']
+        rt_dest_ext_id = self.nuage_vsd_client.get_vsd_external_id( pre_rt_dest_ext_id)
+
         rt_dest = self.nuage_vsd_client.get_redirection_target(
             'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_dest_ext_id)
         self.assertNotEquals(
@@ -117,10 +117,16 @@ class nuage_sfc(NuageBaseTest):
             vsd_domain_id = self._get_vsd_domain_id(router)
         redirect_targets = self.nuage_vsd_client.get_redirection_target(
             'domains', vsd_domain_id)
-        rt_src_ext_id = 'fc_%s@%s' % (ingressport['id'], CMS_ID)
+        #rt_src_ext_id = 'fc_%s@%s' % (ingressport['id'], CMS_ID)
+        pre_rt_src = 'fc_%s' % ingressport['id']
+        rt_src_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_src)
+
         rt_src = self.nuage_vsd_client.get_redirection_target(
             'domains', vsd_domain_id, filters='externalID', filter_value=rt_src_ext_id)
-        rt_dest_ext_id = 'fc_%s@%s' % (egressport['id'], CMS_ID)
+        #rt_dest_ext_id = 'fc_%s@%s' % (egressport['id'], CMS_ID)
+        pre_rt_dest_ext_id = 'fc_%s' % egressport['id']
+        rt_dest_ext_id = self.nuage_vsd_client.get_vsd_external_id( pre_rt_dest_ext_id)
+
         rt_dest = self.nuage_vsd_client.get_redirection_target(
             'domains', vsd_domain_id, filters='externalID', filter_value=rt_dest_ext_id)
         self.assertNotEquals(
@@ -148,8 +154,9 @@ class nuage_sfc(NuageBaseTest):
         else:
             vsd_domainid = vsd_domain_id
         if bidirectional_port == 'true':
-            rt_ingress_egress_ext_id = 'ingress_egress_%s@%s' % (
-                port_pair_group['port_pair_group']['id'], CMS_ID)
+            pre_rt_ingress_egress_ext_id = 'ingress_egress_%s' % (
+                port_pair_group['port_pair_group']['id'])
+            rt_ingress_egress_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_ingress_egress_ext_id)
             rt_ingress_egress = self.nuage_vsd_client.get_redirection_target(
                 'domains', vsd_domainid, filters='externalID', filter_value=rt_ingress_egress_ext_id)
             port_pair_group_ingress_pg = self.nuage_vsd_client.get_policygroup(
@@ -159,12 +166,16 @@ class nuage_sfc(NuageBaseTest):
                 filter_value=rt_ingress_egress_ext_id)
             return rt_ingress_egress, port_pair_group_ingress_pg
         else:
-            rt_ingress_ext_id = 'ingress_%s@%s' % (
-                port_pair_group['port_pair_group']['id'], CMS_ID)
+            pre_rt_ingress_ext_id = 'ingress_%s' % (
+                port_pair_group['port_pair_group']['id'])
+            rt_ingress_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_ingress_ext_id)
             rt_ingress = self.nuage_vsd_client.get_redirection_target(
                 'domains', vsd_domainid, filters='externalID', filter_value=rt_ingress_ext_id)
-            rt_egress_ext_id = 'egress_%s@%s' % (
-                port_pair_group['port_pair_group']['id'], CMS_ID)
+            #rt_egress_ext_id = 'egress_%s@%s' % (
+            #    port_pair_group['port_pair_group']['id'], CMS_ID)
+            pre_rt_egress_ext_id = 'egress_%s' % port_pair_group['port_pair_group']['id']
+            rt_egress_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_egress_ext_id)
+
             rt_egress = self.nuage_vsd_client.get_redirection_target(
                 'domains', vsd_domainid, filters='externalID', filter_value=rt_egress_ext_id)
             port_pair_group_ingress_pg = self.nuage_vsd_client.get_policygroup(
@@ -177,8 +188,10 @@ class nuage_sfc(NuageBaseTest):
             self, port_pair_group, subnet, bidirectional_port=None, netpart_name=None):
         vsd_l2domain_id = self._get_vsd_l2domain_id(subnet, netpart_name)
         if bidirectional_port == 'true':
-            rt_ingress_egress_ext_id = 'ingress_egress_%s@%s' % (
-                port_pair_group['port_pair_group']['id'], CMS_ID)
+            #rt_ingress_egress_ext_id = 'ingress_egress_%s@%s' % (
+            #    port_pair_group['port_pair_group']['id'], CMS_ID)
+            pre_rt_ingress_egress_ext_id = 'ingress_egress_%s' % port_pair_group['port_pair_group']['id']
+            rt_ingress_egress_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_ingress_egress_ext_id)
             rt_ingress_egress = self.nuage_vsd_client.get_redirection_target(
                 'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_ingress_egress_ext_id)
             port_pair_group_ingress_pg = self.nuage_vsd_client.get_policygroup(
@@ -188,12 +201,16 @@ class nuage_sfc(NuageBaseTest):
                 filter_value=rt_ingress_egress_ext_id)
             return rt_ingress_egress, port_pair_group_ingress_pg
         else:
-            rt_ingress_ext_id = 'ingress_%s@%s' % (
-                port_pair_group['port_pair_group']['id'], CMS_ID)
+            #rt_ingress_ext_id = 'ingress_%s@%s' % (
+            #    port_pair_group['port_pair_group']['id'], CMS_ID)
+            pre_rt_ingress_ext_id = 'ingress_%s' % port_pair_group['port_pair_group']['id']
+            rt_ingress_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_ingress_ext_id)
             rt_ingress = self.nuage_vsd_client.get_redirection_target(
                 'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_ingress_ext_id)
-            rt_egress_ext_id = 'egress_%s@%s' % (
-                port_pair_group['port_pair_group']['id'], CMS_ID)
+            #rt_egress_ext_id = 'egress_%s@%s' % (
+            #    port_pair_group['port_pair_group']['id'], CMS_ID)
+            pre_rt_egress_ext_id = 'egress_%s' % port_pair_group['port_pair_group']['id']
+            rt_egress_ext_id = self.nuage_vsd_client.get_vsd_external_id(pre_rt_egress_ext_id)
             rt_egress = self.nuage_vsd_client.get_redirection_target(
                 'l2domains', vsd_l2domain_id, filters='externalID', filter_value=rt_egress_ext_id)
             port_pair_group_ingress_pg = self.nuage_vsd_client.get_policygroup(
@@ -205,7 +222,8 @@ class nuage_sfc(NuageBaseTest):
     def _get_adv_fwd_rules_port_chain_l2(
             self, PC, subnet, netpart_name=None):
         vsd_l2domain_id = self._get_vsd_l2domain_id(subnet, netpart_name)
-        pc_ext_id = '%s@%s' % (PC['port_chain']['id'], CMS_ID)
+        #pc_ext_id = '%s@%s' % (PC['port_chain']['id'], CMS_ID)
+        pc_ext_id = self.nuage_vsd_client.get_vsd_external_id( PC['port_chain']['id'])
         adv_fwd_template = self.nuage_vsd_client.get_advfwd_template(
             'l2domains', vsd_l2domain_id, 'externalID', pc_ext_id)
         rules = self.nuage_vsd_client.get_advfwd_entrytemplate(
@@ -219,7 +237,8 @@ class nuage_sfc(NuageBaseTest):
         else:
             vsd_domainid = vsd_domain_id
 
-        pc_ext_id = '%s@%s' % (PC['port_chain']['id'], CMS_ID)
+        #pc_ext_id = '%s@%s' % (PC['port_chain']['id'], CMS_ID)
+        pc_ext_id = self.nuage_vsd_client.get_vsd_external_id( PC['port_chain']['id'])
         adv_fwd_template = self.nuage_vsd_client.get_advfwd_template(
             'domains', vsd_domainid, 'externalID', pc_ext_id)
         rules = self.nuage_vsd_client.get_advfwd_entrytemplate(
